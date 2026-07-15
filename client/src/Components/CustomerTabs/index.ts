@@ -1,0 +1,9 @@
+export { default as CustomerList } from './CustomerList';
+export { default as CustomerCard } from './CustomerCard';
+export { default as OngoingService } from './OngoingService';
+export { default as PoliciesAndPlans } from './PoliciesAndPlans';
+export { default as Quotes } from './Quotes';
+export { default as Claims } from './Claims';
+export { default as Documents } from './Documents';
+export { default as NewCustomerModal } from './NewCustomerModal';
+export { default as DeleteCustomerModal } from './DeleteCustomerModal';
