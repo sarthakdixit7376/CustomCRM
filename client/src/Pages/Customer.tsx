@@ -7,10 +7,12 @@ import {
   Quotes,
   Claims,
   Documents,
+  Lead,
 } from '../Components/CustomerTabs';
 import NewCustomerModal from '../Components/CustomerTabs/NewCustomerModal';
 import type { CustomerFormData } from '../Components/CustomerTabs/NewCustomerModal';
 import type { PolicyRow } from '../Components/CustomerTabs/CustomerList';
+import type { LeadRow } from '../Components/CustomerTabs/Lead';
 
 /* ───────── Seed Data ───────── */
 const INITIAL_CUSTOMERS: PolicyRow[] = [
@@ -33,6 +35,7 @@ const TABS = [
   { key: 'quotes', label: 'Quotes', badge: null },
   { key: 'claims', label: 'Claims', badge: null },
   { key: 'documents', label: 'Documents', badge: null },
+  { key: 'lead', label: 'Lead', badge: null },
 ] as const;
 
 type TabKey = (typeof TABS)[number]['key'];
@@ -44,6 +47,7 @@ export default function Customer() {
   const [activeTab, setActiveTab] = useState<TabKey>('list');
   const [customers, setCustomers] = useState<PolicyRow[]>(INITIAL_CUSTOMERS);
   const [selectedCustomer, setSelectedCustomer] = useState<PolicyRow | null>(null);
+  const [selectedLead, setSelectedLead] = useState<LeadRow | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [nextId, setNextId] = useState(INITIAL_CUSTOMERS.length + 1);
@@ -78,6 +82,13 @@ export default function Customer() {
 
   const handleSelectCustomer = (customer: PolicyRow) => {
     setSelectedCustomer(customer);
+    setSelectedLead(null);
+    setActiveTab('card');
+  };
+
+  const handleSelectLead = (lead: LeadRow) => {
+    setSelectedLead(lead);
+    setSelectedCustomer(null);
     setActiveTab('card');
   };
 
@@ -88,8 +99,8 @@ export default function Customer() {
 
   const TAB_COMPONENTS: Record<TabKey, React.FC> = {
     list: () => <CustomerList customers={customers} onDeleteCustomer={handleDeleteCustomer} onSelectCustomer={handleSelectCustomer} />,
-    card: () => <CustomerCard customer={selectedCustomer} />,
-    service: OngoingService, policies: PoliciesAndPlans, quotes: Quotes, claims: Claims, documents: Documents,
+    card: () => <CustomerCard customer={selectedCustomer} lead={selectedLead} />,
+    service: OngoingService, policies: PoliciesAndPlans, quotes: Quotes, claims: Claims, documents: Documents, lead: () => <Lead onSelectLead={handleSelectLead} />,
   };
 
   const ActiveTabComponent = TAB_COMPONENTS[activeTab];

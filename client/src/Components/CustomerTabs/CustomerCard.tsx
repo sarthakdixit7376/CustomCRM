@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { PolicyRow } from './CustomerList';
+import type { LeadRow } from './Lead';
 
 /* ───────── Default Data ───────── */
 const DEFAULT_CUSTOMER = {
@@ -34,31 +35,46 @@ const DEFAULT_CUSTOMER = {
 /* ───────── Component ───────── */
 export interface CustomerCardProps {
   customer?: PolicyRow | null;
+  lead?: LeadRow | null;
 }
 
-export default function CustomerCard({ customer }: CustomerCardProps) {
+export default function CustomerCard({ customer, lead }: CustomerCardProps) {
   const [isEditing, setIsEditing] = useState(false);
 
-  const [localData, setLocalData] = useState(() => ({
-    ...DEFAULT_CUSTOMER,
-    name: customer?.customerName || DEFAULT_CUSTOMER.name,
-    avatar: customer?.customerName ? customer.customerName.charAt(0) : DEFAULT_CUSTOMER.avatar,
-    identity: DEFAULT_CUSTOMER.identity.map((f) =>
-      f.label === 'Insurance Agent' ? { ...f, value: customer?.insuranceCompany || f.value } : f
-    ),
-  }));
+  const getInitialData = (cust: PolicyRow | null | undefined, ld: LeadRow | null | undefined) => {
+    const displayName = cust?.customerName || ld?.leadName || DEFAULT_CUSTOMER.name;
+    const insuranceAgent = cust?.insuranceCompany || DEFAULT_CUSTOMER.identity.find((f) => f.label === 'Insurance Agent')?.value || '';
+    
+    const newContacts = [...DEFAULT_CUSTOMER.contacts];
+    if (ld?.phoneNumber) {
+      newContacts[0] = { ...newContacts[0], value: ld.phoneNumber };
+    }
+
+    const newExtras = { ...DEFAULT_CUSTOMER.extras };
+    if (ld) {
+      newExtras.carBrand = ld.vehicleModel;
+      newExtras.uniqueId = ld.registrationNumber;
+      newExtras.pathNumber = ld.vehicleNumber;
+    }
+
+    return {
+      ...DEFAULT_CUSTOMER,
+      name: displayName,
+      avatar: displayName ? displayName.charAt(0) : DEFAULT_CUSTOMER.avatar,
+      identity: DEFAULT_CUSTOMER.identity.map((f) =>
+        f.label === 'Insurance Agent' ? { ...f, value: insuranceAgent } : f
+      ),
+      contacts: newContacts,
+      extras: newExtras,
+    };
+  };
+
+  const [localData, setLocalData] = useState(() => getInitialData(customer, lead));
 
   useEffect(() => {
-    setLocalData({
-      ...DEFAULT_CUSTOMER,
-      name: customer?.customerName || DEFAULT_CUSTOMER.name,
-      avatar: customer?.customerName ? customer.customerName.charAt(0) : DEFAULT_CUSTOMER.avatar,
-      identity: DEFAULT_CUSTOMER.identity.map((f) =>
-        f.label === 'Insurance Agent' ? { ...f, value: customer?.insuranceCompany || f.value } : f
-      ),
-    });
+    setLocalData(getInitialData(customer, lead));
     setIsEditing(false);
-  }, [customer]);
+  }, [customer, lead]);
 
   const handleIdentityChange = (index: number, value: string) => {
     setLocalData((prev) => {
