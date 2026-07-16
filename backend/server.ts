@@ -24,8 +24,8 @@ const apiKeyMiddleware = (req: Request, res: Response, next: NextFunction) => {
   if (req.path.startsWith('/api/')) {
     const clientApiKey = req.header('X-API-Key');
     if (clientApiKey !== apiKey) {
-       res.status(401).json({ error: 'Unauthorized: Invalid API Key' });
-       return;
+      res.status(401).json({ error: 'Unauthorized: Invalid API Key' });
+      return;
     }
   }
   next();
@@ -62,7 +62,7 @@ app.get('/api/fields', async (req, res) => {
 // POST /api/fields
 app.post('/api/fields', (req, res) => {
   const { api_name, label, data_type, required, options } = req.body;
-  
+
   if (!api_name) {
     res.status(400).json({ error: 'api_name is required' });
     return;
@@ -72,16 +72,16 @@ app.post('/api/fields', (req, res) => {
     try {
       const data = await fs.readFile(fieldsPath, 'utf8');
       const fields = JSON.parse(data);
-      
+
       const existingIndex = fields.findIndex((f: any) => f.api_name === api_name);
       const newField = { api_name, label, data_type, required, options };
-      
+
       if (existingIndex >= 0) {
         fields[existingIndex] = { ...fields[existingIndex], ...newField };
       } else {
         fields.push(newField);
       }
-      
+
       await fs.writeFile(fieldsPath, JSON.stringify(fields, null, 2));
       res.json(newField);
     } catch (error) {
@@ -89,8 +89,8 @@ app.post('/api/fields', (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
     }
   }).catch((error) => {
-      console.error('Lock error in POST /api/fields:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Lock error in POST /api/fields:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   });
 });
 
@@ -113,41 +113,41 @@ app.post('/api/leads', (req, res) => {
     try {
       const data = await fs.readFile(leadsPath, 'utf8');
       const leads = JSON.parse(data);
-      
+
       const newLead = {
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
         ...req.body
       };
-      
+
       leads.push(newLead);
       await fs.writeFile(leadsPath, JSON.stringify(leads, null, 2));
-      
+
       res.status(201).json(newLead);
     } catch (error) {
       console.error('Error writing lead:', error);
       res.status(500).json({ error: 'Internal Server Error' });
     }
   }).catch((error) => {
-      console.error('Lock error in POST /api/leads:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Lock error in POST /api/leads:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   });
 });
 
 // DELETE /api/leads/:id
 app.delete('/api/leads/:id', (req, res) => {
   const { id } = req.params;
-  
+
   leadsWriteLock = leadsWriteLock.then(async () => {
     try {
       const data = await fs.readFile(leadsPath, 'utf8');
       const leads = JSON.parse(data);
-      
+
       const filteredLeads = leads.filter((lead: any) => lead.id !== id);
-      
+
       if (leads.length === filteredLeads.length) {
-         res.status(404).json({ error: 'Lead not found' });
-         return;
+        res.status(404).json({ error: 'Lead not found' });
+        return;
       }
 
       await fs.writeFile(leadsPath, JSON.stringify(filteredLeads, null, 2));
@@ -157,8 +157,8 @@ app.delete('/api/leads/:id', (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
     }
   }).catch((error) => {
-      console.error('Lock error in DELETE /api/leads:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Lock error in DELETE /api/leads:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   });
 });
 

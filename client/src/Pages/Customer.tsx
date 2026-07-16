@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import logo from '../assets/Logo.png';
 import {
   CustomerList,
   CustomerCard,
@@ -111,8 +112,11 @@ export default function Customer() {
       {/* Header */}
       <header className="px-8 pt-6 pb-0 flex items-center justify-between gap-4 max-md:flex-col max-md:items-start max-md:gap-3 max-md:px-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-center text-xl">👥</div>
-          <h1 className="text-2xl font-bold tracking-tight m-0">Accounts</h1>
+          <img src={logo} alt="MdarAi Logo" className="w-10 h-10 object-contain" />
+          <h1 className="text-2xl font-bold tracking-tight m-0">
+            <span>Mdar</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">Ai</span>
+          </h1>
         </div>
         <button
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-white text-black border-none cursor-pointer transition-all duration-150 hover:bg-neutral-200 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(255,255,255,0.12)]"
