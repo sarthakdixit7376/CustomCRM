@@ -1,0 +1,50 @@
+[
+  {
+    "api_name": "lead_name",
+    "label": "Lead Name",
+    "data_type": "text",
+    "required": true
+  },
+  {
+    "api_name": "phone_number",
+    "label": "Phone Number",
+    "data_type": "text",
+    "required": true
+  },
+  {
+    "api_name": "vehicle_number",
+    "label": "Vehicle Number",
+    "data_type": "text",
+    "required": false
+  },
+  {
+    "api_name": "engine_cc",
+    "label": "Engine CC",
+    "data_type": "text",
+    "required": false
+  },
+  {
+    "api_name": "registration_number",
+    "label": "Registration Number",
+    "data_type": "text",
+    "required": false
+  },
+  {
+    "api_name": "valid_until",
+    "label": "Valid Until",
+    "data_type": "date",
+    "required": false
+  },
+  {
+    "api_name": "vehicle_type",
+    "label": "Vehicle Type",
+    "data_type": "text",
+    "required": false
+  },
+  {
+    "api_name": "vehicle_model",
+    "label": "Vehicle Model",
+    "data_type": "text",
+    "required": false
+  }
+]
