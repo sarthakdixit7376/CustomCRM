@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:4000';
+const API_BASE = 'https://customcrm-production.up.railway.app';
 
 export interface LeadRow {
   id: string;
