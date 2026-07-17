@@ -20,7 +20,7 @@ const EMPTY_FILTERS: FilterState = {
 const INSURANCE_TYPES = ['Life Insurance', 'Health Insurance', 'Car Insurance', 'Home Insurance', 'Travel Insurance', 'Pension Plan'];
 
 /* ───────── Component ───────── */
-export default function PoliciesAndPlans({ customer }: { customer?: any }) {
+export default function PoliciesAndPlans() {
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
   const [policies, setPolicies] = useState<any[]>([]);
 

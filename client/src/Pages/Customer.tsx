@@ -152,7 +152,7 @@ export default function Customer() {
   const TAB_COMPONENTS: Record<TabKey, React.FC> = {
     list: () => <CustomerList customers={customers} onDeleteCustomer={handleDeleteCustomer} onSelectCustomer={handleSelectCustomer} />,
     card: () => <CustomerCard customer={selectedCustomer} lead={selectedLead} />,
-    service: OngoingService, policies: () => <PoliciesAndPlans customer={selectedCustomer} />, quotes: Quotes, claims: Claims, documents: Documents, lead: () => <Lead onSelectLead={handleSelectLead} />,
+    service: OngoingService, policies: () => <PoliciesAndPlans />, quotes: Quotes, claims: Claims, documents: Documents, lead: () => <Lead onSelectLead={handleSelectLead} />,
   };
 
   const ActiveTabComponent = TAB_COMPONENTS[activeTab];
