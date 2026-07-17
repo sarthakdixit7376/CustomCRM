@@ -97,15 +97,16 @@ export default function Customer() {
     try {
       const newCustomer = {
         customerName: `${data.firstName} ${data.lastName}`,
-        idNumber: data.idNumber,
-        insuranceAgent: data.insuranceAgent,
+        insuranceAgent: data.insuranceCompany,
         dateOfBirth: data.dateOfBirth,
         gender: data.gender,
         policies: [
           {
-            policyNumber: `NEW-${Math.floor(Math.random() * 10000)}/2026`,
+            policyNumber: data.policyNumber,
             policyType: data.policyType,
-            insuranceCompany: data.insuranceAgent || 'Unassigned',
+            insuranceCompany: data.insuranceCompany || 'Unassigned',
+            startDate: data.startDate || undefined,
+            endDate: data.endDate || undefined,
             type: data.insuranceType,
             status: 'Active'
           }

@@ -4,17 +4,19 @@ import { useState, useEffect, useRef } from 'react';
 export interface CustomerFormData {
   firstName: string;
   lastName: string;
-  idNumber: string;
   dateOfBirth: string;
   gender: string;
+  policyNumber: string;
   policyType: string;
   insuranceType: string;
+  startDate: string;
+  endDate: string;
   email: string;
   phone: string;
   mobile: string;
   address: string;
   city: string;
-  insuranceAgent: string;
+  insuranceCompany: string;
   purchaseType: string;
   notes: string;
 }
@@ -26,9 +28,9 @@ interface NewCustomerModalProps {
 }
 
 const INITIAL_FORM: CustomerFormData = {
-  firstName: '', lastName: '', idNumber: '', dateOfBirth: '', gender: '',
-  policyType: 'Mandatory', insuranceType: 'Car', email: '', phone: '',
-  mobile: '', address: '', city: '', insuranceAgent: '', purchaseType: 'Private', notes: '',
+  firstName: '', lastName: '', dateOfBirth: '', gender: '',
+  policyNumber: '', policyType: 'Mandatory', insuranceType: 'Car', startDate: '', endDate: '', email: '', phone: '',
+  mobile: '', address: '', city: '', insuranceCompany: '', purchaseType: 'Private', notes: '',
 };
 
 /* ───────── Component ───────── */
@@ -59,7 +61,7 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
     const e: Partial<Record<keyof CustomerFormData, string>> = {};
     if (!form.firstName.trim()) e.firstName = 'Required';
     if (!form.lastName.trim()) e.lastName = 'Required';
-    if (!form.idNumber.trim()) e.idNumber = 'Required';
+    if (!form.policyNumber.trim()) e.policyNumber = 'Required';
     if (!form.phone.trim() && !form.mobile.trim()) e.phone = 'At least one phone required';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -110,11 +112,6 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
                 {errors.lastName && <span className="text-[11px] text-red-500 flex items-center gap-1">⚠ {errors.lastName}</span>}
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-neutral-400">ID Number <span className="text-red-500">*</span></label>
-                <input type="text" className={`${inputBase} ${errors.idNumber ? inputErr : inputOk}`} placeholder="e.g., 086029261" value={form.idNumber} onChange={(e) => handleChange('idNumber', e.target.value)} />
-                {errors.idNumber && <span className="text-[11px] text-red-500 flex items-center gap-1">⚠ {errors.idNumber}</span>}
-              </div>
-              <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-neutral-400">Date of Birth</label>
                 <input type="date" className={`${inputBase} ${inputOk}`} value={form.dateOfBirth} onChange={(e) => handleChange('dateOfBirth', e.target.value)} />
               </div>
@@ -144,13 +141,16 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
               <span className="text-sm">📋</span> Policy Details
             </div>
             <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+              <div className="flex flex-col gap-1.5 col-span-full">
+                <label className="text-xs font-medium text-neutral-400">Policy Number <span className="text-red-500">*</span></label>
+                <input type="text" className={`${inputBase} ${errors.policyNumber ? inputErr : inputOk}`} placeholder="Enter policy number" value={form.policyNumber} onChange={(e) => handleChange('policyNumber', e.target.value)} />
+                {errors.policyNumber && <span className="text-[11px] text-red-500 flex items-center gap-1">⚠ {errors.policyNumber}</span>}
+              </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-neutral-400">Policy Type <span className="text-red-500">*</span></label>
                 <select className={selectClass} style={selectBg} value={form.policyType} onChange={(e) => handleChange('policyType', e.target.value)}>
                   <option value="Mandatory">Mandatory</option>
                   <option value="Comprehensive">Comprehensive</option>
-                  <option value="Life">Life</option>
-                  <option value="Home">Home</option>
                 </select>
               </div>
               <div className="flex flex-col gap-1.5">
@@ -160,6 +160,14 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
                   <option value="Life">Life</option>
                   <option value="Property">Property</option>
                 </select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-neutral-400">Start Date</label>
+                <input type="date" className={`${inputBase} ${inputOk}`} value={form.startDate} onChange={(e) => handleChange('startDate', e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-neutral-400">End Date</label>
+                <input type="date" className={`${inputBase} ${inputOk}`} value={form.endDate} onChange={(e) => handleChange('endDate', e.target.value)} />
               </div>
             </div>
           </div>
@@ -201,8 +209,8 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
                 <input type="text" className={`${inputBase} ${inputOk}`} placeholder="Enter city" value={form.city} onChange={(e) => handleChange('city', e.target.value)} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-neutral-400">Insurance Agent</label>
-                <input type="text" className={`${inputBase} ${inputOk}`} placeholder="Agent name" value={form.insuranceAgent} onChange={(e) => handleChange('insuranceAgent', e.target.value)} />
+                <label className="text-xs font-medium text-neutral-400">Insurance Company</label>
+                <input type="text" className={`${inputBase} ${inputOk}`} placeholder="Company name" value={form.insuranceCompany} onChange={(e) => handleChange('insuranceCompany', e.target.value)} />
               </div>
             </div>
           </div>
