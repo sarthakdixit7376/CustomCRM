@@ -58,27 +58,3 @@ export const deleteCustomer = async (req: Request, res: Response): Promise<void>
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
-
-export const createPolicy = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const newPolicy = await CustomerModel.createPolicy(req.params.id, req.body);
-    res.status(201).json(newPolicy);
-  } catch (error: any) {
-    console.error('Error creating policy:', error);
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
-  }
-};
-
-export const deletePolicy = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const result = await CustomerModel.deletePolicy(req.params.policyId);
-    if (!result) {
-      res.status(404).json({ error: 'Policy not found' });
-      return;
-    }
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting policy:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-};

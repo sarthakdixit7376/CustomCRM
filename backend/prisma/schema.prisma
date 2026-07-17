@@ -64,7 +64,7 @@ model Contact {
 
 model Policy {
   id               String   @id @default(uuid())
-  customerId       String
+  customerId       String?
   policyNumber     String
   policyType       String
   insuranceCompany String
@@ -73,7 +73,7 @@ model Policy {
   type             String?
   status           String   @default("Active") // 'Active' or 'Cancelled'
 
-  customer         Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer         Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@map("policies")
 }

@@ -25,12 +25,10 @@ export default function PoliciesAndPlans({ customer }: { customer?: any }) {
   const [policies, setPolicies] = useState<any[]>([]);
 
   useEffect(() => {
-    if (customer && customer.policies) {
-      setPolicies(customer.policies);
-    } else {
-      setPolicies([]);
-    }
-  }, [customer]);
+    axios.get(`${API_BASE}/api/policies`)
+      .then(res => setPolicies(res.data))
+      .catch(err => console.error("Failed to load policies", err));
+  }, []);
 
   function handleChange(key: keyof FilterState, value: string) {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -39,10 +37,6 @@ export default function PoliciesAndPlans({ customer }: { customer?: any }) {
   function handleReset() { setFilters(EMPTY_FILTERS); }
 
   async function handleAdd() {
-    if (!customer || !customer.id) {
-       alert("Please select a valid customer first");
-       return;
-    }
     if (!filters.agentName.trim() && !filters.insuranceCompany.trim()) return;
 
     try {
@@ -56,8 +50,8 @@ export default function PoliciesAndPlans({ customer }: { customer?: any }) {
         policyType: filters.typeOfInsurance,
       };
 
-      const res = await axios.post(`${API_BASE}/api/customers/${customer.id}/policies`, newPolicy);
-      setPolicies((prev) => [...prev, res.data]);
+      const res = await axios.post(`${API_BASE}/api/policies`, newPolicy);
+      setPolicies((prev) => [res.data, ...prev]);
       setFilters(EMPTY_FILTERS);
     } catch (error) {
       console.error("Failed to add policy", error);
@@ -65,14 +59,13 @@ export default function PoliciesAndPlans({ customer }: { customer?: any }) {
   }
 
   async function handleRemovePolicy(index: number, policyId?: string) {
-    if (!customer || !customer.id || !policyId) {
-       // if it's a locally added one without an ID somehow? 
+    if (!policyId) {
        setPolicies((prev) => prev.filter((_, i) => i !== index));
        return;
     }
 
     try {
-      await axios.delete(`${API_BASE}/api/customers/${customer.id}/policies/${policyId}`);
+      await axios.delete(`${API_BASE}/api/policies/${policyId}`);
       setPolicies((prev) => prev.filter((_, i) => i !== index));
     } catch (error) {
       console.error("Failed to delete policy", error);

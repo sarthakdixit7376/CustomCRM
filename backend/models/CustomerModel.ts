@@ -81,31 +81,5 @@ export const CustomerModel = {
     } catch (error) {
       return null;
     }
-  },
-  
-  createPolicy: async (customerId: string, policyData: any) => {
-    return prisma.policy.create({
-      data: {
-        policyNumber: policyData.policyNumber,
-        policyType: policyData.policyType || 'General',
-        insuranceCompany: policyData.insuranceCompany,
-        startDate: policyData.startDate || null,
-        endDate: policyData.endDate || null,
-        type: policyData.type || null,
-        status: policyData.status || 'Active',
-        customerId,
-      }
-    });
-  },
-  
-  deletePolicy: async (policyId: string) => {
-    try {
-      await prisma.policy.delete({
-        where: { id: policyId },
-      });
-      return true;
-    } catch (error) {
-      return null;
-    }
   }
 };

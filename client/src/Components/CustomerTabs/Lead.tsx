@@ -24,6 +24,19 @@ export default function Lead({ onSelectLead }: LeadProps) {
   const [leads, setLeads] = useState<LeadRow[]>([]);
   const [status, setStatus] = useState<'loading' | 'live' | 'error'>('loading');
 
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this lead?')) return;
+    
+    try {
+      await axios.delete(`${API_BASE}/api/leads/${id}`);
+      setLeads(prevLeads => prevLeads.filter(lead => lead.id !== id));
+    } catch (error) {
+      console.error('Failed to delete lead:', error);
+      alert('Failed to delete lead');
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -78,14 +91,17 @@ export default function Lead({ onSelectLead }: LeadProps) {
                   <span className="inline-flex items-center gap-1.5">{h} <span className="text-[10px] opacity-0 group-hover:opacity-50 transition-opacity">▾</span></span>
                 </th>
               ))}
+              <th className="px-4 py-3.5 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-right bg-neutral-900 border-b border-neutral-800 whitespace-nowrap">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
             {status === 'loading' && leads.length === 0 ? (
               <tr className="animate-pulse">
-                <td colSpan={8} className="p-0 border-b border-neutral-800/50">
+                <td colSpan={9} className="p-0 border-b border-neutral-800/50">
                   <div className="flex w-full">
-                    {Array.from({ length: 8 }).map((_, i) => (
+                    {Array.from({ length: 9 }).map((_, i) => (
                       <div key={i} className="flex-1 px-4 py-3">
                         <div className="h-4 bg-neutral-800 rounded w-full"></div>
                       </div>
@@ -95,7 +111,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
               </tr>
             ) : status === 'error' && leads.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-10 text-red-500 text-sm">
+                <td colSpan={9} className="text-center py-10 text-red-500 text-sm">
                   Could not reach the leads API — retrying...
                 </td>
               </tr>
@@ -117,11 +133,24 @@ export default function Lead({ onSelectLead }: LeadProps) {
                   <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.validUntil}</td>
                   <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.vehicleType}</td>
                   <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.vehicleModel}</td>
+                  <td className="px-4 py-3 text-sm border-b border-neutral-800/50 whitespace-nowrap text-right">
+                    <button
+                      onClick={(e) => handleDelete(row.id, e)}
+                      className="text-red-500 hover:text-red-400 transition-colors p-1.5 rounded hover:bg-red-500/10"
+                      title="Delete Lead"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                      </svg>
+                    </button>
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={8} className="text-center py-10 text-neutral-600">
+                <td colSpan={9} className="text-center py-10 text-neutral-600">
                   No leads yet — new submissions will appear here automatically
                 </td>
               </tr>
