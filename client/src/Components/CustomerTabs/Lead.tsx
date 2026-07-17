@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API_BASE = 'https://customcrm-production.up.railway.app';
+const API_BASE = import.meta.env.DEV ? 'http://localhost:4000' : 'https://customcrm-production.up.railway.app';
 
 export interface LeadRow {
   id: string;
@@ -39,14 +39,14 @@ export default function Lead({ onSelectLead }: LeadProps) {
             id: lead.id,
             createdAt: lead.createdAt,
             pdfUrl: lead.pdfUrl,
-            leadName: lead.lead_name,
-            phoneNumber: lead.phone_number,
-            vehicleNumber: lead.vehicle_number,
-            engineCc: lead.engine_cc,
-            registrationNumber: lead.registration_number,
-            validUntil: lead.valid_until,
-            vehicleType: lead.vehicle_type,
-            vehicleModel: lead.vehicle_model,
+            leadName: lead.leadName || lead.lead_name,
+            phoneNumber: lead.phoneNumber || lead.phone_number,
+            vehicleNumber: lead.vehicleNumber || lead.vehicle_number,
+            engineCc: lead.engineCc || lead.engine_cc,
+            registrationNumber: lead.registrationNumber || lead.registration_number,
+            validUntil: lead.validUntil || lead.valid_until,
+            vehicleType: lead.vehicleType || lead.vehicle_type,
+            vehicleModel: lead.vehicleModel || lead.vehicle_model,
           }));
 
           setLeads(mappedLeads);

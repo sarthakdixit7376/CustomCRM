@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 /* ───────── Types ───────── */
 interface FilterState {
@@ -17,10 +18,20 @@ const EMPTY_FILTERS: FilterState = {
 
 const INSURANCE_TYPES = ['Life Insurance', 'Health Insurance', 'Car Insurance', 'Home Insurance', 'Travel Insurance', 'Pension Plan'];
 
+const API_BASE = import.meta.env.DEV ? 'http://localhost:4000' : 'https://customcrm-production.up.railway.app';
+
 /* ───────── Component ───────── */
-export default function PoliciesAndPlans() {
+export default function PoliciesAndPlans({ customer }: { customer?: any }) {
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
-  const [policies, setPolicies] = useState<FilterState[]>([]);
+  const [policies, setPolicies] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (customer && customer.policies) {
+      setPolicies(customer.policies);
+    } else {
+      setPolicies([]);
+    }
+  }, [customer]);
 
   function handleChange(key: keyof FilterState, value: string) {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -28,14 +39,45 @@ export default function PoliciesAndPlans() {
 
   function handleReset() { setFilters(EMPTY_FILTERS); }
 
-  function handleAdd() {
+  async function handleAdd() {
+    if (!customer || !customer.id) {
+       alert("Please select a valid customer first");
+       return;
+    }
     if (!filters.agentName.trim() && !filters.insuranceCompany.trim()) return;
-    setPolicies((prev) => [...prev, { ...filters }]);
-    setFilters(EMPTY_FILTERS);
+
+    try {
+      const newPolicy = {
+        policyNumber: filters.numberOfPolicies,
+        agentName: filters.agentName,
+        insuranceCompany: filters.insuranceCompany,
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+        type: filters.typeOfInsurance,
+        policyType: filters.typeOfInsurance,
+      };
+
+      const res = await axios.post(`${API_BASE}/api/customers/${customer.id}/policies`, newPolicy);
+      setPolicies((prev) => [...prev, res.data]);
+      setFilters(EMPTY_FILTERS);
+    } catch (error) {
+      console.error("Failed to add policy", error);
+    }
   }
 
-  function handleRemovePolicy(index: number) {
-    setPolicies((prev) => prev.filter((_, i) => i !== index));
+  async function handleRemovePolicy(index: number, policyId?: string) {
+    if (!customer || !customer.id || !policyId) {
+       // if it's a locally added one without an ID somehow? 
+       setPolicies((prev) => prev.filter((_, i) => i !== index));
+       return;
+    }
+
+    try {
+      await axios.delete(`${API_BASE}/api/customers/${customer.id}/policies/${policyId}`);
+      setPolicies((prev) => prev.filter((_, i) => i !== index));
+    } catch (error) {
+      console.error("Failed to delete policy", error);
+    }
   }
 
   const inputClass = "w-full px-3.5 py-2.5 text-sm text-white bg-neutral-950 border border-neutral-800 rounded-lg outline-none transition-all placeholder:text-neutral-600 hover:border-neutral-600 focus:border-white focus:bg-neutral-900";
@@ -126,12 +168,12 @@ export default function PoliciesAndPlans() {
                     <td className="px-4 py-3 text-neutral-400 border-b border-neutral-800/50">{i + 1}</td>
                     <td className="px-4 py-3 text-neutral-300 border-b border-neutral-800/50">{p.agentName || '—'}</td>
                     <td className="px-4 py-3 text-neutral-300 border-b border-neutral-800/50">{p.insuranceCompany || '—'}</td>
-                    <td className="px-4 py-3 text-neutral-300 border-b border-neutral-800/50">{p.typeOfInsurance || '—'}</td>
-                    <td className="px-4 py-3 text-neutral-300 border-b border-neutral-800/50">{p.numberOfPolicies || '—'}</td>
+                    <td className="px-4 py-3 text-neutral-300 border-b border-neutral-800/50">{p.typeOfInsurance || p.type || p.policyType || '—'}</td>
+                    <td className="px-4 py-3 text-neutral-300 border-b border-neutral-800/50">{p.numberOfPolicies || p.policyNumber || '—'}</td>
                     <td className="px-4 py-3 text-neutral-300 border-b border-neutral-800/50">{p.startDate || '—'}</td>
                     <td className="px-4 py-3 text-neutral-300 border-b border-neutral-800/50">{p.endDate || '—'}</td>
                     <td className="px-4 py-3 border-b border-neutral-800/50">
-                      <button className="bg-transparent border-none px-2 py-1 cursor-pointer text-neutral-600 text-sm rounded transition-all hover:text-red-400 hover:bg-red-500/10" onClick={() => handleRemovePolicy(i)}>✕</button>
+                      <button className="bg-transparent border-none px-2 py-1 cursor-pointer text-neutral-600 text-sm rounded transition-all hover:text-red-400 hover:bg-red-500/10" onClick={() => handleRemovePolicy(i, p.id)}>✕</button>
                     </td>
                   </tr>
                 ))}

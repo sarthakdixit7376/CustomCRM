@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id                 String   @id @default(uuid())
+  createdAt          DateTime @default(now())
+  pdfUrl             String?
+  leadName           String
+  phoneNumber        String
+  vehicleNumber      String?
+  engineCc           String?
+  registrationNumber String?
+  validUntil         String?
+  vehicleType        String?
+  vehicleModel       String?
+
+  @@map("leads")
+}
+
+model Customer {
+  id              String    @id @default(uuid())
+  createdAt       DateTime  @default(now())
+  customerName    String
+  idNumber        String?
+  dateOfBirth     String?
+  gender          String?
+  insuranceAgent  String?
+  agentName       String?
+  purchaseType    String?
+  uniqueId        String?
+  pathNumber      String?
+  healthFund      String?
+  employer        String?
+  signedGoodFaith Boolean   @default(false)
+  noFixedAddress  Boolean   @default(false)
+  memberId        String?
+  workPlace       String?
+  carBrand        String?
+
+  contacts        Contact[]
+  policies        Policy[]
+
+  @@map("customers")
+}
+
+model Contact {
+  id         String   @id @default(uuid())
+  customerId String
+  type       String   // e.g., 'mobile', 'phone'
+  value      String
+  label      String
+  icon       String
+
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("contacts")
+}
+
+model Policy {
+  id               String   @id @default(uuid())
+  customerId       String
+  policyNumber     String
+  policyType       String
+  insuranceCompany String
+  startDate        String?
+  endDate          String?
+  type             String?
+  status           String   @default("Active") // 'Active' or 'Cancelled'
+
+  customer         Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("policies")
+}

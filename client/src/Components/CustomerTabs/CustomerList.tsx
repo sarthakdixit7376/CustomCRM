@@ -3,7 +3,7 @@ import DeleteCustomerModal from './DeleteCustomerModal';
 
 /* ───────── Types ───────── */
 export interface PolicyRow {
-  id: number;
+  id: string;
   customerName: string;
   policyNumber: string;
   policyType: string;
@@ -16,7 +16,7 @@ export interface PolicyRow {
 
 export interface CustomerListProps {
   customers: PolicyRow[];
-  onDeleteCustomer: (id: number) => void;
+  onDeleteCustomer: (id: string) => void;
   onSelectCustomer?: (customer: PolicyRow) => void;
 }
 
@@ -153,8 +153,8 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
             </thead>
             <tbody>
               {filteredData.length > 0 ? (
-                filteredData.map((row) => (
-                  <tr key={row.id} className="transition-colors even:bg-[#050505] hover:bg-neutral-900">
+                filteredData.map((row, index) => (
+                  <tr key={`${row.id}-${index}`} className="transition-colors even:bg-[#050505] hover:bg-neutral-900">
                     <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">
                       <input type="checkbox" className="w-4 h-4 accent-white cursor-pointer" />
                     </td>

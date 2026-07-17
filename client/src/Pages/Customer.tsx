@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import logo from '../assets/Logo.png';
 import {
   CustomerList,
@@ -15,17 +16,7 @@ import type { CustomerFormData } from '../Components/CustomerTabs/NewCustomerMod
 import type { PolicyRow } from '../Components/CustomerTabs/CustomerList';
 import type { LeadRow } from '../Components/CustomerTabs/Lead';
 
-/* ───────── Seed Data ───────── */
-const INITIAL_CUSTOMERS: PolicyRow[] = [
-  { id: 1, customerName: 'Hassan Khalil', policyNumber: '637/2026', policyType: 'Mandatory', insuranceCompany: 'Phoenix', startDate: '29/04/2026', endDate: '31/10/2026', type: 'Car', status: 'Active' },
-  { id: 2, customerName: 'Sarah Cohen', policyNumber: '12832025', policyType: 'Mandatory', insuranceCompany: 'Clal', startDate: '01/11/2025', endDate: '31/10/2026', type: 'Car', status: 'Active' },
-  { id: 3, customerName: 'Sarah Cohen', policyNumber: '12832025', policyType: 'Comprehensive', insuranceCompany: 'Clal', startDate: '01/11/2025', endDate: '31/10/2026', type: 'Car', status: 'Cancelled' },
-  { id: 4, customerName: 'David Levi', policyNumber: '12345/2026', policyType: 'Mandatory', insuranceCompany: 'Phoenix', startDate: '01/11/2025', endDate: '31/10/2026', type: 'Car', status: 'Active' },
-  { id: 5, customerName: 'David Levi', policyNumber: '12345/2026', policyType: 'Comprehensive', insuranceCompany: 'Clal', startDate: '01/11/2025', endDate: '31/10/2026', type: 'Car', status: 'Active' },
-  { id: 6, customerName: 'Miriam Azulay', policyNumber: '12345/2026', policyType: 'Life', insuranceCompany: 'Migdal', startDate: '01/11/2025', endDate: '31/10/2026', type: 'Life', status: 'Active' },
-  { id: 7, customerName: 'Yossi Ben-Ari', policyNumber: '12345/2026', policyType: 'Home', insuranceCompany: 'Migdal', startDate: '01/11/2025', endDate: '31/10/2026', type: 'Property', status: 'Active' },
-  { id: 8, customerName: 'Rachel Goldstein', policyNumber: '12345/2026', policyType: 'Mandatory', insuranceCompany: 'Ayalon', startDate: '01/11/2025', endDate: '31/10/2026', type: 'Car', status: 'Active' },
-];
+const API_BASE = import.meta.env.DEV ? 'http://localhost:4000' : 'https://customcrm-production.up.railway.app';
 
 /* ───────── Tab Definitions ───────── */
 const TABS = [
@@ -46,12 +37,56 @@ interface Toast { id: number; message: string; type: 'success' | 'error'; }
 /* ───────── Customer Page ───────── */
 export default function Customer() {
   const [activeTab, setActiveTab] = useState<TabKey>('list');
-  const [customers, setCustomers] = useState<PolicyRow[]>(INITIAL_CUSTOMERS);
+  const [customers, setCustomers] = useState<PolicyRow[]>([]);
+  const [rawCustomers, setRawCustomers] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<PolicyRow | null>(null);
   const [selectedLead, setSelectedLead] = useState<LeadRow | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [nextId, setNextId] = useState(INITIAL_CUSTOMERS.length + 1);
+
+  const fetchCustomers = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/api/customers`);
+      setRawCustomers(response.data);
+      const mappedPolicies: PolicyRow[] = [];
+      response.data.forEach((cust: any) => {
+        if (cust.policies && cust.policies.length > 0) {
+          cust.policies.forEach((pol: any) => {
+            mappedPolicies.push({
+              id: cust.id, // Using customer id so we can select the customer
+              customerName: cust.customerName,
+              policyNumber: pol.policyNumber,
+              policyType: pol.policyType,
+              insuranceCompany: pol.insuranceCompany,
+              startDate: pol.startDate || '-',
+              endDate: pol.endDate || '-',
+              type: pol.type || '-',
+              status: pol.status || 'Active',
+            });
+          });
+        } else {
+          mappedPolicies.push({
+            id: cust.id,
+            customerName: cust.customerName,
+            policyNumber: '-',
+            policyType: '-',
+            insuranceCompany: cust.insuranceAgent || '-',
+            startDate: '-',
+            endDate: '-',
+            type: '-',
+            status: 'Active',
+          });
+        }
+      });
+      setCustomers(mappedPolicies);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     const id = Date.now();
@@ -59,30 +94,47 @@ export default function Customer() {
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
   };
 
-  const handleAddCustomer = (data: CustomerFormData) => {
-    const today = new Date();
-    const fmt = (d: Date) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-    const newCustomer: PolicyRow = {
-      id: nextId, customerName: `${data.firstName} ${data.lastName}`,
-      policyNumber: `NEW-${nextId}/${today.getFullYear()}`, policyType: data.policyType,
-      insuranceCompany: data.insuranceAgent || 'Unassigned', startDate: fmt(today),
-      endDate: fmt(new Date(today.getFullYear() + 1, today.getMonth(), today.getDate())),
-      type: data.insuranceType, status: 'Active',
-    };
-    setCustomers((prev) => [newCustomer, ...prev]);
-    setNextId((prev) => prev + 1);
-    setIsNewModalOpen(false);
-    showToast(`Customer "${data.firstName} ${data.lastName}" added successfully!`);
+  const handleAddCustomer = async (data: CustomerFormData) => {
+    try {
+      const newCustomer = {
+        customerName: `${data.firstName} ${data.lastName}`,
+        idNumber: data.idNumber,
+        insuranceAgent: data.insuranceAgent,
+        dateOfBirth: data.dateOfBirth,
+        gender: data.gender,
+        policies: [
+          {
+            policyNumber: `NEW-${Math.floor(Math.random() * 10000)}/2026`,
+            policyType: data.policyType,
+            insuranceCompany: data.insuranceAgent || 'Unassigned',
+            type: data.insuranceType,
+            status: 'Active'
+          }
+        ]
+      };
+      await axios.post(`${API_BASE}/api/customers`, newCustomer);
+      setIsNewModalOpen(false);
+      showToast(`Customer "${data.firstName} ${data.lastName}" added successfully!`);
+      fetchCustomers();
+    } catch (error) {
+      showToast('Error adding customer', 'error');
+    }
   };
 
-  const handleDeleteCustomer = (id: number) => {
-    const customer = customers.find((c) => c.id === id);
-    setCustomers((prev) => prev.filter((c) => c.id !== id));
-    if (customer) showToast(`Customer "${customer.customerName}" has been deleted.`);
+  const handleDeleteCustomer = async (id: string) => {
+    try {
+      await axios.delete(`${API_BASE}/api/customers/${id}`);
+      showToast(`Customer has been deleted.`);
+      fetchCustomers();
+    } catch (error) {
+      showToast('Error deleting customer', 'error');
+    }
   };
 
   const handleSelectCustomer = (customer: PolicyRow) => {
-    setSelectedCustomer(customer);
+    // Pass the full customer object based on ID
+    const fullCustomer = rawCustomers.find(c => c.id === customer.id) || customer;
+    setSelectedCustomer(fullCustomer);
     setSelectedLead(null);
     setActiveTab('card');
   };
@@ -95,13 +147,13 @@ export default function Customer() {
 
   const tabsWithBadge = TABS.map((tab) => ({
     ...tab,
-    badge: tab.key === 'list' ? customers.length : tab.badge,
+    badge: tab.key === 'list' ? rawCustomers.length : tab.badge,
   }));
 
   const TAB_COMPONENTS: Record<TabKey, React.FC> = {
     list: () => <CustomerList customers={customers} onDeleteCustomer={handleDeleteCustomer} onSelectCustomer={handleSelectCustomer} />,
     card: () => <CustomerCard customer={selectedCustomer} lead={selectedLead} />,
-    service: OngoingService, policies: PoliciesAndPlans, quotes: Quotes, claims: Claims, documents: Documents, lead: () => <Lead onSelectLead={handleSelectLead} />,
+    service: OngoingService, policies: () => <PoliciesAndPlans customer={selectedCustomer} />, quotes: Quotes, claims: Claims, documents: Documents, lead: () => <Lead onSelectLead={handleSelectLead} />,
   };
 
   const ActiveTabComponent = TAB_COMPONENTS[activeTab];

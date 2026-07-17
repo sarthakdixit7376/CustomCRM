@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import type { PolicyRow } from './CustomerList';
+import axios from 'axios';
 import type { LeadRow } from './Lead';
 
 /* ───────── Default Data ───────── */
 const DEFAULT_CUSTOMER = {
+  id: '',
   name: 'Hassan Khalil',
   avatar: '👤',
   identity: [
@@ -34,19 +35,23 @@ const DEFAULT_CUSTOMER = {
 
 /* ───────── Component ───────── */
 export interface CustomerCardProps {
-  customer?: PolicyRow | null;
+  customer?: any | null; // using any to accept full db object
   lead?: LeadRow | null;
 }
 
 export default function CustomerCard({ customer, lead }: CustomerCardProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const API_BASE = import.meta.env.DEV ? 'http://localhost:4000' : 'https://customcrm-production.up.railway.app';
 
-  const getInitialData = (cust: PolicyRow | null | undefined, ld: LeadRow | null | undefined) => {
+  const getInitialData = (cust: any | null | undefined, ld: LeadRow | null | undefined) => {
     const displayName = cust?.customerName || ld?.leadName || DEFAULT_CUSTOMER.name;
-    const insuranceAgent = cust?.insuranceCompany || DEFAULT_CUSTOMER.identity.find((f) => f.label === 'Insurance Agent')?.value || '';
+    const insuranceAgent = cust?.insuranceAgent || cust?.insuranceCompany || DEFAULT_CUSTOMER.identity.find((f) => f.label === 'Insurance Agent')?.value || '';
     
-    const newContacts = [...DEFAULT_CUSTOMER.contacts];
-    if (ld?.phoneNumber) {
+    let newContacts = cust?.contacts?.length ? cust.contacts.map((c: any) => ({
+      icon: c.icon || '📱', value: c.value, label: c.label, type: c.type
+    })) : [...DEFAULT_CUSTOMER.contacts];
+    
+    if (ld?.phoneNumber && !cust?.contacts?.length) {
       newContacts[0] = { ...newContacts[0], value: ld.phoneNumber };
     }
 
@@ -56,14 +61,32 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
       newExtras.uniqueId = ld.registrationNumber;
       newExtras.pathNumber = ld.vehicleNumber;
     }
+    if (cust) {
+      newExtras.uniqueId = cust.uniqueId || '';
+      newExtras.pathNumber = cust.pathNumber || '';
+      newExtras.healthFund = cust.healthFund || '';
+      newExtras.employer = cust.employer || '';
+      newExtras.signedGoodFaith = cust.signedGoodFaith ? 'Yes' : 'No';
+      newExtras.noFixedAddress = cust.noFixedAddress || false;
+      newExtras.memberId = cust.memberId || '';
+      newExtras.workPlace = cust.workPlace || '';
+      newExtras.carBrand = cust.carBrand || '';
+    }
 
     return {
       ...DEFAULT_CUSTOMER,
+      id: cust?.id || '',
       name: displayName,
       avatar: displayName ? displayName.charAt(0) : DEFAULT_CUSTOMER.avatar,
-      identity: DEFAULT_CUSTOMER.identity.map((f) =>
-        f.label === 'Insurance Agent' ? { ...f, value: insuranceAgent } : f
-      ),
+      identity: [
+        { label: 'ID', value: cust?.idNumber || DEFAULT_CUSTOMER.identity[0].value },
+        { label: 'Date of Birth', value: cust?.dateOfBirth || '' },
+        { label: 'Gender', value: cust?.gender || '' },
+        { label: 'No. of Policies', value: cust?.policies?.length?.toString() || '' },
+        { label: 'Insurance Agent', value: insuranceAgent },
+        { label: 'Agent Name', value: cust?.agentName || DEFAULT_CUSTOMER.identity[5].value },
+        { label: 'Purchase Type', value: cust?.purchaseType || DEFAULT_CUSTOMER.identity[6].value },
+      ],
       contacts: newContacts,
       extras: newExtras,
     };
@@ -96,6 +119,39 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
     });
   };
 
+  const handleSave = async () => {
+    if (!localData.id) {
+       setIsEditing(false);
+       return;
+    }
+    try {
+      const updatePayload = {
+        customerName: localData.name,
+        idNumber: localData.identity[0].value,
+        dateOfBirth: localData.identity[1].value,
+        gender: localData.identity[2].value,
+        insuranceAgent: localData.identity[4].value,
+        agentName: localData.identity[5].value,
+        purchaseType: localData.identity[6].value,
+        uniqueId: localData.extras.uniqueId,
+        pathNumber: localData.extras.pathNumber,
+        healthFund: localData.extras.healthFund,
+        employer: localData.extras.employer,
+        signedGoodFaith: localData.extras.signedGoodFaith === 'Yes' || (localData.extras.signedGoodFaith as any) === true,
+        noFixedAddress: localData.extras.noFixedAddress,
+        memberId: localData.extras.memberId,
+        workPlace: localData.extras.workPlace,
+        carBrand: localData.extras.carBrand,
+        contacts: localData.contacts.map((c: any) => ({ type: c.type, value: c.value, label: c.label, icon: c.icon }))
+      };
+      await axios.put(`${API_BASE}/api/customers/${localData.id}`, updatePayload);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Failed to save customer', error);
+      setIsEditing(false);
+    }
+  };
+
   const inputClass = "bg-neutral-900 border border-neutral-700 rounded-md text-white text-sm px-3 py-1.5 w-full max-w-[200px] outline-none transition-all focus:border-white focus:bg-neutral-800";
 
   return (
@@ -109,7 +165,13 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
               ? 'bg-white text-black hover:bg-neutral-200'
               : 'text-neutral-400 bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 hover:text-white'
           }`}
-          onClick={() => setIsEditing(!isEditing)}
+          onClick={() => {
+            if (isEditing) {
+               handleSave();
+            } else {
+               setIsEditing(true);
+            }
+          }}
         >
           {isEditing ? '💾 Save Changes' : '✏️ Edit Customer'}
         </button>
@@ -202,7 +264,7 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
       <div className="px-8 py-6 border-b border-neutral-800 max-md:px-4">
         <div className="text-sm font-bold text-white mb-5 pb-3 border-b border-neutral-800">Contact Information</div>
         <div className="grid grid-cols-2 gap-x-8 gap-y-3 max-md:grid-cols-1">
-          {localData.contacts.map((c, i) => (
+          {localData.contacts.map((c: any, i: number) => (
             <div key={i} className="flex items-center gap-3.5 py-2.5 border-b border-neutral-800/30 last:border-b-0">
               <span className="text-base text-neutral-500 w-6 text-center shrink-0">{c.icon}</span>
               {isEditing ? (
