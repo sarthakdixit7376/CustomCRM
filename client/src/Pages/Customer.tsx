@@ -15,8 +15,7 @@ import NewCustomerModal from '../Components/CustomerTabs/NewCustomerModal';
 import type { CustomerFormData } from '../Components/CustomerTabs/NewCustomerModal';
 import type { PolicyRow } from '../Components/CustomerTabs/CustomerList';
 import type { LeadRow } from '../Components/CustomerTabs/Lead';
-
-const API_BASE = import.meta.env.DEV ? 'http://localhost:4000' : 'https://customcrm-production.up.railway.app';
+import { API_BASE } from '../config';
 
 /* ───────── Tab Definitions ───────── */
 const TABS = [

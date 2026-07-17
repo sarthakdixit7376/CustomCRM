@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE } from '../../config';
 
 /* ───────── Types ───────── */
 interface FilterState {
@@ -17,8 +18,6 @@ const EMPTY_FILTERS: FilterState = {
 };
 
 const INSURANCE_TYPES = ['Life Insurance', 'Health Insurance', 'Car Insurance', 'Home Insurance', 'Travel Insurance', 'Pension Plan'];
-
-const API_BASE = import.meta.env.DEV ? 'http://localhost:4000' : 'https://customcrm-production.up.railway.app';
 
 /* ───────── Component ───────── */
 export default function PoliciesAndPlans({ customer }: { customer?: any }) {

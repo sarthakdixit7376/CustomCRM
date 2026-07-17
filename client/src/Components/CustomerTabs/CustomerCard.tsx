@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import type { LeadRow } from './Lead';
+import { API_BASE } from '../../config';
 
 /* ───────── Default Data ───────── */
 const DEFAULT_CUSTOMER = {
@@ -41,7 +42,6 @@ export interface CustomerCardProps {
 
 export default function CustomerCard({ customer, lead }: CustomerCardProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const API_BASE = import.meta.env.DEV ? 'http://localhost:4000' : 'https://customcrm-production.up.railway.app';
 
   const getInitialData = (cust: any | null | undefined, ld: LeadRow | null | undefined) => {
     const displayName = cust?.customerName || ld?.leadName || DEFAULT_CUSTOMER.name;
