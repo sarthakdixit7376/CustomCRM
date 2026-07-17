@@ -73,7 +73,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
         <table className="w-full border-collapse table-auto">
           <thead className="sticky top-0 z-[2]">
             <tr>
-              {['Lead Name', 'Phone Number', 'Vehicle Number', 'Engine CC', 'Registration Number', 'Valid Until', 'Vehicle Type', 'Vehicle Model'].map((h) => (
+              {['Phone Number', 'Lead Name', 'Vehicle Number', 'Engine CC', 'Registration Number', 'Valid Until', 'Vehicle Type', 'Vehicle Model'].map((h) => (
                 <th key={h} className="group px-4 py-3.5 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-left bg-neutral-900 border-b border-neutral-800 whitespace-nowrap select-none cursor-pointer hover:text-neutral-300 transition-colors">
                   <span className="inline-flex items-center gap-1.5">{h} <span className="text-[10px] opacity-0 group-hover:opacity-50 transition-opacity">▾</span></span>
                 </th>
@@ -102,6 +102,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
             ) : leads.length > 0 ? (
               leads.map((row) => (
                 <tr key={row.id} className="transition-colors even:bg-[#050505] hover:bg-neutral-900">
+                  <td className="px-4 py-3 text-sm text-neutral-300 border-b border-neutral-800/50 whitespace-nowrap font-medium">{row.phoneNumber}</td>
                   <td className="px-4 py-3 text-sm border-b border-neutral-800/50 whitespace-nowrap">
                     <div className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => onSelectLead?.(row)}>
                       <div className="w-7 h-7 rounded-md bg-neutral-800 border border-neutral-700 flex items-center justify-center text-[11px] font-bold text-neutral-400 shrink-0">
@@ -110,7 +111,6 @@ export default function Lead({ onSelectLead }: LeadProps) {
                       <span className="text-white font-medium">{row.leadName}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-neutral-300 border-b border-neutral-800/50 whitespace-nowrap font-medium">{row.phoneNumber}</td>
                   <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.vehicleNumber}</td>
                   <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.engineCc}</td>
                   <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.registrationNumber}</td>

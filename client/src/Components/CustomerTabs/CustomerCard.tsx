@@ -6,31 +6,31 @@ import { API_BASE } from '../../config';
 /* ───────── Default Data ───────── */
 const DEFAULT_CUSTOMER = {
   id: '',
-  name: 'Hassan Khalil',
+  name: '',
   avatar: '👤',
   identity: [
-    { label: 'ID', value: '086029261' },
+    { label: 'ID', value: '' },
     { label: 'Date of Birth', value: '' },
     { label: 'Gender', value: '' },
     { label: 'No. of Policies', value: '' },
-    { label: 'Insurance Agent', value: 'Salma Zagier' },
-    { label: 'Agent Name', value: 'Raagda Average Insurance Agent' },
-    { label: 'Purchase Type', value: 'Private' },
+    { label: 'Insurance Agent', value: '' },
+    { label: 'Agent Name', value: '' },
+    { label: 'Purchase Type', value: '' },
   ],
   extras: {
-    uniqueId: '8838970',
+    uniqueId: '',
     pathNumber: '',
     healthFund: '',
     employer: '',
     signedGoodFaith: 'No',
-    noFixedAddress: true,
-    memberId: '5317',
+    noFixedAddress: false,
+    memberId: '',
     workPlace: '',
     carBrand: '',
   },
   contacts: [
-    { icon: '📱', value: '052-8844475', label: 'Rozen', type: 'mobile' },
-    { icon: '📞', value: '0543952229', label: 'Hassan', type: 'phone' },
+    { icon: '📱', value: '', label: 'Mobile', type: 'mobile' },
+    { icon: '📞', value: '', label: 'Phone', type: 'phone' },
   ],
 };
 
@@ -48,11 +48,11 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
     const insuranceAgent = cust?.insuranceAgent || cust?.insuranceCompany || DEFAULT_CUSTOMER.identity.find((f) => f.label === 'Insurance Agent')?.value || '';
     
     let newContacts = cust?.contacts?.length ? cust.contacts.map((c: any) => ({
-      icon: c.icon || '📱', value: c.value, label: c.label, type: c.type
-    })) : [...DEFAULT_CUSTOMER.contacts];
+      icon: c.icon || '📱', value: c.value, label: c.label || displayName || (c.type === 'phone' ? 'Phone' : 'Mobile'), type: c.type
+    })) : DEFAULT_CUSTOMER.contacts.map(c => ({ ...c }));
     
     if (ld?.phoneNumber && !cust?.contacts?.length) {
-      newContacts[0] = { ...newContacts[0], value: ld.phoneNumber };
+      newContacts[0] = { ...newContacts[0], value: ld.phoneNumber, label: displayName || 'Mobile' };
     }
 
     const newExtras = { ...DEFAULT_CUSTOMER.extras };
