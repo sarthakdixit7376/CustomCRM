@@ -29,7 +29,7 @@ interface NewCustomerModalProps {
 
 const INITIAL_FORM: CustomerFormData = {
   firstName: '', lastName: '', dateOfBirth: '', gender: '',
-  policyNumber: '', policyType: 'Mandatory', insuranceType: 'Car', startDate: '', endDate: '', email: '', phone: '',
+  policyNumber: '', policyType: 'Mandatory', insuranceType: 'Car Insurance', startDate: '', endDate: '', email: '', phone: '',
   mobile: '', address: '', city: '', insuranceCompany: '', purchaseType: 'Private', notes: '',
 };
 
@@ -156,9 +156,12 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-neutral-400">Type <span className="text-red-500">*</span></label>
                 <select className={selectClass} style={selectBg} value={form.insuranceType} onChange={(e) => handleChange('insuranceType', e.target.value)}>
-                  <option value="Car">Car</option>
-                  <option value="Life">Life</option>
-                  <option value="Property">Property</option>
+                  <option value="Car Insurance">Car Insurance</option>
+                  <option value="Life Insurance">Life Insurance</option>
+                  <option value="Property Insurance">Property Insurance</option>
+                  <option value="Health Insurance">Health Insurance</option>
+                  <option value="Home Insurance">Home Insurance</option>
+                  <option value="Travel Insurance">Travel Insurance</option>
                 </select>
               </div>
               <div className="flex flex-col gap-1.5">

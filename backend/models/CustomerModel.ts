@@ -74,11 +74,14 @@ export const CustomerModel = {
 
   deleteCustomer: async (id: string) => {
     try {
-      await prisma.customer.delete({
-        where: { id },
-      });
+      await prisma.$transaction([
+        prisma.contact.deleteMany({ where: { customerId: id } }),
+        prisma.policy.deleteMany({ where: { customerId: id } }),
+        prisma.customer.delete({ where: { id } }),
+      ]);
       return true;
     } catch (error) {
+      console.error("Error in deleteCustomer:", error);
       return null;
     }
   }
