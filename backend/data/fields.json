@@ -60,12 +60,6 @@
     "required": false
   },
   {
-    "api_name": "cost",
-    "label": "Cost",
-    "data_type": "text",
-    "required": false
-  },
-  {
     "api_name": "year_of_license_issued",
     "label": "Year of License Issued",
     "data_type": "text",
