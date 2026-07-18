@@ -90,8 +90,8 @@ export default function Lead({ onSelectLead }: LeadProps) {
 
   return (
     <div className="flex-1 overflow-auto px-8 pb-8 max-md:px-4 max-md:pb-4 mt-8">
-      <div className="border border-neutral-800 rounded-lg overflow-hidden bg-neutral-950 mt-0 animate-fade-in-up">
-        <table className="w-full border-collapse table-auto">
+      <div className="border border-neutral-800 rounded-lg overflow-x-auto hide-scrollbar bg-neutral-950 mt-0 animate-fade-in-up">
+        <table className="w-full border-collapse table-auto min-w-[1200px]">
           <thead className="sticky top-0 z-[2]">
             <tr>
               {['Phone Number', 'Lead Name', 'Vehicle Number', 'Engine CC', 'Registration Number', 'Valid Until', 'Vehicle Type', 'Vehicle Model', 'Age', 'Date of Birth', 'Cost', 'Year of License Issued'].map((h) => (

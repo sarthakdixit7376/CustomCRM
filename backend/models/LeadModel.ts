@@ -24,7 +24,7 @@ export const LeadModel = {
         vehicleModel: leadData.vehicle_model || leadData.vehicleModel,
         age: leadData.age != null ? String(leadData.age) : undefined,
         dateOfBirth: (leadData.date_of_birth || leadData.dateOfBirth) != null ? String(leadData.date_of_birth || leadData.dateOfBirth) : undefined,
-        cost: leadData.cost != null ? String(leadData.cost) : undefined,
+        cost: (leadData.cost || leadData.cost_nis) != null ? String(leadData.cost || leadData.cost_nis) : undefined,
         yearOfLicenseIssued: (leadData.year_of_license_issued || leadData.yearOfLicenseIssued || leadData.license_issue_year) != null ? String(leadData.year_of_license_issued || leadData.yearOfLicenseIssued || leadData.license_issue_year) : undefined,
         pdfUrl: leadData.pdfUrl,
       },
