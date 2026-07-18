@@ -22,6 +22,10 @@ export const LeadModel = {
         validUntil: leadData.valid_until || leadData.validUntil,
         vehicleType: leadData.vehicle_type || leadData.vehicleType,
         vehicleModel: leadData.vehicle_model || leadData.vehicleModel,
+        age: leadData.age,
+        dateOfBirth: leadData.date_of_birth || leadData.dateOfBirth,
+        cost: leadData.cost,
+        yearOfLicenseIssued: leadData.year_of_license_issued || leadData.yearOfLicenseIssued,
         pdfUrl: leadData.pdfUrl,
       },
     });

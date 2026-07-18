@@ -14,6 +14,10 @@ export interface LeadRow {
   validUntil: string;
   vehicleType: string;
   vehicleModel: string;
+  age?: string;
+  dateOfBirth?: string;
+  cost?: string;
+  yearOfLicenseIssued?: string;
 }
 
 export interface LeadProps {
@@ -59,6 +63,10 @@ export default function Lead({ onSelectLead }: LeadProps) {
             validUntil: lead.validUntil || lead.valid_until,
             vehicleType: lead.vehicleType || lead.vehicle_type,
             vehicleModel: lead.vehicleModel || lead.vehicle_model,
+            age: lead.age,
+            dateOfBirth: lead.dateOfBirth || lead.date_of_birth,
+            cost: lead.cost,
+            yearOfLicenseIssued: lead.yearOfLicenseIssued || lead.year_of_license_issued,
           }));
 
           setLeads(mappedLeads);
@@ -86,7 +94,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
         <table className="w-full border-collapse table-auto">
           <thead className="sticky top-0 z-[2]">
             <tr>
-              {['Phone Number', 'Lead Name', 'Vehicle Number', 'Engine CC', 'Registration Number', 'Valid Until', 'Vehicle Type', 'Vehicle Model'].map((h) => (
+              {['Phone Number', 'Lead Name', 'Vehicle Number', 'Engine CC', 'Registration Number', 'Valid Until', 'Vehicle Type', 'Vehicle Model', 'Age', 'Date of Birth', 'Cost', 'Year of License Issued'].map((h) => (
                 <th key={h} className="group px-4 py-3.5 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-left bg-neutral-900 border-b border-neutral-800 whitespace-nowrap select-none cursor-pointer hover:text-neutral-300 transition-colors">
                   <span className="inline-flex items-center gap-1.5">{h} <span className="text-[10px] opacity-0 group-hover:opacity-50 transition-opacity">▾</span></span>
                 </th>
@@ -99,9 +107,9 @@ export default function Lead({ onSelectLead }: LeadProps) {
           <tbody>
             {status === 'loading' && leads.length === 0 ? (
               <tr className="animate-pulse">
-                <td colSpan={9} className="p-0 border-b border-neutral-800/50">
+                <td colSpan={13} className="p-0 border-b border-neutral-800/50">
                   <div className="flex w-full">
-                    {Array.from({ length: 9 }).map((_, i) => (
+                    {Array.from({ length: 13 }).map((_, i) => (
                       <div key={i} className="flex-1 px-4 py-3">
                         <div className="h-4 bg-neutral-800 rounded w-full"></div>
                       </div>
@@ -111,7 +119,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
               </tr>
             ) : status === 'error' && leads.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center py-10 text-red-500 text-sm">
+                <td colSpan={13} className="text-center py-10 text-red-500 text-sm">
                   Could not reach the leads API — retrying...
                 </td>
               </tr>
@@ -133,6 +141,10 @@ export default function Lead({ onSelectLead }: LeadProps) {
                   <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.validUntil}</td>
                   <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.vehicleType}</td>
                   <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.vehicleModel}</td>
+                  <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.age}</td>
+                  <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.dateOfBirth}</td>
+                  <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.cost}</td>
+                  <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.yearOfLicenseIssued}</td>
                   <td className="px-4 py-3 text-sm border-b border-neutral-800/50 whitespace-nowrap text-right">
                     <button
                       onClick={(e) => handleDelete(row.id, e)}
@@ -150,7 +162,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
               ))
             ) : (
               <tr>
-                <td colSpan={9} className="text-center py-10 text-neutral-600">
+                <td colSpan={13} className="text-center py-10 text-neutral-600">
                   No leads yet — new submissions will appear here automatically
                 </td>
               </tr>

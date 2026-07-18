@@ -8,17 +8,21 @@ datasource db {
 }
 
 model Lead {
-  id                 String   @id @default(uuid())
-  createdAt          DateTime @default(now())
-  pdfUrl             String?
-  leadName           String
-  phoneNumber        String
-  vehicleNumber      String?
-  engineCc           String?
-  registrationNumber String?
-  validUntil         String?
-  vehicleType        String?
-  vehicleModel       String?
+  id                  String   @id @default(uuid())
+  createdAt           DateTime @default(now())
+  pdfUrl              String?
+  leadName            String
+  phoneNumber         String
+  vehicleNumber       String?
+  engineCc            String?
+  registrationNumber  String?
+  validUntil          String?
+  vehicleType         String?
+  vehicleModel        String?
+  age                 String?
+  dateOfBirth         String?
+  cost                String?
+  yearOfLicenseIssued String?
 
   @@map("leads")
 }

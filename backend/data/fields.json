@@ -46,5 +46,29 @@
     "label": "Vehicle Model",
     "data_type": "text",
     "required": false
+  },
+  {
+    "api_name": "age",
+    "label": "Age",
+    "data_type": "text",
+    "required": false
+  },
+  {
+    "api_name": "date_of_birth",
+    "label": "Date of Birth",
+    "data_type": "date",
+    "required": false
+  },
+  {
+    "api_name": "cost",
+    "label": "Cost",
+    "data_type": "text",
+    "required": false
+  },
+  {
+    "api_name": "year_of_license_issued",
+    "label": "Year of License Issued",
+    "data_type": "text",
+    "required": false
   }
 ]
