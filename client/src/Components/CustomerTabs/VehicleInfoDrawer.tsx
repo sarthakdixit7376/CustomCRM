@@ -3,6 +3,51 @@ import axios from 'axios';
 
 const VEHICLE_INFO_RESOURCE_ID = '053cea08-09bc-40ec-8f7a-156f0677aff3';
 
+const FIELD_LABELS_HE: Record<string, string> = {
+  _id: 'מזהה רשומה',
+  mispar_rechev: 'מספר רכב',
+  tozeret_cd: 'קוד תוצרת',
+  sug_degem: 'סוג דגם',
+  tozeret_nm: 'שם תוצרת',
+  degem_cd: 'קוד דגם',
+  shnat_yitzur: 'שנת ייצור',
+  degem_nm: 'שם דגם',
+  ramat_gimur: 'רמת גימור',
+  ramat_eivzur_betihuti: 'רמת אבזור בטיחותי',
+  kvutzat_zihum: 'קבוצת זיהום',
+  tzeva_cd: 'קוד צבע',
+  tzeva_rechev: 'צבע רכב',
+  zmig_kidmi: 'צמיג קדמי',
+  zmig_ahori: 'צמיג אחורי',
+  sug_delek_nm: 'סוג דלק',
+  horaat_rishum: 'הוראת רישום',
+  moed_aliya_lakvish: 'מועד עליה לכביש',
+  baalut: 'בעלות',
+  misgeret: 'מספר שילדה',
+  tozeret_eretz_nm: 'ארץ תוצרת',
+  mishkal_kolel: 'משקל כולל',
+  nefah_manoa: 'נפח מנוע',
+  kinuy_mishari: 'כינוי מסחרי',
+  mivchan_acharon_dt: 'תאריך מבחן אחרון',
+  tokef_dt: 'תוקף רישוי',
+  taarich_pkika_dt: 'תאריך פקיעת תוקף',
+  taarich_pkiah: 'תאריך פקיעת תוקף',
+  kvuzat_agra: 'קבוצת אגרה',
+  mahoz_moshav: 'מחוז מושב',
+  sug_rechev_nm: 'סוג רכב',
+  degem_manoa: 'קוד מנוע',
+  koach_sus: 'כוח סוס',
+  mispar_dlatot: 'מספר דלתות',
+  mispar_moshavim: 'מספר מושבים',
+};
+
+const humanizeKey = (key: string) =>
+  key
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
+const translateField = (key: string) => FIELD_LABELS_HE[key] ?? humanizeKey(key);
+
 export interface VehicleInfoDrawerProps {
   vehicleNumber: string;
   onClose: () => void;
@@ -80,12 +125,14 @@ export default function VehicleInfoDrawer({ vehicleNumber, onClose }: VehicleInf
             <div className="text-center py-10 text-red-500 text-sm">{error}</div>
           ) : data ? (
             <div className="divide-y divide-neutral-800 border border-neutral-800 rounded-lg overflow-hidden">
-              {Object.entries(data).map(([key, value]) => (
-                <div key={key} className="flex flex-col gap-1 px-4 py-3 even:bg-[#050505]">
-                  <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">{key}</span>
-                  <span className="text-sm text-neutral-200 break-words">{value === null || value === undefined || value === '' ? '—' : String(value)}</span>
-                </div>
-              ))}
+              {Object.entries(data)
+                .filter(([key]) => key !== '_id')
+                .map(([key, value]) => (
+                  <div key={key} className="flex flex-col gap-1 px-4 py-3 even:bg-[#050505]">
+                    <span className="text-[11px] font-semibold text-neutral-500 tracking-wider">{translateField(key)}</span>
+                    <span className="text-sm text-neutral-200 break-words">{value === null || value === undefined || value === '' ? '—' : String(value)}</span>
+                  </div>
+                ))}
             </div>
           ) : null}
         </div>
