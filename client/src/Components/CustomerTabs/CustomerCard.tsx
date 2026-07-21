@@ -57,9 +57,9 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
 
     const newExtras = { ...DEFAULT_CUSTOMER.extras };
     if (ld) {
-      newExtras.carBrand = ld.vehicleModel;
-      newExtras.uniqueId = ld.registrationNumber;
-      newExtras.pathNumber = ld.vehicleNumber;
+      newExtras.carBrand = ld.degemNm;
+      newExtras.uniqueId = ld.horaatRishum;
+      newExtras.pathNumber = ld.misparRechev;
     }
     if (cust) {
       newExtras.uniqueId = cust.uniqueId || '';

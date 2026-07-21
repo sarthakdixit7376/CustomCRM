@@ -8,21 +8,53 @@ datasource db {
 }
 
 model Lead {
-  id                  String   @id @default(uuid())
-  createdAt           DateTime @default(now())
-  pdfUrl              String?
-  leadName            String
-  phoneNumber         String
-  vehicleNumber       String?
-  engineCc            String?
-  registrationNumber  String?
-  validUntil          String?
-  vehicleType         String?
-  vehicleModel        String?
-  age                 String?
-  dateOfBirth         String?
-  cost                String?
-  yearOfLicenseIssued String?
+  id                    String   @id @default(uuid())
+  createdAt             DateTime @default(now())
+  pdfUrl                String?
+  leadName              String
+  phoneNumber           String
+
+  // Person-specific fields
+  age                   String?
+  dateOfBirth           String?
+  cost                  String?
+  yearOfLicenseIssued   String?
+
+  // Vehicle info fields (from Israeli gov vehicle API)
+  misparRechev          String?   // מספר רכב
+  tozeretCd             String?   // קוד תוצרת
+  sugDegem              String?   // סוג דגם
+  tozeretNm             String?   // שם תוצרת
+  degemCd               String?   // קוד דגם
+  shnatYitzur           String?   // שנת ייצור
+  degemNm               String?   // שם דגם
+  ramatGimur            String?   // רמת גימור
+  ramatEivzurBetihuti   String?   // רמת אבזור בטיחותי
+  kvutzatZihum          String?   // קבוצת זיהום
+  tzevaCd               String?   // קוד צבע
+  tzevaRechev           String?   // צבע רכב
+  zmigKidmi             String?   // צמיג קדמי
+  zmigAhori             String?   // צמיג אחורי
+  sugDelekNm            String?   // סוג דלק
+  horaatRishum          String?   // הוראת רישום
+  moedAliyaLakvish      String?   // מועד עליה לכביש
+  baalut                String?   // בעלות
+  misgeret              String?   // מספר שילדה
+  tozeretEretzNm        String?   // ארץ תוצרת
+  mishkalKolel          String?   // משקל כולל
+  nefahManoa            String?   // נפח מנוע
+  kinuyMishari          String?   // כינוי מסחרי
+  mivchanAcharonDt      String?   // תאריך מבחן אחרון
+  tokefDt               String?   // תוקף רישוי
+  taarichPkikaDt        String?   // תאריך פקיעת תוקף
+  taarichPkiah          String?   // תאריך פקיעת תוקף
+  kvuzatAgra            String?   // קבוצת אגרה
+  mahozMoshav           String?   // מחוז מושב
+  sugRechevNm           String?   // סוג רכב
+  degemManoa            String?   // קוד מנוע
+  koachSus              String?   // כוח סוס
+  misparDlatot          String?   // מספר דלתות
+  misparMoshavim        String?   // מספר מושבים
 
   @@map("leads")
 }
