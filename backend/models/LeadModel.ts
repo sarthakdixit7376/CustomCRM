@@ -15,7 +15,14 @@ export const LeadModel = {
     });
   },
 
-  createLead: async (d: any) => {
+  createLead: async (input: any) => {
+    // Handle array payload — take first element
+    const raw = Array.isArray(input) ? input[0] : input;
+
+    // Flatten vehicle_gov_data into the top-level object
+    const v = raw.vehicle_gov_data || {};
+    const d = { ...raw, ...v };
+
     return prisma.lead.create({
       data: {
         leadName:             d.lead_name           || d.leadName,
@@ -29,7 +36,7 @@ export const LeadModel = {
         yearOfLicenseIssued:  str(d.year_of_license_issued || d.yearOfLicenseIssued || d.license_issue_year),
 
         // Vehicle info fields (snake_case from API → camelCase Prisma)
-        misparRechev:         str(d.mispar_rechev         || d.misparRechev),
+        misparRechev:         str(d.mispar_rechev         || d.misparRechev         || d.vehicle_number),
         tozeretCd:            str(d.tozeret_cd            || d.tozeretCd),
         sugDegem:             str(d.sug_degem             || d.sugDegem),
         tozeretNm:            str(d.tozeret_nm            || d.tozeretNm),
@@ -37,7 +44,7 @@ export const LeadModel = {
         shnatYitzur:          str(d.shnat_yitzur          || d.shnatYitzur),
         degemNm:              str(d.degem_nm              || d.degemNm),
         ramatGimur:           str(d.ramat_gimur           || d.ramatGimur),
-        ramatEivzurBetihuti:  str(d.ramat_eivzur_betihuti || d.ramatEivzurBetihuti),
+        ramatEivzurBetihuti:  str(d.ramat_eivzur_betihuti || d.ramat_eivzur_betihuty || d.ramatEivzurBetihuti),
         kvutzatZihum:         str(d.kvutzat_zihum         || d.kvutzatZihum),
         tzevaCd:              str(d.tzeva_cd              || d.tzevaCd),
         tzevaRechev:          str(d.tzeva_rechev          || d.tzevaRechev),
