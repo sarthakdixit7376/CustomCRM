@@ -3,8 +3,9 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const CustomerModel = {
-  getCustomers: async () => {
+  getCustomers: async (agentId?: string) => {
     return prisma.customer.findMany({
+      where: agentId ? { agentId } : undefined,
       include: {
         contacts: true,
         policies: true,
@@ -25,12 +26,13 @@ export const CustomerModel = {
     });
   },
 
-  createCustomer: async (data: any) => {
+  createCustomer: async (data: any, agentId: string) => {
     const { contacts, policies, ...customerData } = data;
-    
+
     return prisma.customer.create({
       data: {
         ...customerData,
+        agentId,
         contacts: contacts ? { create: contacts } : undefined,
         policies: policies ? { create: policies } : undefined,
       },

@@ -3,8 +3,9 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const PolicyModel = {
-  getAllPolicies: async () => {
+  getAllPolicies: async (agentId?: string) => {
     return prisma.policy.findMany({
+      where: agentId ? { customer: { agentId } } : undefined,
       orderBy: { id: 'desc' },
     });
   },
@@ -12,6 +13,13 @@ export const PolicyModel = {
   getPoliciesByCustomerId: async (customerId: string) => {
     return prisma.policy.findMany({
       where: { customerId },
+    });
+  },
+
+  getPolicyById: async (id: string) => {
+    return prisma.policy.findUnique({
+      where: { id },
+      include: { customer: true },
     });
   },
 

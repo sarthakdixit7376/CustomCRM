@@ -7,61 +7,83 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  AGENT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(AGENT)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  leads     Lead[]
+  customers Customer[]
+
+  @@map("users")
+}
+
 model Lead {
-  id                    String   @id @default(uuid())
-  createdAt             DateTime @default(now())
-  pdfUrl                String?
-  leadName              String
-  phoneNumber           String
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  pdfUrl      String?
+  leadName    String
+  phoneNumber String
+  agentId     String?
+  agent       User?    @relation(fields: [agentId], references: [id])
 
   // Person-specific fields
-  age                   String?
-  dateOfBirth           String?
-  cost                  String?
-  yearOfLicenseIssued   String?
+  age                 String?
+  dateOfBirth         String?
+  cost                String?
+  yearOfLicenseIssued String?
 
   // Vehicle info fields (from Israeli gov vehicle API)
-  misparRechev          String?   // מספר רכב
-  tozeretCd             String?   // קוד תוצרת
-  sugDegem              String?   // סוג דגם
-  tozeretNm             String?   // שם תוצרת
-  degemCd               String?   // קוד דגם
-  shnatYitzur           String?   // שנת ייצור
-  degemNm               String?   // שם דגם
-  ramatGimur            String?   // רמת גימור
-  ramatEivzurBetihuti   String?   // רמת אבזור בטיחותי
-  kvutzatZihum          String?   // קבוצת זיהום
-  tzevaCd               String?   // קוד צבע
-  tzevaRechev           String?   // צבע רכב
-  zmigKidmi             String?   // צמיג קדמי
-  zmigAhori             String?   // צמיג אחורי
-  sugDelekNm            String?   // סוג דלק
-  horaatRishum          String?   // הוראת רישום
-  moedAliyaLakvish      String?   // מועד עליה לכביש
-  baalut                String?   // בעלות
-  misgeret              String?   // מספר שילדה
-  tozeretEretzNm        String?   // ארץ תוצרת
-  mishkalKolel          String?   // משקל כולל
-  nefahManoa            String?   // נפח מנוע
-  kinuyMishari          String?   // כינוי מסחרי
-  mivchanAcharonDt      String?   // תאריך מבחן אחרון
-  tokefDt               String?   // תוקף רישוי
-  taarichPkikaDt        String?   // תאריך פקיעת תוקף
-  taarichPkiah          String?   // תאריך פקיעת תוקף
-  kvuzatAgra            String?   // קבוצת אגרה
-  mahozMoshav           String?   // מחוז מושב
-  sugRechevNm           String?   // סוג רכב
-  degemManoa            String?   // קוד מנוע
-  koachSus              String?   // כוח סוס
-  misparDlatot          String?   // מספר דלתות
-  misparMoshavim        String?   // מספר מושבים
+  misparRechev        String? // מספר רכב
+  tozeretCd           String? // קוד תוצרת
+  sugDegem            String? // סוג דגם
+  tozeretNm           String? // שם תוצרת
+  degemCd             String? // קוד דגם
+  shnatYitzur         String? // שנת ייצור
+  degemNm             String? // שם דגם
+  ramatGimur          String? // רמת גימור
+  ramatEivzurBetihuti String? // רמת אבזור בטיחותי
+  kvutzatZihum        String? // קבוצת זיהום
+  tzevaCd             String? // קוד צבע
+  tzevaRechev         String? // צבע רכב
+  zmigKidmi           String? // צמיג קדמי
+  zmigAhori           String? // צמיג אחורי
+  sugDelekNm          String? // סוג דלק
+  horaatRishum        String? // הוראת רישום
+  moedAliyaLakvish    String? // מועד עליה לכביש
+  baalut              String? // בעלות
+  misgeret            String? // מספר שילדה
+  tozeretEretzNm      String? // ארץ תוצרת
+  mishkalKolel        String? // משקל כולל
+  nefahManoa          String? // נפח מנוע
+  kinuyMishari        String? // כינוי מסחרי
+  mivchanAcharonDt    String? // תאריך מבחן אחרון
+  tokefDt             String? // תוקף רישוי
+  taarichPkikaDt      String? // תאריך פקיעת תוקף
+  taarichPkiah        String? // תאריך פקיעת תוקף
+  kvuzatAgra          String? // קבוצת אגרה
+  mahozMoshav         String? // מחוז מושב
+  sugRechevNm         String? // סוג רכב
+  degemManoa          String? // קוד מנוע
+  koachSus            String? // כוח סוס
+  misparDlatot        String? // מספר דלתות
+  misparMoshavim      String? // מספר מושבים
 
   @@map("leads")
 }
 
 model Customer {
-  id              String    @id @default(uuid())
-  createdAt       DateTime  @default(now())
+  id              String   @id @default(uuid())
+  createdAt       DateTime @default(now())
   customerName    String
   idNumber        String?
   dateOfBirth     String?
@@ -73,33 +95,35 @@ model Customer {
   pathNumber      String?
   healthFund      String?
   employer        String?
-  signedGoodFaith Boolean   @default(false)
-  noFixedAddress  Boolean   @default(false)
+  signedGoodFaith Boolean  @default(false)
+  noFixedAddress  Boolean  @default(false)
   memberId        String?
   workPlace       String?
   carBrand        String?
+  agentId         String?
+  agent           User?    @relation(fields: [agentId], references: [id])
 
-  contacts        Contact[]
-  policies        Policy[]
+  contacts Contact[]
+  policies Policy[]
 
   @@map("customers")
 }
 
 model Contact {
-  id         String   @id @default(uuid())
+  id         String @id @default(uuid())
   customerId String
-  type       String   // e.g., 'mobile', 'phone'
+  type       String // e.g., 'mobile', 'phone'
   value      String
   label      String
   icon       String
 
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@map("contacts")
 }
 
 model Policy {
-  id               String   @id @default(uuid())
+  id               String  @id @default(uuid())
   customerId       String?
   policyNumber     String
   policyType       String
@@ -107,9 +131,9 @@ model Policy {
   startDate        String?
   endDate          String?
   type             String?
-  status           String   @default("Active") // 'Active' or 'Cancelled'
+  status           String  @default("Active") // 'Active' or 'Cancelled'
 
-  customer         Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@map("policies")
 }

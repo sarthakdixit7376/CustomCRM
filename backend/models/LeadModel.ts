@@ -7,15 +7,20 @@ const str = (v: any): string | undefined =>
   v != null && v !== '' ? String(v) : undefined;
 
 export const LeadModel = {
-  getLeads: async () => {
+  getLeads: async (agentId?: string) => {
     return prisma.lead.findMany({
+      where: agentId ? { agentId } : undefined,
       orderBy: {
         createdAt: 'desc',
       },
     });
   },
 
-  createLead: async (input: any) => {
+  getLeadById: async (id: string) => {
+    return prisma.lead.findUnique({ where: { id } });
+  },
+
+  createLead: async (input: any, agentId: string) => {
     // Handle array payload — take first element
     const raw = Array.isArray(input) ? input[0] : input;
 
@@ -28,6 +33,7 @@ export const LeadModel = {
         leadName:             d.lead_name           || d.leadName,
         phoneNumber:          d.phone_number         || d.phoneNumber,
         pdfUrl:               d.pdfUrl,
+        agentId,
 
         // Person-specific fields
         age:                  str(d.age),

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE } from '../../config';
-import VehicleInfoDrawer from './VehicleInfoDrawer';
 
 export interface LeadRow {
   id: string;
@@ -107,8 +106,6 @@ export default function Lead({ onSelectLead }: LeadProps) {
   const [leads, setLeads] = useState<LeadRow[]>([]);
   const [status, setStatus] = useState<'loading' | 'live' | 'error'>('loading');
 
-  const [infoVehicleNumber, setInfoVehicleNumber] = useState<string | null>(null);
-
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!window.confirm('Are you sure you want to delete this lead?')) return;
@@ -120,15 +117,6 @@ export default function Lead({ onSelectLead }: LeadProps) {
       console.error('Failed to delete lead:', error);
       alert('Failed to delete lead');
     }
-  };
-
-  const handleInfo = (vehicleNumber: string | undefined, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (vehicleNumber) setInfoVehicleNumber(vehicleNumber);
-  };
-
-  const closeInfo = () => {
-    setInfoVehicleNumber(null);
   };
 
   useEffect(() => {
@@ -267,17 +255,6 @@ export default function Lead({ onSelectLead }: LeadProps) {
                   <td className="px-4 py-3 text-sm border-b border-neutral-800/50 whitespace-nowrap text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button
-                        onClick={(e) => handleInfo(row.misparRechev, e)}
-                        className="text-blue-500 hover:text-blue-400 transition-colors p-1.5 rounded hover:bg-blue-500/10"
-                        title="Vehicle Info"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <line x1="12" y1="16" x2="12" y2="12"></line>
-                          <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                        </svg>
-                      </button>
-                      <button
                         onClick={(e) => handleDelete(row.id, e)}
                         className="text-red-500 hover:text-red-400 transition-colors p-1.5 rounded hover:bg-red-500/10"
                         title="Delete Lead"
@@ -303,9 +280,6 @@ export default function Lead({ onSelectLead }: LeadProps) {
         </table>
       </div>
 
-      {infoVehicleNumber && (
-        <VehicleInfoDrawer vehicleNumber={infoVehicleNumber} onClose={closeInfo} />
-      )}
     </div>
   );
 }

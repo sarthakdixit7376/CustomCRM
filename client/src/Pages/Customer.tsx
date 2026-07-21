@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import logo from '../assets/Logo.png';
 import {
   CustomerList,
@@ -16,6 +17,7 @@ import type { CustomerFormData } from '../Components/CustomerTabs/NewCustomerMod
 import type { PolicyRow } from '../Components/CustomerTabs/CustomerList';
 import type { LeadRow } from '../Components/CustomerTabs/Lead';
 import { API_BASE } from '../config';
+import { useAuth } from '../context/AuthContext';
 
 /* ───────── Tab Definitions ───────── */
 const TABS = [
@@ -35,6 +37,8 @@ interface Toast { id: number; message: string; type: 'success' | 'error'; }
 
 /* ───────── Customer Page ───────── */
 export default function Customer() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabKey>('list');
   const [customers, setCustomers] = useState<PolicyRow[]>([]);
   const [rawCustomers, setRawCustomers] = useState<any[]>([]);
@@ -170,12 +174,31 @@ export default function Customer() {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">Ai</span>
           </h1>
         </div>
-        <button
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-white text-black border-none cursor-pointer transition-all duration-150 hover:bg-neutral-200 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(255,255,255,0.12)]"
-          onClick={() => setIsNewModalOpen(true)}
-        >
-          <span className="text-lg leading-none">+</span> New Customer
-        </button>
+        <div className="flex items-center gap-3">
+          {user?.role === 'ADMIN' && (
+            <button
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-transparent text-neutral-300 border border-neutral-700 cursor-pointer transition-all duration-150 hover:bg-neutral-900"
+              onClick={() => navigate('/admin/users')}
+            >
+              Users
+            </button>
+          )}
+          <button
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-white text-black border-none cursor-pointer transition-all duration-150 hover:bg-neutral-200 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(255,255,255,0.12)]"
+            onClick={() => setIsNewModalOpen(true)}
+          >
+            <span className="text-lg leading-none">+</span> New Customer
+          </button>
+          <div className="flex items-center gap-2 pl-1">
+            <span className="text-xs text-neutral-400">{user?.name} · {user?.role === 'ADMIN' ? 'Admin' : 'Agent'}</span>
+            <button
+              className="text-xs font-medium text-neutral-400 bg-transparent border-none cursor-pointer hover:text-white"
+              onClick={() => logout()}
+            >
+              Log out
+            </button>
+          </div>
+        </div>
       </header>
 
       {/* Tabs */}
