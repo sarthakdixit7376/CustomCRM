@@ -4,6 +4,7 @@
   "description": "Express backend for CustomCRM",
   "type": "module",
   "scripts": {
+    "build": "npx prisma generate && npx prisma db push --accept-data-loss",
     "start": "tsx server.ts",
     "dev": "tsx watch server.ts"
   },
