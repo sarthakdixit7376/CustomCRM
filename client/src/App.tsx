@@ -1,9 +1,11 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './Components/ProtectedRoute';
+import AppLayout from './layouts/AppLayout';
 import Login from './Pages/Login';
 import Signup from './Pages/Signup';
-import Customer from './Pages/Customer';
+import CustomersPage from './Pages/CustomersPage';
+import LeadsPage from './Pages/LeadsPage';
 import UserManagement from './Pages/UserManagement';
 
 function App() {
@@ -11,24 +13,22 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+          {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Customer />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedRoute allow={['ADMIN']}>
-                <UserManagement />
-              </ProtectedRoute>
-            }
-          />
+
+          {/* Protected routes with sidebar layout */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppLayout />}>
+              <Route index element={<Navigate to="/leads" replace />} />
+              <Route path="leads" element={<LeadsPage />} />
+              <Route path="customers" element={<CustomersPage />} />
+              <Route element={<ProtectedRoute allow={['ADMIN']} />}>
+                <Route path="admin/users" element={<UserManagement />} />
+              </Route>
+              <Route path="*" element={<Navigate to="/leads" replace />} />
+            </Route>
+          </Route>
         </Routes>
       </AuthProvider>
     </BrowserRouter>
@@ -36,3 +36,4 @@ function App() {
 }
 
 export default App;
+

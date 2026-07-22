@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../config/prisma.js';
 
-const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET as string;
 const TOKEN_MAX_AGE_MS = 12 * 60 * 60 * 1000; // 12 hours
 

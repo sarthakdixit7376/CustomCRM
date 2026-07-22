@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../config/prisma.js';
 
 /** Helper: coerce a value to string or undefined */
 const str = (v: any): string | undefined =>
@@ -13,11 +11,19 @@ export const LeadModel = {
       orderBy: {
         createdAt: 'desc',
       },
+      include: {
+        agent: { select: { id: true, name: true, email: true } },
+      },
     });
   },
 
   getLeadById: async (id: string) => {
-    return prisma.lead.findUnique({ where: { id } });
+    return prisma.lead.findUnique({
+      where: { id },
+      include: {
+        agent: { select: { id: true, name: true, email: true } },
+      },
+    });
   },
 
   createLead: async (input: any, agentId: string) => {
@@ -90,6 +96,40 @@ export const LeadModel = {
       // If it doesn't exist, prisma throws
       return null;
     }
+  },
+
+  updateLeadFlowStatus: async (id: string, leadFlowStatus: any, userId?: string, note?: string) => {
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.lead.findUnique({ where: { id } });
+      if (!existing) throw new Error('Lead not found');
+
+      const updated = await tx.lead.update({
+        where: { id },
+        data: { leadFlowStatus },
+      });
+
+      await tx.leadFlowStatusLog.create({
+        data: {
+          leadId: id,
+          fromStatus: existing.leadFlowStatus,
+          toStatus: leadFlowStatus,
+          changedBy: userId,
+          note,
+        },
+      });
+
+      return updated;
+    });
+  },
+
+  updateLeadAgent: async (id: string, agentId: string) => {
+    return prisma.lead.update({
+      where: { id },
+      data: { agentId },
+      include: {
+        agent: { select: { id: true, name: true, email: true } },
+      },
+    });
   },
 };
 

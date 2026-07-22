@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { PrismaClient, Role } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { Role } from '@prisma/client';
+import prisma from '../config/prisma.js';
 
 const toSafeUser = (user: { id: string; name: string; email: string; role: Role; isActive: boolean; createdAt: Date }) => ({
   id: user.id,

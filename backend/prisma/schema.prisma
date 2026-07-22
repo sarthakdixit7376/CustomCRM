@@ -12,6 +12,27 @@ enum Role {
   AGENT
 }
 
+enum LeadFlowStatus {
+  NEW
+  WAITING_FOR_DOCUMENTS
+  PROCESSING_DOCUMENTS
+  QUOTE_READY
+  QUOTE_SENT
+  QUOTE_ACCEPTED
+  WAITING_SIGNATURE
+  SIGNED
+  WAITING_PAYMENT
+  PAYMENT_COMPLETED
+  POLICY_ISSUED
+  ACTIVE_CUSTOMER
+}
+
+enum LeadStatus {
+  NEW
+  IN_PROGRESS
+  DONE
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -28,13 +49,18 @@ model User {
 }
 
 model Lead {
-  id          String   @id @default(uuid())
-  createdAt   DateTime @default(now())
-  pdfUrl      String?
-  leadName    String
-  phoneNumber String
-  agentId     String?
-  agent       User?    @relation(fields: [agentId], references: [id])
+  id                 String              @id @default(uuid())
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @default(now()) @updatedAt
+  leadFlowStatus     LeadFlowStatus      @default(NEW)
+  leadStatus         LeadStatus          @default(NEW)
+  pdfUrl             String?
+  leadName           String
+  phoneNumber        String
+  idNumber           String?
+  agentId            String?
+  agent              User?               @relation(fields: [agentId], references: [id])
+  leadFlowStatusLogs LeadFlowStatusLog[]
 
   // Person-specific fields
   age                 String?
@@ -81,6 +107,19 @@ model Lead {
   @@map("leads")
 }
 
+model LeadFlowStatusLog {
+  id         String          @id @default(uuid())
+  leadId     String
+  lead       Lead            @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  fromStatus LeadFlowStatus?
+  toStatus   LeadFlowStatus
+  changedBy  String?
+  note       String?
+  createdAt  DateTime        @default(now())
+
+  @@map("lead_flow_status_logs")
+}
+
 model Customer {
   id              String   @id @default(uuid())
   createdAt       DateTime @default(now())
@@ -123,15 +162,15 @@ model Contact {
 }
 
 model Policy {
-  id               String  @id @default(uuid())
+  id               String    @id @default(uuid())
   customerId       String?
   policyNumber     String
   policyType       String
   insuranceCompany String
-  startDate        String?
-  endDate          String?
+  startDate        DateTime?
+  endDate          DateTime?
   type             String?
-  status           String  @default("Active") // 'Active' or 'Cancelled'
+  status           String    @default("Active") // 'Active' or 'Cancelled'
 
   customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
