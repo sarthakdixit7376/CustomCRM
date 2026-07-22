@@ -63,6 +63,16 @@ export default function UserManagement() {
     fetchUsers();
   };
 
+  const handleDelete = async (u: ManagedUser) => {
+    if (!window.confirm(`Delete ${u.name}? This cannot be undone.`)) return;
+    try {
+      await axios.delete(`${API_BASE}/api/users/${u.id}`);
+      fetchUsers();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Error deleting user');
+    }
+  };
+
   const handleResetPassword = async (userId: string) => {
     setResetError('');
     if (newPassword.length < 8) {
@@ -180,6 +190,12 @@ export default function UserManagement() {
                         onClick={() => toggleActive(u)}
                       >
                         {u.isActive ? 'Deactivate' : 'Reactivate'}
+                      </button>
+                      <button
+                        className="text-xs font-medium text-red-400 bg-transparent border border-red-900 rounded px-3 py-1.5 cursor-pointer hover:bg-red-950"
+                        onClick={() => handleDelete(u)}
+                      >
+                        Delete
                       </button>
                       <button
                         className="text-xs font-medium text-neutral-400 bg-transparent border border-neutral-700 rounded px-3 py-1.5 cursor-pointer hover:bg-neutral-900"
