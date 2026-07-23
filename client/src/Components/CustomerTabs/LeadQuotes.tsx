@@ -11,6 +11,7 @@ interface QuoteRow {
   mandatoryPrice?: number;
   thirdPartyPrice?: number;
   complimentaryPrice?: number;
+  pricingPdfUrl?: string;
 }
 
 const PRICE_COLUMNS: [string, QuoteField][] = [
@@ -22,6 +23,7 @@ const PRICE_COLUMNS: [string, QuoteField][] = [
 export default function LeadQuotes() {
   const [leads, setLeads] = useState<QuoteRow[]>([]);
   const [status, setStatus] = useState<'loading' | 'live' | 'error'>('loading');
+  const [sendingId, setSendingId] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -38,6 +40,7 @@ export default function LeadQuotes() {
           mandatoryPrice: lead.mandatoryPrice,
           thirdPartyPrice: lead.thirdPartyPrice,
           complimentaryPrice: lead.complimentaryPrice,
+          pricingPdfUrl: lead.pricingPdfUrl,
         }));
         setLeads(mapped);
         setStatus('live');
@@ -70,6 +73,21 @@ export default function LeadQuotes() {
       console.error('Failed to update quote price:', error);
       alert('Failed to save price change');
       setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, [field]: previous } : l)));
+    }
+  };
+
+  const handleSend = async (leadId: string) => {
+    setSendingId(leadId);
+    try {
+      const response = await axios.post(`${API_BASE}/api/leads/${leadId}/pricing-pdf`);
+      const { pricingPdfUrl, whatsappLink } = response.data;
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, pricingPdfUrl } : l)));
+      window.open(whatsappLink, '_blank');
+    } catch (error) {
+      console.error('Failed to generate/send pricing PDF:', error);
+      alert('Failed to generate the pricing PDF. Please try again.');
+    } finally {
+      setSendingId(null);
     }
   };
 
@@ -133,11 +151,12 @@ export default function LeadQuotes() {
                   ))}
                   <td className="px-4 py-3 text-sm border-b border-neutral-800/50 whitespace-nowrap text-right">
                     <button
-                      disabled
-                      title="Coming soon"
-                      className="px-3 py-1.5 text-xs font-semibold rounded-md border border-neutral-800 bg-neutral-900 text-neutral-600 cursor-not-allowed"
+                      onClick={() => handleSend(row.id)}
+                      disabled={sendingId === row.id}
+                      title="Generate pricing PDF and send via WhatsApp"
+                      className="px-3 py-1.5 text-xs font-semibold rounded-md border border-neutral-700 bg-neutral-900 text-neutral-200 hover:bg-neutral-800 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-wait"
                     >
-                      Send
+                      {sendingId === row.id ? 'Sending…' : 'Send'}
                     </button>
                   </td>
                 </tr>

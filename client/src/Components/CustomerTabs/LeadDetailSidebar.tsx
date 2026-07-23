@@ -4,6 +4,7 @@ import type { LeadRow } from './Lead';
 const DETAIL_FIELDS: [string, keyof LeadRow][] = [
   ['Created At', 'createdAt'],
   ['PDF', 'pdfUrl'],
+  ['Pricing PDF', 'pricingPdfUrl'],
   ['Age', 'age'],
   ['Date of Birth', 'dateOfBirth'],
   ['Cost', 'cost'],
@@ -53,7 +54,7 @@ export default function LeadDetailSidebar({ lead, onClose }: LeadDetailSidebarPr
   const renderValue = (key: keyof LeadRow, value: unknown) => {
     if (value === null || value === undefined || value === '') return '—';
     if (key === 'createdAt') return new Date(String(value)).toLocaleString();
-    if (key === 'pdfUrl') {
+    if (key === 'pdfUrl' || key === 'pricingPdfUrl') {
       return (
         <a
           href={String(value)}

@@ -10,6 +10,7 @@ export interface LeadRow {
   id: string;
   createdAt?: string;
   pdfUrl?: string;
+  pricingPdfUrl?: string;
   leadName: string;
   phoneNumber: string;
 
@@ -226,6 +227,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
             id: lead.id,
             createdAt: lead.createdAt,
             pdfUrl: lead.pdfUrl,
+            pricingPdfUrl: lead.pricingPdfUrl,
             leadName: lead.leadName || lead.lead_name,
             phoneNumber: lead.phoneNumber || lead.phone_number,
 

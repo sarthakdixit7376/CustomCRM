@@ -152,5 +152,12 @@ export const LeadModel = {
       data,
     });
   },
+
+  updateLeadPricingPdfUrl: async (id: string, pricingPdfUrl: string) => {
+    return prisma.lead.update({
+      where: { id },
+      data: { pricingPdfUrl },
+    });
+  },
 };
 

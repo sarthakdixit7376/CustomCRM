@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import { LeadModel } from '../models/LeadModel.js';
 import prisma from '../config/prisma.js';
+import { generatePricingPdfBuffer } from '../services/pdfService.js';
+import { uploadPdfBuffer } from '../services/cloudinaryService.js';
+import { buildWhatsAppShareLink } from '../services/whatsappService.js';
 
 export const getLeads = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -131,6 +134,30 @@ export const updateLeadQuote = async (req: Request, res: Response): Promise<void
     res.json(updated);
   } catch (error) {
     console.error('Error updating lead quote:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+export const generatePricingPdf = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const existing = await LeadModel.getLeadById(req.params.id);
+    if (!existing) {
+      res.status(404).json({ error: 'Lead not found' });
+      return;
+    }
+    if (req.user!.role !== 'ADMIN' && existing.agentId !== req.user!.id) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const buffer = await generatePricingPdfBuffer(existing);
+    const pricingPdfUrl = await uploadPdfBuffer(buffer, existing.id);
+    await LeadModel.updateLeadPricingPdfUrl(existing.id, pricingPdfUrl);
+    const whatsappLink = buildWhatsAppShareLink(existing.phoneNumber, pricingPdfUrl);
+
+    res.json({ pricingPdfUrl, whatsappLink });
+  } catch (error) {
+    console.error('Error generating pricing PDF:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };

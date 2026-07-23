@@ -64,6 +64,7 @@ model Lead {
   leadFlowStatus     LeadFlowStatus      @default(NEW)
   leadStatus         LeadStatus          @default(NEW)
   pdfUrl             String?
+  pricingPdfUrl      String?
   leadName           String
   phoneNumber        String
   idNumber           String?
