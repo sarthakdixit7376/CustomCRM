@@ -120,7 +120,7 @@ export default function LeadQuotes() {
                       <span className="text-white font-medium">{row.leadName}</span>
                     </div>
                   </td>
-                  {PRICE_COLUMNS.map(([label, field]) => (
+                  {PRICE_COLUMNS.map(([, field]) => (
                     <td key={field} className="px-4 py-3 text-sm border-b border-neutral-800/50 whitespace-nowrap">
                       <input
                         key={`${row.id}-${field}-${row[field] ?? ''}`}
