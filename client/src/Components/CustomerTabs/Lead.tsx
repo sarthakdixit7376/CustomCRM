@@ -3,6 +3,8 @@ import axios from 'axios';
 import { API_BASE } from '../../config';
 import { useAuth } from '../../context/AuthContext';
 import LeadDetailSidebar from './LeadDetailSidebar';
+import CreateLeadModal from './CreateLeadModal';
+import type { LeadFormData } from './CreateLeadModal';
 
 export interface LeadRow {
   id: string;
@@ -22,6 +24,12 @@ export interface LeadRow {
   dateOfBirth?: string;
   cost?: string;
   yearOfLicenseIssued?: string;
+  interestedIn?: string;
+
+  // Insurance quote pricing
+  mandatoryPrice?: number;
+  thirdPartyPrice?: number;
+  complimentaryPrice?: number;
 
   // Vehicle info fields
   misparRechev?: string;
@@ -66,8 +74,18 @@ const COLUMNS: [string, keyof LeadRow][] = [
   ['Lead Name', 'leadName'],
   ['Status', 'leadStatus'],
   ['Flow Status', 'leadFlowStatus'],
+  ['Interested In', 'interestedIn'],
   ['Agent Assigned', 'agentName'],
 ];
+
+const INTERESTED_IN_LABELS: Record<string, string> = {
+  CARS: 'Cars',
+  HOME: 'Home',
+  BUSINESS: 'Business',
+  TRAVEL: 'Travel',
+  HEALTH: 'Health',
+  OTHER: 'Other',
+};
 
 interface Agent {
   id: string;
@@ -88,6 +106,8 @@ export default function Lead({ onSelectLead }: LeadProps) {
   const [selectedLead, setSelectedLead] = useState<LeadRow | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [assigningId, setAssigningId] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   const handleRowClick = (row: LeadRow) => {
     setSelectedLead(row);
@@ -128,6 +148,70 @@ export default function Lead({ onSelectLead }: LeadProps) {
     }
   };
 
+  const handleCreateLead = async (formData: LeadFormData) => {
+    setIsCreating(true);
+    try {
+      // 1. Fetch vehicle info from the Israeli government vehicle registry
+      let vehicleGovData: Record<string, any> = {};
+      const vehicleNumber = formData.vehicle_number?.trim();
+
+      if (vehicleNumber) {
+        try {
+          const govUrl = `https://data.gov.il/api/3/action/datastore_search?resource_id=053cea08-09bc-40ec-8f7a-156f0677aff3&filters=${encodeURIComponent(JSON.stringify({ mispar_rechev: Number(vehicleNumber) }))}&limit=1`;
+          const govResponse = await axios.get(govUrl, { withCredentials: false });
+          const records = govResponse.data?.result?.records;
+          if (records && records.length > 0) {
+            vehicleGovData = records[0];
+          }
+        } catch (govError) {
+          console.warn('Could not fetch vehicle data from gov API:', govError);
+          // Continue with lead creation even if gov API fails
+        }
+      }
+
+      // 2. Create the lead with form fields + vehicle gov data merged
+      const response = await axios.post(`${API_BASE}/api/leads`, {
+        ...formData,
+        vehicle_gov_data: vehicleGovData,
+      });
+
+      const newLead = response.data;
+      setLeads((prev) => [
+        {
+          id: newLead.id,
+          createdAt: newLead.createdAt,
+          leadName: newLead.leadName || formData.lead_name,
+          phoneNumber: newLead.phoneNumber || formData.phone_number,
+          leadStatus: newLead.leadStatus,
+          leadFlowStatus: newLead.leadFlowStatus,
+          age: newLead.age,
+          dateOfBirth: newLead.dateOfBirth,
+          yearOfLicenseIssued: newLead.yearOfLicenseIssued,
+          interestedIn: newLead.interestedIn || formData.interested_in,
+          misparRechev: newLead.misparRechev,
+          agentId: newLead.agentId,
+          agentName: newLead.agent?.name,
+          mandatoryPrice: newLead.mandatoryPrice,
+          thirdPartyPrice: newLead.thirdPartyPrice,
+          complimentaryPrice: newLead.complimentaryPrice,
+        },
+        ...prev,
+      ]);
+      setIsCreateModalOpen(false);
+    } catch (error: any) {
+      console.error('Failed to create lead:', error);
+      const status = error?.response?.status;
+      if (status === 401) {
+        alert('Your session has expired. Please log in again.');
+      } else {
+        const serverMsg = error?.response?.data?.error;
+        alert(serverMsg || 'Failed to create lead. Please try again.');
+      }
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -156,6 +240,10 @@ export default function Lead({ onSelectLead }: LeadProps) {
             dateOfBirth: lead.dateOfBirth || lead.date_of_birth,
             cost: lead.cost,
             yearOfLicenseIssued: lead.yearOfLicenseIssued || lead.year_of_license_issued,
+            interestedIn: lead.interestedIn || lead.interested_in,
+            mandatoryPrice: lead.mandatoryPrice,
+            thirdPartyPrice: lead.thirdPartyPrice,
+            complimentaryPrice: lead.complimentaryPrice,
 
             // Vehicle info
             misparRechev: lead.misparRechev || lead.mispar_rechev,
@@ -234,6 +322,21 @@ export default function Lead({ onSelectLead }: LeadProps) {
 
   return (
     <div className="flex-1 overflow-auto px-8 pb-8 max-md:px-4 max-md:pb-4 mt-8">
+      {/* ── Header bar with Create button ── */}
+      <div className="flex items-center justify-between mb-4">
+        <div />
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="group flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer transition-all bg-white text-black border-none hover:bg-neutral-200 hover:-translate-y-px hover:shadow-[0_4px_14px_rgba(255,255,255,0.15)]"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:rotate-90">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Create New Lead
+        </button>
+      </div>
+
       <div className="border border-neutral-800 rounded-lg overflow-x-auto hide-scrollbar bg-neutral-950 mt-0 animate-fade-in-up">
         <table className="w-full border-collapse table-auto">
           <thead className="sticky top-0 z-[2]">
@@ -313,6 +416,10 @@ export default function Lead({ onSelectLead }: LeadProps) {
                       </span>
                     ) : '—'}
                   </td>
+                  {/* Interested In */}
+                  <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">
+                    {row.interestedIn ? (INTERESTED_IN_LABELS[row.interestedIn] || row.interestedIn) : '—'}
+                  </td>
                   {/* Agent Assigned */}
                   <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">
                     {row.agentName || '—'}
@@ -365,6 +472,14 @@ export default function Lead({ onSelectLead }: LeadProps) {
       {selectedLead && (
         <LeadDetailSidebar lead={selectedLead} onClose={() => setSelectedLead(null)} />
       )}
+
+      {/* ── Create Lead Modal ── */}
+      <CreateLeadModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSubmit={handleCreateLead}
+        isSubmitting={isCreating}
+      />
     </div>
   );
 }

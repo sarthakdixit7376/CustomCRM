@@ -8,3 +8,5 @@ export { default as Documents } from './Documents';
 export { default as NewCustomerModal } from './NewCustomerModal';
 export { default as DeleteCustomerModal } from './DeleteCustomerModal';
 export { default as Lead } from './Lead';
+export { default as CreateLeadModal } from './CreateLeadModal';
+export { default as LeadQuotes } from './LeadQuotes';

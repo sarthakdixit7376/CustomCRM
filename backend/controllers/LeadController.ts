@@ -15,6 +15,13 @@ export const getLeads = async (req: Request, res: Response): Promise<void> => {
 
 export const createLead = async (req: Request, res: Response): Promise<void> => {
   try {
+    const raw = Array.isArray(req.body) ? req.body[0] : req.body;
+    const age = Number(raw?.age);
+    if (!raw?.age || Number.isNaN(age)) {
+      res.status(400).json({ error: 'age is required and must be a number' });
+      return;
+    }
+
     const newLead = await LeadModel.createLead(req.body, req.user!.id);
     res.status(201).json(newLead);
   } catch (error) {
@@ -91,6 +98,39 @@ export const updateLeadAgent = async (req: Request, res: Response): Promise<void
     res.json(updated);
   } catch (error) {
     console.error('Error updating lead agent:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+export const updateLeadQuote = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const existing = await LeadModel.getLeadById(req.params.id);
+    if (!existing) {
+      res.status(404).json({ error: 'Lead not found' });
+      return;
+    }
+    if (req.user!.role !== 'ADMIN' && existing.agentId !== req.user!.id) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const { mandatoryPrice, thirdPartyPrice, complimentaryPrice } = req.body;
+    const fields = { mandatoryPrice, thirdPartyPrice, complimentaryPrice };
+    const data: Record<string, number> = {};
+    for (const [key, value] of Object.entries(fields)) {
+      if (value === undefined) continue;
+      const num = Number(value);
+      if (Number.isNaN(num)) {
+        res.status(400).json({ error: `${key} must be a number` });
+        return;
+      }
+      data[key] = num;
+    }
+
+    const updated = await LeadModel.updateLeadQuote(req.params.id, data);
+    res.json(updated);
+  } catch (error) {
+    console.error('Error updating lead quote:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
