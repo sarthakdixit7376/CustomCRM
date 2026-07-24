@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import type { LeadRow } from './Lead';
 
 /** Every field on LeadRow except the ones already shown as table columns (phoneNumber, leadName, leadStatus, id). */
@@ -91,15 +92,12 @@ export default function LeadDetailSidebar({ lead, onClose }: LeadDetailSidebarPr
             className="text-text-muted hover:text-text transition-colors p-1.5 rounded hover:bg-neutral-100"
             title="Close"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 6 6 18"></path>
-              <path d="m6 6 12 12"></path>
-            </svg>
+            <X size={18} />
           </button>
         </div>
 
-        <div className="px-6 py-5">
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+        <div className="px-6 py-5 max-sm:px-4">
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 max-[380px]:grid-cols-1">
             {DETAIL_FIELDS.map(([label, key]) => (
               <div key={key}>
                 <dt className="text-[11px] text-text-muted mb-0.5">{label}</dt>

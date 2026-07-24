@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { UserPlus, X, Car, Plus, Loader2, AlertTriangle } from 'lucide-react';
 
 /* ───────── Field Configuration ───────── */
 export interface LeadFieldConfig {
@@ -138,7 +139,7 @@ function FormField({ field, value, error, onChange, inputClassName, errorClassNa
         />
       )}
       {error && (
-        <span className={errorClassName}>⚠ {error}</span>
+        <span className={errorClassName}><AlertTriangle size={12} /> {error}</span>
       )}
     </div>
   );
@@ -229,12 +230,7 @@ export default function CreateLeadModal({ isOpen, onClose, onSubmit, isSubmittin
         <div className="flex items-center justify-between px-7 py-5 border-b border-border max-sm:px-5">
           <div className="flex items-center gap-3.5">
             <div className="w-[42px] h-[42px] rounded-xl bg-success-50 border border-success-100 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-success-600">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <line x1="19" y1="8" x2="19" y2="14" />
-                <line x1="22" y1="11" x2="16" y2="11" />
-              </svg>
+              <UserPlus size={20} className="text-success-600" />
             </div>
             <div>
               <h2 className="m-0 text-xl font-bold text-text tracking-tight">Create New Lead</h2>
@@ -242,17 +238,17 @@ export default function CreateLeadModal({ isOpen, onClose, onSubmit, isSubmittin
             </div>
           </div>
           <button
-            className="w-9 h-9 rounded-lg bg-transparent border border-transparent text-text-muted text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-neutral-100 hover:border-border hover:text-text"
+            className="w-9 h-9 rounded-lg bg-transparent border border-transparent text-text-muted cursor-pointer flex items-center justify-center transition-all hover:bg-neutral-100 hover:border-border hover:text-text"
             onClick={onClose}
           >
-            ✕
+            <X size={18} />
           </button>
         </div>
 
         {/* ── Body ── */}
         <div className="flex-1 overflow-y-auto p-7 max-sm:p-5 [&::-webkit-scrollbar]:w-[5px] [&::-webkit-scrollbar-track]:bg-surface [&::-webkit-scrollbar-thumb]:bg-neutral-300 [&::-webkit-scrollbar-thumb]:rounded">
           <div className="flex items-center gap-2 text-xs font-semibold text-text-muted uppercase tracking-wider mb-4 pb-2.5 border-b border-border">
-            <span className="text-sm">🚗</span> Lead Information
+            <Car size={14} /> Lead Information
           </div>
           <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
             {LEAD_FORM_FIELDS.map((field) => (
@@ -286,14 +282,13 @@ export default function CreateLeadModal({ isOpen, onClose, onSubmit, isSubmittin
           >
             {isSubmitting ? (
               <>
-                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
+                <Loader2 size={16} className="animate-spin" />
                 Creating…
               </>
             ) : (
-              '+ Create Lead'
+              <>
+                <Plus size={16} strokeWidth={2.5} /> Create Lead
+              </>
             )}
           </button>
         </div>
