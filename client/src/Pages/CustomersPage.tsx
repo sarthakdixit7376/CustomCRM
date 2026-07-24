@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Plus, CheckCircle2, XCircle } from 'lucide-react';
 import {
   CustomerList,
   CustomerCard,
@@ -148,16 +149,16 @@ export default function CustomersPage() {
 
   return (
     <div className="font-sans bg-surface-muted text-text h-full flex flex-col">
-      <div className="px-8 pt-6 pb-2 border-b border-border flex items-center justify-between">
+      <div className="px-8 pt-6 pb-2 border-b border-border flex items-center justify-between gap-3 flex-wrap max-md:px-4 max-md:pt-4">
         <div>
-          <h1 className="text-2xl font-bold text-text">Customers</h1>
-          <p className="text-sm text-text-muted mt-1">Manage your clients and their policies</p>
+          <h1 className="text-2xl font-bold text-text max-md:text-xl">Customers</h1>
+          <p className="text-sm text-text-muted mt-1 max-md:text-xs">Manage your clients and their policies</p>
         </div>
         <button
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary-600 text-white border-none cursor-pointer transition-all duration-150 hover:bg-primary-700 hover:-translate-y-px hover:shadow-card"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary-600 text-white border-none cursor-pointer transition-all duration-150 hover:bg-primary-700 hover:-translate-y-px hover:shadow-card max-md:px-4 max-md:py-2"
           onClick={() => setIsNewModalOpen(true)}
         >
-          <span className="text-lg leading-none">+</span> New Customer
+          <Plus size={16} strokeWidth={2.5} /> New Customer
         </button>
       </div>
 
@@ -193,7 +194,7 @@ export default function CustomersPage() {
 
       {/* Toasts */}
       {toasts.length > 0 && (
-        <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-[1000]">
+        <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-[1000] max-md:left-4 max-md:right-4 max-md:bottom-4">
           {toasts.map((toast) => (
             <div
               key={toast.id}
@@ -201,7 +202,9 @@ export default function CustomersPage() {
                 toast.type === 'success' ? 'border-l-4 border-l-success-500' : 'border-l-4 border-l-danger-500'
               }`}
             >
-              <span className="text-base">{toast.type === 'success' ? '✅' : '❌'}</span>
+              {toast.type === 'success'
+                ? <CheckCircle2 size={18} className="text-success-500 shrink-0" />
+                : <XCircle size={18} className="text-danger-500 shrink-0" />}
               {toast.message}
             </div>
           ))}

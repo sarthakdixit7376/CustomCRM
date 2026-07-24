@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Search, ChevronDown, X, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import DeleteCustomerModal from './DeleteCustomerModal';
 
 /* ───────── Types ───────── */
@@ -56,7 +57,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
       <div className="px-8 py-4 flex flex-wrap items-center gap-3 border-b border-border max-md:flex-col max-md:items-stretch max-md:px-4">
         {/* Search */}
         <div className="relative flex-1 min-w-[240px] max-w-[420px] max-md:max-w-full">
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-base pointer-events-none">🔍</span>
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
           <input
             type="text"
             className="w-full py-2.5 pr-4 pl-10 text-sm text-text bg-surface border border-border rounded-lg outline-none transition-all placeholder:text-neutral-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
@@ -78,7 +79,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
               }`}
               onClick={() => { setShowTypeDropdown(!showTypeDropdown); setShowCompanyDropdown(false); }}
             >
-              <span className="text-sm">▾</span> Policy: {selectedType}
+              <ChevronDown size={14} /> Policy: {selectedType}
             </button>
             {showTypeDropdown && (
               <div className="absolute top-full left-0 mt-1 bg-surface border border-border rounded-lg py-1 min-w-[160px] z-50 shadow-dropdown animate-dropdown-fade-in">
@@ -102,7 +103,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
               }`}
               onClick={() => { setShowCompanyDropdown(!showCompanyDropdown); setShowTypeDropdown(false); }}
             >
-              <span className="text-sm">▾</span> Company: {selectedCompany}
+              <ChevronDown size={14} /> Company: {selectedCompany}
             </button>
             {showCompanyDropdown && (
               <div className="absolute top-full left-0 mt-1 bg-surface border border-border rounded-lg py-1 min-w-[160px] z-50 shadow-dropdown animate-dropdown-fade-in">
@@ -122,7 +123,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
               className="inline-flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium text-text-muted bg-surface border border-border rounded-lg cursor-pointer transition-all hover:bg-neutral-50 hover:text-text"
               onClick={() => { setSelectedType('All'); setSelectedCompany('All'); }}
             >
-              ✕ Clear
+              <X size={14} /> Clear
             </button>
           )}
         </div>
@@ -136,7 +137,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
 
       {/* Table */}
       <div className="flex-1 overflow-auto px-8 pb-8 max-md:px-4 max-md:pb-4 mt-8">
-        <div className="border border-border rounded-lg overflow-hidden bg-surface shadow-card mt-0 animate-fade-in-up">
+        <div className="border border-border rounded-lg overflow-x-auto hide-scrollbar bg-surface shadow-card mt-0 animate-fade-in-up">
           <table className="w-full border-collapse table-auto">
             <thead className="sticky top-0 z-[2]">
               <tr>
@@ -145,7 +146,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                 </th>
                 {['Customer', 'Policy Number', 'Policy Type', 'Insurance Company', 'Start Date', 'End Date', 'Type', 'Status'].map((h) => (
                   <th key={h} className="group px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap select-none cursor-pointer hover:text-text transition-colors">
-                    <span className="inline-flex items-center gap-1.5">{h} <span className="text-[10px] opacity-0 group-hover:opacity-50 transition-opacity">▾</span></span>
+                    <span className="inline-flex items-center gap-1.5">{h} <ChevronDown size={12} className="opacity-0 group-hover:opacity-50 transition-opacity" /></span>
                   </th>
                 ))}
                 <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border" style={{ width: 60 }}>Actions</th>
@@ -189,10 +190,10 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                     </td>
                     <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                       <button
-                        className="text-text-muted hover:text-danger-600 bg-transparent border-none cursor-pointer transition-colors text-base"
+                        className="text-text-muted hover:text-danger-600 bg-transparent border-none cursor-pointer transition-colors p-1.5 rounded hover:bg-danger-50"
                         title="Delete customer"
                         onClick={() => setDeleteTarget(row)}
-                      >🗑️</button>
+                      ><Trash2 size={16} /></button>
                     </td>
                   </tr>
                 ))
@@ -205,7 +206,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
           </table>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between px-4 py-3.5 bg-neutral-50 border-t border-border text-xs text-text-muted">
+          <div className="flex items-center justify-between px-4 py-3.5 bg-neutral-50 border-t border-border text-xs text-text-muted flex-wrap gap-2">
             <div className="flex items-center gap-2">
               Rows per page:
               <select className="px-2 py-1 text-xs text-text bg-surface border border-border rounded outline-none cursor-pointer" defaultValue={10}>
@@ -216,9 +217,9 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
               </select>
             </div>
             <div className="flex items-center gap-1">
-              <button className="w-8 h-8 text-sm text-text-muted bg-transparent border-none rounded cursor-pointer transition-all hover:bg-neutral-200 disabled:opacity-30" disabled>‹</button>
+              <button className="w-8 h-8 flex items-center justify-center text-text-muted bg-transparent border-none rounded cursor-pointer transition-all hover:bg-neutral-200 disabled:opacity-30" disabled><ChevronLeft size={14} /></button>
               <button className="w-8 h-8 text-sm font-semibold text-white bg-primary-600 rounded cursor-pointer">1</button>
-              <button className="w-8 h-8 text-sm text-text-muted bg-transparent border-none rounded cursor-pointer transition-all hover:bg-neutral-200 disabled:opacity-30" disabled>›</button>
+              <button className="w-8 h-8 flex items-center justify-center text-text-muted bg-transparent border-none rounded cursor-pointer transition-all hover:bg-neutral-200 disabled:opacity-30" disabled><ChevronRight size={14} /></button>
             </div>
           </div>
         </div>

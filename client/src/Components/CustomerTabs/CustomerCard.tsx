@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Save, Pencil, Printer, Phone, Smartphone, User } from 'lucide-react';
 import type { LeadRow } from './Lead';
 import { API_BASE } from '../../config';
 
@@ -173,10 +174,10 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
             }
           }}
         >
-          {isEditing ? '💾 Save Changes' : '✏️ Edit Customer'}
+          {isEditing ? <><Save size={16} /> Save Changes</> : <><Pencil size={16} /> Edit Customer</>}
         </button>
         <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-text-muted bg-surface border border-border rounded-lg cursor-pointer transition-all hover:bg-neutral-50 hover:text-text">
-          🖨️ Print
+          <Printer size={16} /> Print
         </button>
       </div>
 
@@ -190,7 +191,7 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
               className="w-20 h-20 rounded-full bg-primary-50 border-2 border-primary-100 flex items-center justify-center text-3xl text-primary-700 shrink-0"
               style={customer ? { fontSize: '28px', fontWeight: 'bold' } : {}}
             >
-              {localData.avatar}
+              {localData.name ? localData.avatar : <User size={32} className="text-primary-400" />}
             </div>
             <div className="text-lg font-bold text-text text-center">
               {isEditing ? (
@@ -225,7 +226,7 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
           <div className="text-sm font-bold text-text mb-5 pb-3 border-b border-border flex items-center justify-between">
             <span>Additional Details</span>
             <span className="text-xs font-medium text-text-muted cursor-pointer hover:text-text transition-colors" onClick={() => setIsEditing(!isEditing)}>
-              {isEditing ? 'Done' : '✏️ Edit'}
+              {isEditing ? 'Done' : <span className="inline-flex items-center gap-1"><Pencil size={12} /> Edit</span>}
             </span>
           </div>
           <div className="grid grid-cols-2 max-md:grid-cols-1">
@@ -266,7 +267,7 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
         <div className="grid grid-cols-2 gap-x-8 gap-y-3 max-md:grid-cols-1">
           {localData.contacts.map((c: any, i: number) => (
             <div key={i} className="flex items-center gap-3.5 py-2.5 border-b border-border last:border-b-0">
-              <span className="text-base text-text-muted w-6 text-center shrink-0">{c.icon}</span>
+              <span className="text-text-muted w-6 flex justify-center shrink-0">{c.type === 'phone' ? <Phone size={16} /> : <Smartphone size={16} />}</span>
               {isEditing ? (
                 <input type="text" className={inputClass} value={c.value} onChange={(e) => handleContactChange(i, e.target.value)} />
               ) : (
