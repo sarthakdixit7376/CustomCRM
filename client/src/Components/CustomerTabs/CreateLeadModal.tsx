@@ -45,7 +45,7 @@ export const LEAD_FORM_FIELDS: LeadFieldConfig[] = [
     key: 'age',
     label: 'Age',
     type: 'number',
-    placeholder: 'e.g., 30',
+    placeholder: 'Calculated from date of birth',
     required: true,
   },
   {
@@ -81,6 +81,21 @@ export interface CreateLeadModalProps {
   isSubmitting?: boolean;
 }
 
+/** Calculates whole years elapsed since a YYYY-MM-DD date of birth. */
+function calculateAge(dateOfBirth: string): string {
+  const dob = new Date(dateOfBirth);
+  if (isNaN(dob.getTime())) return '';
+
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const hasHadBirthdayThisYear =
+    today.getMonth() > dob.getMonth() ||
+    (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate());
+  if (!hasHadBirthdayThisYear) age -= 1;
+
+  return age >= 0 ? String(age) : '';
+}
+
 /* ───────── Reusable FormField ───────── */
 interface FormFieldProps {
   field: LeadFieldConfig;
@@ -89,9 +104,10 @@ interface FormFieldProps {
   onChange: (key: string, value: string) => void;
   inputClassName: string;
   errorClassName: string;
+  readOnly?: boolean;
 }
 
-function FormField({ field, value, error, onChange, inputClassName, errorClassName }: FormFieldProps) {
+function FormField({ field, value, error, onChange, inputClassName, errorClassName, readOnly }: FormFieldProps) {
   return (
     <div className={`flex flex-col gap-1.5 ${field.colSpan === 'full' ? 'col-span-full' : ''}`}>
       <label className="text-xs font-medium text-neutral-400">
@@ -114,9 +130,10 @@ function FormField({ field, value, error, onChange, inputClassName, errorClassNa
       ) : (
         <input
           type={field.type}
-          className={inputClassName}
+          className={`${inputClassName} ${readOnly ? 'opacity-60 cursor-not-allowed' : ''}`}
           placeholder={field.placeholder}
           value={value}
+          readOnly={readOnly}
           onChange={(e) => onChange(field.key, e.target.value)}
         />
       )}
@@ -157,11 +174,16 @@ export default function CreateLeadModal({ isOpen, onClose, onSubmit, isSubmittin
   }, [isOpen]);
 
   const handleChange = useCallback((key: string, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+      ...(key === 'date_of_birth' ? { age: calculateAge(value) } : {}),
+    }));
     setErrors((prev) => {
-      if (!prev[key]) return prev;
+      const keysToClear = key === 'date_of_birth' ? [key, 'age'] : [key];
+      if (!keysToClear.some((k) => prev[k])) return prev;
       const next = { ...prev };
-      delete next[key];
+      for (const k of keysToClear) delete next[k];
       return next;
     });
   }, []);
@@ -242,6 +264,7 @@ export default function CreateLeadModal({ isOpen, onClose, onSubmit, isSubmittin
                 onChange={handleChange}
                 inputClassName={`${inputBase} ${errors[field.key] ? inputErr : inputOk}`}
                 errorClassName={errorText}
+                readOnly={field.key === 'age'}
               />
             ))}
           </div>
