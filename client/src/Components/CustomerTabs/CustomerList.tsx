@@ -53,13 +53,13 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
   return (
     <>
       {/* Toolbar */}
-      <div className="px-8 py-4 flex flex-wrap items-center gap-3 border-b border-neutral-800 max-md:flex-col max-md:items-stretch max-md:px-4">
+      <div className="px-8 py-4 flex flex-wrap items-center gap-3 border-b border-border max-md:flex-col max-md:items-stretch max-md:px-4">
         {/* Search */}
         <div className="relative flex-1 min-w-[240px] max-w-[420px] max-md:max-w-full">
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 text-base pointer-events-none">🔍</span>
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-base pointer-events-none">🔍</span>
           <input
             type="text"
-            className="w-full py-2.5 pr-4 pl-10 text-sm text-white bg-neutral-950 border border-neutral-800 rounded-lg outline-none transition-all placeholder:text-neutral-600 focus:border-neutral-600 focus:bg-neutral-900"
+            className="w-full py-2.5 pr-4 pl-10 text-sm text-text bg-surface border border-border rounded-lg outline-none transition-all placeholder:text-neutral-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
             placeholder="Search by name, policy, type, company..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -73,18 +73,18 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
             <button
               className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium rounded-lg cursor-pointer transition-all whitespace-nowrap ${
                 selectedType !== 'All'
-                  ? 'bg-white text-black'
-                  : 'text-neutral-400 bg-neutral-950 border border-neutral-800 hover:bg-neutral-900 hover:text-white'
+                  ? 'bg-primary-600 text-white'
+                  : 'text-text-muted bg-surface border border-border hover:bg-neutral-50 hover:text-text'
               }`}
               onClick={() => { setShowTypeDropdown(!showTypeDropdown); setShowCompanyDropdown(false); }}
             >
               <span className="text-sm">▾</span> Policy: {selectedType}
             </button>
             {showTypeDropdown && (
-              <div className="absolute top-full left-0 mt-1 bg-neutral-900 border border-neutral-700 rounded-lg py-1 min-w-[160px] z-50 shadow-2xl animate-dropdown-fade-in">
+              <div className="absolute top-full left-0 mt-1 bg-surface border border-border rounded-lg py-1 min-w-[160px] z-50 shadow-dropdown animate-dropdown-fade-in">
                 {POLICY_TYPES.map((type) => (
                   <div key={type}
-                    className={`px-4 py-2 text-[13px] cursor-pointer transition-colors hover:bg-neutral-800 ${selectedType === type ? 'text-white bg-neutral-800' : 'text-neutral-400'}`}
+                    className={`px-4 py-2 text-[13px] cursor-pointer transition-colors hover:bg-neutral-50 ${selectedType === type ? 'text-primary-700 bg-primary-50 font-medium' : 'text-text-muted'}`}
                     onClick={() => { setSelectedType(type); setShowTypeDropdown(false); }}
                   >{type}</div>
                 ))}
@@ -97,18 +97,18 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
             <button
               className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium rounded-lg cursor-pointer transition-all whitespace-nowrap ${
                 selectedCompany !== 'All'
-                  ? 'bg-white text-black'
-                  : 'text-neutral-400 bg-neutral-950 border border-neutral-800 hover:bg-neutral-900 hover:text-white'
+                  ? 'bg-primary-600 text-white'
+                  : 'text-text-muted bg-surface border border-border hover:bg-neutral-50 hover:text-text'
               }`}
               onClick={() => { setShowCompanyDropdown(!showCompanyDropdown); setShowTypeDropdown(false); }}
             >
               <span className="text-sm">▾</span> Company: {selectedCompany}
             </button>
             {showCompanyDropdown && (
-              <div className="absolute top-full left-0 mt-1 bg-neutral-900 border border-neutral-700 rounded-lg py-1 min-w-[160px] z-50 shadow-2xl animate-dropdown-fade-in">
+              <div className="absolute top-full left-0 mt-1 bg-surface border border-border rounded-lg py-1 min-w-[160px] z-50 shadow-dropdown animate-dropdown-fade-in">
                 {INSURANCE_COMPANIES.map((company) => (
                   <div key={company}
-                    className={`px-4 py-2 text-[13px] cursor-pointer transition-colors hover:bg-neutral-800 ${selectedCompany === company ? 'text-white bg-neutral-800' : 'text-neutral-400'}`}
+                    className={`px-4 py-2 text-[13px] cursor-pointer transition-colors hover:bg-neutral-50 ${selectedCompany === company ? 'text-primary-700 bg-primary-50 font-medium' : 'text-text-muted'}`}
                     onClick={() => { setSelectedCompany(company); setShowCompanyDropdown(false); }}
                   >{company}</div>
                 ))}
@@ -119,7 +119,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
           {/* Clear */}
           {(selectedType !== 'All' || selectedCompany !== 'All') && (
             <button
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium text-neutral-500 bg-neutral-950 border border-neutral-800 rounded-lg cursor-pointer transition-all hover:bg-neutral-900 hover:text-white"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium text-text-muted bg-surface border border-border rounded-lg cursor-pointer transition-all hover:bg-neutral-50 hover:text-text"
               onClick={() => { setSelectedType('All'); setSelectedCompany('All'); }}
             >
               ✕ Clear
@@ -128,68 +128,68 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
         </div>
 
         {/* Results count */}
-        <div className="text-xs text-neutral-500 whitespace-nowrap ml-auto">
-          Showing <span className="text-white font-semibold">{filteredData.length}</span> of{' '}
-          <span className="text-white font-semibold">{customers.length}</span> records
+        <div className="text-xs text-text-muted whitespace-nowrap ml-auto">
+          Showing <span className="text-text font-semibold">{filteredData.length}</span> of{' '}
+          <span className="text-text font-semibold">{customers.length}</span> records
         </div>
       </div>
 
       {/* Table */}
       <div className="flex-1 overflow-auto px-8 pb-8 max-md:px-4 max-md:pb-4 mt-8">
-        <div className="border border-neutral-800 rounded-lg overflow-hidden bg-neutral-950 mt-0 animate-fade-in-up">
+        <div className="border border-border rounded-lg overflow-hidden bg-surface shadow-card mt-0 animate-fade-in-up">
           <table className="w-full border-collapse table-auto">
             <thead className="sticky top-0 z-[2]">
               <tr>
-                <th className="px-4 py-3.5 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-left bg-neutral-900 border-b border-neutral-800 select-none" style={{ width: 40 }}>
-                  <input type="checkbox" className="w-4 h-4 accent-white cursor-pointer" />
+                <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none" style={{ width: 40 }}>
+                  <input type="checkbox" className="w-4 h-4 accent-primary-600 cursor-pointer" />
                 </th>
                 {['Customer', 'Policy Number', 'Policy Type', 'Insurance Company', 'Start Date', 'End Date', 'Type', 'Status'].map((h) => (
-                  <th key={h} className="group px-4 py-3.5 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-left bg-neutral-900 border-b border-neutral-800 whitespace-nowrap select-none cursor-pointer hover:text-neutral-300 transition-colors">
+                  <th key={h} className="group px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap select-none cursor-pointer hover:text-text transition-colors">
                     <span className="inline-flex items-center gap-1.5">{h} <span className="text-[10px] opacity-0 group-hover:opacity-50 transition-opacity">▾</span></span>
                   </th>
                 ))}
-                <th className="px-4 py-3.5 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-left bg-neutral-900 border-b border-neutral-800" style={{ width: 60 }}>Actions</th>
+                <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border" style={{ width: 60 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredData.length > 0 ? (
                 filteredData.map((row, index) => (
-                  <tr key={`${row.id}-${index}`} className="transition-colors even:bg-[#050505] hover:bg-neutral-900">
-                    <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">
-                      <input type="checkbox" className="w-4 h-4 accent-white cursor-pointer" />
+                  <tr key={`${row.id}-${index}`} className="transition-colors hover:bg-neutral-50">
+                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">
+                      <input type="checkbox" className="w-4 h-4 accent-primary-600 cursor-pointer" />
                     </td>
-                    <td className="px-4 py-3 text-sm border-b border-neutral-800/50 whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                       <div className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => onSelectCustomer?.(row)}>
-                        <div className="w-7 h-7 rounded-md bg-neutral-800 border border-neutral-700 flex items-center justify-center text-[11px] font-bold text-neutral-400 shrink-0">
+                        <div className="w-7 h-7 rounded-md bg-primary-50 border border-primary-100 flex items-center justify-center text-[11px] font-bold text-primary-700 shrink-0">
                           {row.customerName.charAt(0)}
                         </div>
-                        <span className="text-white font-medium">{row.customerName}</span>
+                        <span className="text-text font-medium">{row.customerName}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-neutral-300 border-b border-neutral-800/50 whitespace-nowrap font-medium">{row.policyNumber}</td>
-                    <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.policyType}</td>
-                    <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm text-text border-b border-border whitespace-nowrap font-medium">{row.policyNumber}</td>
+                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{row.policyType}</td>
+                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-md bg-neutral-800 border border-neutral-700 flex items-center justify-center text-[11px] font-bold text-neutral-400 shrink-0">
+                        <div className="w-7 h-7 rounded-md bg-info-50 border border-info-100 flex items-center justify-center text-[11px] font-bold text-info-600 shrink-0">
                           {row.insuranceCompany.charAt(0)}
                         </div>
                         {row.insuranceCompany}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.startDate}</td>
-                    <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.endDate}</td>
-                    <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">{row.type}</td>
-                    <td className="px-4 py-3 text-sm border-b border-neutral-800/50 whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{row.startDate}</td>
+                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{row.endDate}</td>
+                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{row.type}</td>
+                    <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full ${
-                        row.status === 'Active' ? 'bg-white/10 text-neutral-200' : 'bg-white/5 text-neutral-500'
+                        row.status === 'Active' ? 'bg-success-50 text-success-600' : 'bg-neutral-100 text-text-muted'
                       }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${row.status === 'Active' ? 'bg-white' : 'bg-neutral-600'}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${row.status === 'Active' ? 'bg-success-500' : 'bg-neutral-400'}`} />
                         {row.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm border-b border-neutral-800/50 whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                       <button
-                        className="text-neutral-600 hover:text-white bg-transparent border-none cursor-pointer transition-colors text-base"
+                        className="text-text-muted hover:text-danger-600 bg-transparent border-none cursor-pointer transition-colors text-base"
                         title="Delete customer"
                         onClick={() => setDeleteTarget(row)}
                       >🗑️</button>
@@ -198,17 +198,17 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                 ))
               ) : (
                 <tr>
-                  <td colSpan={10} className="text-center py-10 text-neutral-600">No results found</td>
+                  <td colSpan={10} className="text-center py-10 text-text-muted">No results found</td>
                 </tr>
               )}
             </tbody>
           </table>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between px-4 py-3.5 bg-neutral-900 border-t border-neutral-800 text-xs text-neutral-500">
+          <div className="flex items-center justify-between px-4 py-3.5 bg-neutral-50 border-t border-border text-xs text-text-muted">
             <div className="flex items-center gap-2">
               Rows per page:
-              <select className="px-2 py-1 text-xs text-neutral-300 bg-neutral-950 border border-neutral-800 rounded outline-none cursor-pointer" defaultValue={10}>
+              <select className="px-2 py-1 text-xs text-text bg-surface border border-border rounded outline-none cursor-pointer" defaultValue={10}>
                 <option value={5}>5</option>
                 <option value={10}>10</option>
                 <option value={25}>25</option>
@@ -216,9 +216,9 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
               </select>
             </div>
             <div className="flex items-center gap-1">
-              <button className="w-8 h-8 text-sm text-neutral-500 bg-transparent border-none rounded cursor-pointer transition-all hover:bg-neutral-800 disabled:opacity-30" disabled>‹</button>
-              <button className="w-8 h-8 text-sm font-semibold text-black bg-white rounded cursor-pointer">1</button>
-              <button className="w-8 h-8 text-sm text-neutral-500 bg-transparent border-none rounded cursor-pointer transition-all hover:bg-neutral-800 disabled:opacity-30" disabled>›</button>
+              <button className="w-8 h-8 text-sm text-text-muted bg-transparent border-none rounded cursor-pointer transition-all hover:bg-neutral-200 disabled:opacity-30" disabled>‹</button>
+              <button className="w-8 h-8 text-sm font-semibold text-white bg-primary-600 rounded cursor-pointer">1</button>
+              <button className="w-8 h-8 text-sm text-text-muted bg-transparent border-none rounded cursor-pointer transition-all hover:bg-neutral-200 disabled:opacity-30" disabled>›</button>
             </div>
           </div>
         </div>

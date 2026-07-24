@@ -60,7 +60,7 @@ export default function LeadDetailSidebar({ lead, onClose }: LeadDetailSidebarPr
           href={String(value)}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-400 hover:text-blue-300 underline"
+          className="text-primary-600 hover:text-primary-700 underline"
         >
           View PDF
         </a>
@@ -72,23 +72,23 @@ export default function LeadDetailSidebar({ lead, onClose }: LeadDetailSidebarPr
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fade-in"
+        className="fixed inset-0 bg-neutral-900/40 backdrop-blur-sm z-40 animate-fade-in"
         onClick={onClose}
       />
-      <div className="fixed top-0 right-0 h-full w-full max-w-md bg-neutral-950 border-l border-neutral-800 z-50 overflow-y-auto shadow-2xl animate-slide-in-right">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800 sticky top-0 bg-neutral-950 z-10">
+      <div className="fixed top-0 right-0 h-full w-full max-w-md bg-surface border-l border-border z-50 overflow-y-auto shadow-dropdown animate-slide-in-right">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-surface z-10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-md bg-neutral-800 border border-neutral-700 flex items-center justify-center text-sm font-bold text-neutral-400 shrink-0">
+            <div className="w-9 h-9 rounded-md bg-primary-50 border border-primary-100 flex items-center justify-center text-sm font-bold text-primary-700 shrink-0">
               {lead.leadName ? lead.leadName.charAt(0).toUpperCase() : '?'}
             </div>
             <div>
-              <div className="text-white font-semibold leading-tight">{lead.leadName || 'Unknown'}</div>
-              <div className="text-xs text-neutral-500">{lead.phoneNumber}</div>
+              <div className="text-text font-semibold leading-tight">{lead.leadName || 'Unknown'}</div>
+              <div className="text-xs text-text-muted">{lead.phoneNumber}</div>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-neutral-500 hover:text-neutral-300 transition-colors p-1.5 rounded hover:bg-neutral-800"
+            className="text-text-muted hover:text-text transition-colors p-1.5 rounded hover:bg-neutral-100"
             title="Close"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -102,8 +102,8 @@ export default function LeadDetailSidebar({ lead, onClose }: LeadDetailSidebarPr
           <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
             {DETAIL_FIELDS.map(([label, key]) => (
               <div key={key}>
-                <dt className="text-[11px] text-neutral-500 mb-0.5">{label}</dt>
-                <dd className="text-sm text-neutral-200 break-words">{renderValue(key, lead[key])}</dd>
+                <dt className="text-[11px] text-text-muted mb-0.5">{label}</dt>
+                <dd className="text-sm text-text break-words">{renderValue(key, lead[key])}</dd>
               </div>
             ))}
           </dl>

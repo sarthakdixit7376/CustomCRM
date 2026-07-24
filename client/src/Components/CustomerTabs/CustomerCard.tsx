@@ -46,11 +46,11 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
   const getInitialData = (cust: any | null | undefined, ld: LeadRow | null | undefined) => {
     const displayName = cust?.customerName || ld?.leadName || DEFAULT_CUSTOMER.name;
     const insuranceAgent = cust?.insuranceAgent || cust?.insuranceCompany || DEFAULT_CUSTOMER.identity.find((f) => f.label === 'Insurance Agent')?.value || '';
-    
+
     let newContacts = cust?.contacts?.length ? cust.contacts.map((c: any) => ({
       icon: c.icon || '📱', value: c.value, label: c.label || displayName || (c.type === 'phone' ? 'Phone' : 'Mobile'), type: c.type
     })) : DEFAULT_CUSTOMER.contacts.map(c => ({ ...c }));
-    
+
     if (ld?.phoneNumber && !cust?.contacts?.length) {
       newContacts[0] = { ...newContacts[0], value: ld.phoneNumber, label: displayName || 'Mobile' };
     }
@@ -152,18 +152,18 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
     }
   };
 
-  const inputClass = "bg-neutral-900 border border-neutral-700 rounded-md text-white text-sm px-3 py-1.5 w-full max-w-[200px] outline-none transition-all focus:border-white focus:bg-neutral-800";
+  const inputClass = "bg-surface border border-border rounded-md text-text text-sm px-3 py-1.5 w-full max-w-[200px] outline-none transition-all focus:border-primary-400 focus:ring-2 focus:ring-primary-100";
 
   return (
     <div className="flex flex-col animate-fade-in-up">
 
       {/* Action Bar */}
-      <div className="flex items-center gap-3 px-8 py-4 border-b border-neutral-800 bg-neutral-950 flex-wrap max-md:px-4">
+      <div className="flex items-center gap-3 px-8 py-4 border-b border-border bg-surface flex-wrap max-md:px-4">
         <button
           className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg cursor-pointer transition-all ${
             isEditing
-              ? 'bg-white text-black hover:bg-neutral-200'
-              : 'text-neutral-400 bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 hover:text-white'
+              ? 'bg-primary-600 text-white hover:bg-primary-700'
+              : 'text-text-muted bg-surface border border-border hover:bg-neutral-50 hover:text-text'
           }`}
           onClick={() => {
             if (isEditing) {
@@ -175,28 +175,28 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
         >
           {isEditing ? '💾 Save Changes' : '✏️ Edit Customer'}
         </button>
-        <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-400 bg-neutral-900 border border-neutral-800 rounded-lg cursor-pointer transition-all hover:bg-neutral-800 hover:text-white">
+        <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-text-muted bg-surface border border-border rounded-lg cursor-pointer transition-all hover:bg-neutral-50 hover:text-text">
           🖨️ Print
         </button>
       </div>
 
       {/* Main Grid */}
-      <div className="grid grid-cols-[360px_1fr] border-b border-neutral-800 max-lg:grid-cols-1">
+      <div className="grid grid-cols-[360px_1fr] border-b border-border max-lg:grid-cols-1">
 
         {/* Left: Identity */}
-        <div className="px-8 py-6 border-r border-neutral-800 max-lg:border-r-0 max-lg:border-b max-md:px-4">
+        <div className="px-8 py-6 border-r border-border max-lg:border-r-0 max-lg:border-b max-md:px-4">
           <div className="flex flex-col items-center gap-3 mb-6">
             <div
-              className="w-20 h-20 rounded-full bg-neutral-800 border-2 border-neutral-700 flex items-center justify-center text-3xl text-white shrink-0"
+              className="w-20 h-20 rounded-full bg-primary-50 border-2 border-primary-100 flex items-center justify-center text-3xl text-primary-700 shrink-0"
               style={customer ? { fontSize: '28px', fontWeight: 'bold' } : {}}
             >
               {localData.avatar}
             </div>
-            <div className="text-lg font-bold text-white text-center">
+            <div className="text-lg font-bold text-text text-center">
               {isEditing ? (
                 <input
                   type="text"
-                  className="bg-neutral-900 border border-neutral-700 rounded-md text-white text-center text-lg font-bold max-w-[240px] px-3 py-1.5 w-full outline-none focus:border-white focus:bg-neutral-800"
+                  className="bg-surface border border-border rounded-md text-text text-center text-lg font-bold max-w-[240px] px-3 py-1.5 w-full outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                   value={localData.name}
                   onChange={(e) => setLocalData({ ...localData, name: e.target.value })}
                 />
@@ -206,12 +206,12 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
 
           <div className="flex flex-col">
             {localData.identity.map((field, i) => (
-              <div key={field.label} className="flex items-baseline justify-between py-2.5 border-b border-neutral-800/50 gap-3 last:border-b-0">
-                <span className="text-xs text-neutral-500 whitespace-nowrap shrink-0">{field.label}</span>
+              <div key={field.label} className="flex items-baseline justify-between py-2.5 border-b border-border gap-3 last:border-b-0">
+                <span className="text-xs text-text-muted whitespace-nowrap shrink-0">{field.label}</span>
                 {isEditing ? (
                   <input type="text" className={inputClass + " text-right"} value={field.value} onChange={(e) => handleIdentityChange(i, e.target.value)} />
                 ) : (
-                  <span className={`text-sm text-right break-words ${field.value ? 'text-white font-medium' : 'text-neutral-600'}`}>
+                  <span className={`text-sm text-right break-words ${field.value ? 'text-text font-medium' : 'text-neutral-400'}`}>
                     {field.value || '—'}
                   </span>
                 )}
@@ -222,9 +222,9 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
 
         {/* Right: Extra Details */}
         <div className="px-8 py-6 max-md:px-4">
-          <div className="text-sm font-bold text-white mb-5 pb-3 border-b border-neutral-800 flex items-center justify-between">
+          <div className="text-sm font-bold text-text mb-5 pb-3 border-b border-border flex items-center justify-between">
             <span>Additional Details</span>
-            <span className="text-xs font-medium text-neutral-500 cursor-pointer hover:text-white transition-colors" onClick={() => setIsEditing(!isEditing)}>
+            <span className="text-xs font-medium text-text-muted cursor-pointer hover:text-text transition-colors" onClick={() => setIsEditing(!isEditing)}>
               {isEditing ? 'Done' : '✏️ Edit'}
             </span>
           </div>
@@ -234,24 +234,24 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
               'Work Place': 'workPlace', 'Health Fund': 'healthFund', 'Car Brand': 'carBrand',
               'Signed Good Faith': 'signedGoodFaith',
             }) as [string, keyof typeof DEFAULT_CUSTOMER.extras][]).map(([label, key], idx) => (
-              <div key={key} className={`flex flex-col gap-1 py-3 border-b border-neutral-800/30 ${idx % 2 === 0 ? 'pr-6 border-r border-r-neutral-800/30' : 'pl-6'} max-md:pr-0 max-md:pl-0 max-md:border-r-0`}>
-                <span className="text-xs text-neutral-500">{label}</span>
+              <div key={key} className={`flex flex-col gap-1 py-3 border-b border-border ${idx % 2 === 0 ? 'pr-6 border-r border-r-border' : 'pl-6'} max-md:pr-0 max-md:pl-0 max-md:border-r-0`}>
+                <span className="text-xs text-text-muted">{label}</span>
                 {isEditing ? (
                   <input type="text" className={inputClass} value={String(localData.extras[key])} onChange={(e) => handleExtraChange(key, e.target.value)} />
                 ) : (
-                  <span className={`text-sm ${localData.extras[key] ? 'text-white font-medium' : 'text-neutral-600 italic'}`}>
+                  <span className={`text-sm ${localData.extras[key] ? 'text-text font-medium' : 'text-neutral-400 italic'}`}>
                     {localData.extras[key] || '—'}
                   </span>
                 )}
               </div>
             ))}
             {/* Checkbox field */}
-            <div className="flex flex-col gap-1 py-3 border-b border-neutral-800/30 pl-6 max-md:pl-0">
-              <span className="text-xs text-neutral-500">No Fixed Address</span>
+            <div className="flex flex-col gap-1 py-3 border-b border-border pl-6 max-md:pl-0">
+              <span className="text-xs text-text-muted">No Fixed Address</span>
               {isEditing ? (
-                <input type="checkbox" className="mt-1 w-4 h-4 accent-white" checked={Boolean(localData.extras.noFixedAddress)} onChange={(e) => handleExtraChange('noFixedAddress', e.target.checked)} />
+                <input type="checkbox" className="mt-1 w-4 h-4 accent-primary-600" checked={Boolean(localData.extras.noFixedAddress)} onChange={(e) => handleExtraChange('noFixedAddress', e.target.checked)} />
               ) : (
-                <span className="text-sm text-white font-medium inline-flex items-center gap-1.5 bg-neutral-800 px-2.5 py-0.5 rounded-full w-fit text-xs mt-1">
+                <span className="text-sm text-text font-medium inline-flex items-center gap-1.5 bg-neutral-100 px-2.5 py-0.5 rounded-full w-fit text-xs mt-1">
                   {localData.extras.noFixedAddress ? 'Yes' : 'No'}
                 </span>
               )}
@@ -261,18 +261,18 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
       </div>
 
       {/* Contact Information */}
-      <div className="px-8 py-6 border-b border-neutral-800 max-md:px-4">
-        <div className="text-sm font-bold text-white mb-5 pb-3 border-b border-neutral-800">Contact Information</div>
+      <div className="px-8 py-6 border-b border-border max-md:px-4">
+        <div className="text-sm font-bold text-text mb-5 pb-3 border-b border-border">Contact Information</div>
         <div className="grid grid-cols-2 gap-x-8 gap-y-3 max-md:grid-cols-1">
           {localData.contacts.map((c: any, i: number) => (
-            <div key={i} className="flex items-center gap-3.5 py-2.5 border-b border-neutral-800/30 last:border-b-0">
-              <span className="text-base text-neutral-500 w-6 text-center shrink-0">{c.icon}</span>
+            <div key={i} className="flex items-center gap-3.5 py-2.5 border-b border-border last:border-b-0">
+              <span className="text-base text-text-muted w-6 text-center shrink-0">{c.icon}</span>
               {isEditing ? (
                 <input type="text" className={inputClass} value={c.value} onChange={(e) => handleContactChange(i, e.target.value)} />
               ) : (
-                <span className="text-sm text-white font-medium tabular-nums">{c.value}</span>
+                <span className="text-sm text-text font-medium tabular-nums">{c.value}</span>
               )}
-              <span className="text-xs text-neutral-500 ml-auto">{c.label}</span>
+              <span className="text-xs text-text-muted ml-auto">{c.label}</span>
             </div>
           ))}
         </div>

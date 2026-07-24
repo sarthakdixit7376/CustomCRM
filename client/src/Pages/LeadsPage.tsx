@@ -18,20 +18,20 @@ export default function LeadsPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-black">
-      <div className="px-8 pt-6 pb-2 border-b border-neutral-800">
-        <h1 className="text-2xl font-bold text-white">Leads</h1>
-        <p className="text-sm text-neutral-400 mt-1">Manage and track incoming leads</p>
+    <div className="flex-1 flex flex-col h-full bg-surface-muted">
+      <div className="px-8 pt-6 pb-2 border-b border-border">
+        <h1 className="text-2xl font-bold text-text">Leads</h1>
+        <p className="text-sm text-text-muted mt-1">Manage and track incoming leads</p>
       </div>
 
-      <nav className="px-8 pt-5 flex items-center gap-1 overflow-x-auto relative border-b border-neutral-800 max-md:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <nav className="px-8 pt-5 flex items-center gap-1 overflow-x-auto relative border-b border-border max-md:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map((tab) => (
           <button
             key={tab.key}
-            className={`relative px-4 py-2.5 text-[13px] font-medium bg-transparent border-none rounded-t cursor-pointer whitespace-nowrap transition-all duration-150 ${
+            className={`relative px-4 py-2.5 text-[13px] font-medium bg-transparent border-none rounded-t-md cursor-pointer whitespace-nowrap transition-all duration-150 ${
               activeTab === tab.key
-                ? 'text-black bg-white font-semibold'
-                : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-900'
+                ? 'text-primary-700 bg-primary-50 font-semibold'
+                : 'text-text-muted hover:text-text hover:bg-neutral-50'
             }`}
             onClick={() => setActiveTab(tab.key)}
           >

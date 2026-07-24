@@ -95,26 +95,26 @@ export default function LeadQuotes() {
 
   return (
     <div className="flex-1 overflow-auto px-8 pb-8 max-md:px-4 max-md:pb-4 mt-8">
-      <div className="border border-neutral-800 rounded-lg overflow-x-auto hide-scrollbar bg-neutral-950 mt-0 animate-fade-in-up">
+      <div className="border border-border rounded-lg overflow-x-auto hide-scrollbar bg-surface shadow-card mt-0 animate-fade-in-up">
         <table className="w-full border-collapse table-auto">
           <thead className="sticky top-0 z-[2]">
             <tr>
-              <th className="px-4 py-3.5 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-left bg-neutral-900 border-b border-neutral-800 whitespace-nowrap">Phone Number</th>
-              <th className="px-4 py-3.5 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-left bg-neutral-900 border-b border-neutral-800 whitespace-nowrap">Lead Name</th>
+              <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap">Phone Number</th>
+              <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap">Lead Name</th>
               {PRICE_COLUMNS.map(([label]) => (
-                <th key={label} className="px-4 py-3.5 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-left bg-neutral-900 border-b border-neutral-800 whitespace-nowrap">{label}</th>
+                <th key={label} className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap">{label}</th>
               ))}
-              <th className="px-4 py-3.5 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-right bg-neutral-900 border-b border-neutral-800 whitespace-nowrap">Send</th>
+              <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-right bg-neutral-50 border-b border-border whitespace-nowrap">Send</th>
             </tr>
           </thead>
           <tbody>
             {status === 'loading' && leads.length === 0 ? (
               <tr className="animate-pulse">
-                <td colSpan={totalCols} className="p-0 border-b border-neutral-800/50">
+                <td colSpan={totalCols} className="p-0 border-b border-border">
                   <div className="flex w-full">
                     {Array.from({ length: totalCols }).map((_, i) => (
                       <div key={i} className="flex-1 px-4 py-3">
-                        <div className="h-4 bg-neutral-800 rounded w-full"></div>
+                        <div className="h-4 bg-neutral-200 rounded w-full"></div>
                       </div>
                     ))}
                   </div>
@@ -122,39 +122,39 @@ export default function LeadQuotes() {
               </tr>
             ) : status === 'error' && leads.length === 0 ? (
               <tr>
-                <td colSpan={totalCols} className="text-center py-10 text-red-500 text-sm">
+                <td colSpan={totalCols} className="text-center py-10 text-danger-600 text-sm">
                   Could not reach the leads API — retrying...
                 </td>
               </tr>
             ) : leads.length > 0 ? (
               leads.map((row) => (
-                <tr key={row.id} className="transition-colors even:bg-[#050505] hover:bg-neutral-900">
-                  <td className="px-4 py-3 text-sm text-neutral-300 border-b border-neutral-800/50 whitespace-nowrap font-medium">{row.phoneNumber}</td>
-                  <td className="px-4 py-3 text-sm border-b border-neutral-800/50 whitespace-nowrap">
+                <tr key={row.id} className="transition-colors hover:bg-neutral-50">
+                  <td className="px-4 py-3 text-sm text-text border-b border-border whitespace-nowrap font-medium">{row.phoneNumber}</td>
+                  <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-md bg-neutral-800 border border-neutral-700 flex items-center justify-center text-[11px] font-bold text-neutral-400 shrink-0">
+                      <div className="w-7 h-7 rounded-md bg-primary-50 border border-primary-100 flex items-center justify-center text-[11px] font-bold text-primary-700 shrink-0">
                         {row.leadName ? row.leadName.charAt(0).toUpperCase() : '?'}
                       </div>
-                      <span className="text-white font-medium">{row.leadName}</span>
+                      <span className="text-text font-medium">{row.leadName}</span>
                     </div>
                   </td>
                   {PRICE_COLUMNS.map(([, field]) => (
-                    <td key={field} className="px-4 py-3 text-sm border-b border-neutral-800/50 whitespace-nowrap">
+                    <td key={field} className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                       <input
                         key={`${row.id}-${field}-${row[field] ?? ''}`}
                         type="number"
                         defaultValue={row[field] ?? ''}
                         onBlur={(e) => handlePriceBlur(row.id, field, e.target.value)}
-                        className="w-24 px-2.5 py-1.5 text-sm text-white bg-neutral-900 border border-neutral-800 rounded-md outline-none transition-all hover:border-neutral-600 focus:border-white"
+                        className="w-24 px-2.5 py-1.5 text-sm text-text bg-surface border border-border rounded-md outline-none transition-all hover:border-neutral-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                       />
                     </td>
                   ))}
-                  <td className="px-4 py-3 text-sm border-b border-neutral-800/50 whitespace-nowrap text-right">
+                  <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap text-right">
                     <button
                       onClick={() => handleSend(row.id)}
                       disabled={sendingId === row.id}
                       title="Generate pricing PDF and send via WhatsApp"
-                      className="px-3 py-1.5 text-xs font-semibold rounded-md border border-neutral-700 bg-neutral-900 text-neutral-200 hover:bg-neutral-800 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-wait"
+                      className="px-3 py-1.5 text-xs font-semibold rounded-md border border-border bg-surface text-text hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-wait"
                     >
                       {sendingId === row.id ? 'Sending…' : 'Send'}
                     </button>
@@ -163,7 +163,7 @@ export default function LeadQuotes() {
               ))
             ) : (
               <tr>
-                <td colSpan={totalCols} className="text-center py-10 text-neutral-600">
+                <td colSpan={totalCols} className="text-center py-10 text-text-muted">
                   No leads yet — quotes will appear here automatically once leads are created
                 </td>
               </tr>

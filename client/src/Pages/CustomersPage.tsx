@@ -147,14 +147,14 @@ export default function CustomersPage() {
   const ActiveTabComponent = TAB_COMPONENTS[activeTab];
 
   return (
-    <div className="font-sans bg-black text-white h-full flex flex-col">
-      <div className="px-8 pt-6 pb-2 border-b border-neutral-800 flex items-center justify-between">
+    <div className="font-sans bg-surface-muted text-text h-full flex flex-col">
+      <div className="px-8 pt-6 pb-2 border-b border-border flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Customers</h1>
-          <p className="text-sm text-neutral-400 mt-1">Manage your clients and their policies</p>
+          <h1 className="text-2xl font-bold text-text">Customers</h1>
+          <p className="text-sm text-text-muted mt-1">Manage your clients and their policies</p>
         </div>
         <button
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-white text-black border-none cursor-pointer transition-all duration-150 hover:bg-neutral-200 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(255,255,255,0.12)]"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary-600 text-white border-none cursor-pointer transition-all duration-150 hover:bg-primary-700 hover:-translate-y-px hover:shadow-card"
           onClick={() => setIsNewModalOpen(true)}
         >
           <span className="text-lg leading-none">+</span> New Customer
@@ -162,21 +162,21 @@ export default function CustomersPage() {
       </div>
 
       {/* Tabs */}
-      <nav className="px-8 pt-5 flex items-center gap-1 overflow-x-auto relative border-b border-neutral-800 max-md:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <nav className="px-8 pt-5 flex items-center gap-1 overflow-x-auto relative border-b border-border max-md:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {tabsWithBadge.map((tab) => (
           <button
             key={tab.key}
-            className={`relative px-4 py-2.5 text-[13px] font-medium bg-transparent border-none rounded-t cursor-pointer whitespace-nowrap transition-all duration-150 ${
+            className={`relative px-4 py-2.5 text-[13px] font-medium bg-transparent border-none rounded-t-md cursor-pointer whitespace-nowrap transition-all duration-150 ${
               activeTab === tab.key
-                ? 'text-black bg-white font-semibold'
-                : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-900'
+                ? 'text-primary-700 bg-primary-50 font-semibold'
+                : 'text-text-muted hover:text-text hover:bg-neutral-50'
             }`}
             onClick={() => setActiveTab(tab.key)}
           >
             {tab.label}
             {tab.badge !== null && (
               <span className={`ml-1.5 px-2 py-0.5 text-[11px] font-semibold rounded-full ${
-                activeTab === tab.key ? 'bg-black/20 text-black' : 'bg-neutral-800 text-neutral-400'
+                activeTab === tab.key ? 'bg-primary-600/15 text-primary-700' : 'bg-neutral-100 text-text-muted'
               }`}>
                 {tab.badge}
               </span>
@@ -197,8 +197,8 @@ export default function CustomersPage() {
           {toasts.map((toast) => (
             <div
               key={toast.id}
-              className={`flex items-center gap-3 px-5 py-3.5 bg-neutral-900 border border-neutral-800 rounded-lg text-white text-sm font-medium shadow-xl animate-fade-in-up ${
-                toast.type === 'success' ? 'border-l-2 border-l-white' : 'border-l-2 border-l-neutral-500'
+              className={`flex items-center gap-3 px-5 py-3.5 bg-surface border border-border rounded-lg text-text text-sm font-medium shadow-dropdown animate-fade-in-up ${
+                toast.type === 'success' ? 'border-l-4 border-l-success-500' : 'border-l-4 border-l-danger-500'
               }`}
             >
               <span className="text-base">{toast.type === 'success' ? '✅' : '❌'}</span>

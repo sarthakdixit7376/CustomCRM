@@ -22,14 +22,14 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-black text-white font-sans overflow-hidden">
+    <div className="flex h-screen bg-surface-muted text-text font-sans overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-neutral-800 flex flex-col bg-neutral-950">
+      <aside className="w-64 border-r border-border flex flex-col bg-surface">
         <div className="p-6 flex items-center gap-3">
           <img src={logo} alt="Logo" className="w-8 h-8 object-contain" />
           <h1 className="text-xl font-bold tracking-tight">
-            <span>Mdar</span>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">Ai</span>
+            <span className="text-text">Mdar</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-700">Ai</span>
           </h1>
         </div>
 
@@ -39,8 +39,8 @@ export default function AppLayout() {
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:text-white hover:bg-neutral-900'
+                `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-text-muted hover:text-text hover:bg-neutral-50'
                 }`
               }
             >
@@ -50,15 +50,15 @@ export default function AppLayout() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-neutral-800 mt-auto">
+        <div className="p-4 border-t border-border mt-auto">
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-white">{user?.name}</span>
-              <span className="text-xs text-neutral-500">{user?.role === 'ADMIN' ? 'Administrator' : 'Agent'}</span>
+              <span className="text-sm font-medium text-text">{user?.name}</span>
+              <span className="text-xs text-text-muted">{user?.role === 'ADMIN' ? 'Administrator' : 'Agent'}</span>
             </div>
             <button
               onClick={handleLogout}
-              className="text-neutral-400 hover:text-white bg-neutral-900 hover:bg-neutral-800 p-2 rounded-lg transition-colors"
+              className="text-text-muted hover:text-text bg-neutral-50 hover:bg-neutral-100 border border-border p-2 rounded-md transition-colors"
               title="Log out"
             >
               ✕

@@ -13,8 +13,8 @@ export default function ProtectedRoute({ children, allow }: ProtectedRouteProps)
 
   if (loading) {
     return (
-      <div className="font-sans bg-black text-white min-h-screen flex items-center justify-center">
-        <p className="text-sm text-neutral-500">Loading…</p>
+      <div className="font-sans bg-surface-muted text-text min-h-screen flex items-center justify-center">
+        <p className="text-sm text-text-muted">Loading…</p>
       </div>
     );
   }

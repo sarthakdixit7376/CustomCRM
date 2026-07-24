@@ -329,7 +329,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
         <div />
         <button
           onClick={() => setIsCreateModalOpen(true)}
-          className="group flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer transition-all bg-white text-black border-none hover:bg-neutral-200 hover:-translate-y-px hover:shadow-[0_4px_14px_rgba(255,255,255,0.15)]"
+          className="group flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer transition-all bg-primary-600 text-white border-none hover:bg-primary-700 hover:-translate-y-px hover:shadow-card"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:rotate-90">
             <line x1="12" y1="5" x2="12" y2="19" />
@@ -339,17 +339,17 @@ export default function Lead({ onSelectLead }: LeadProps) {
         </button>
       </div>
 
-      <div className="border border-neutral-800 rounded-lg overflow-x-auto hide-scrollbar bg-neutral-950 mt-0 animate-fade-in-up">
+      <div className="border border-border rounded-lg overflow-x-auto hide-scrollbar bg-surface shadow-card mt-0 animate-fade-in-up">
         <table className="w-full border-collapse table-auto">
           <thead className="sticky top-0 z-[2]">
             <tr>
               {COLUMNS.map(([h]) => (
-                <th key={h} className="group px-4 py-3.5 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-left bg-neutral-900 border-b border-neutral-800 whitespace-nowrap select-none cursor-pointer hover:text-neutral-300 transition-colors">
+                <th key={h} className="group px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap select-none cursor-pointer hover:text-text transition-colors">
                   <span className="inline-flex items-center gap-1.5">{h} <span className="text-[10px] opacity-0 group-hover:opacity-50 transition-opacity">▾</span></span>
                 </th>
               ))}
               {isAdmin && (
-                <th className="px-4 py-3.5 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-right bg-neutral-900 border-b border-neutral-800 whitespace-nowrap">
+                <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-right bg-neutral-50 border-b border-border whitespace-nowrap">
                   Actions
                 </th>
               )}
@@ -358,11 +358,11 @@ export default function Lead({ onSelectLead }: LeadProps) {
           <tbody>
             {status === 'loading' && leads.length === 0 ? (
               <tr className="animate-pulse">
-                <td colSpan={totalCols} className="p-0 border-b border-neutral-800/50">
+                <td colSpan={totalCols} className="p-0 border-b border-border">
                   <div className="flex w-full">
                     {Array.from({ length: totalCols }).map((_, i) => (
                       <div key={i} className="flex-1 px-4 py-3">
-                        <div className="h-4 bg-neutral-800 rounded w-full"></div>
+                        <div className="h-4 bg-neutral-200 rounded w-full"></div>
                       </div>
                     ))}
                   </div>
@@ -370,40 +370,40 @@ export default function Lead({ onSelectLead }: LeadProps) {
               </tr>
             ) : status === 'error' && leads.length === 0 ? (
               <tr>
-                <td colSpan={totalCols} className="text-center py-10 text-red-500 text-sm">
+                <td colSpan={totalCols} className="text-center py-10 text-danger-600 text-sm">
                   Could not reach the leads API — retrying...
                 </td>
               </tr>
             ) : leads.length > 0 ? (
               leads.map((row) => {
                 const val = row.leadStatus;
-                let colorClass = 'text-neutral-400 bg-neutral-800/50 border-neutral-700';
-                if (val === 'NEW') colorClass = 'text-red-500 bg-red-500/10 border-red-500/20';
-                else if (val === 'IN_PROGRESS') colorClass = 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
-                else if (val === 'DONE') colorClass = 'text-green-500 bg-green-500/10 border-green-500/20';
+                let colorClass = 'text-text-muted bg-neutral-100 border-neutral-200';
+                if (val === 'NEW') colorClass = 'text-info-600 bg-info-50 border-info-100';
+                else if (val === 'IN_PROGRESS') colorClass = 'text-amber-600 bg-amber-50 border-amber-100';
+                else if (val === 'DONE') colorClass = 'text-success-600 bg-success-50 border-success-100';
 
                 const flowVal = row.leadFlowStatus;
-                const flowColorClass = 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+                const flowColorClass = 'text-violet-600 bg-violet-50 border-violet-100';
 
                 return (
                 <tr
                   key={row.id}
                   onClick={() => handleRowClick(row)}
-                  className="transition-colors even:bg-[#050505] hover:bg-neutral-900 cursor-pointer"
+                  className="transition-colors hover:bg-neutral-50 cursor-pointer"
                 >
                   {/* Phone Number */}
-                  <td className="px-4 py-3 text-sm text-neutral-300 border-b border-neutral-800/50 whitespace-nowrap font-medium">{row.phoneNumber}</td>
+                  <td className="px-4 py-3 text-sm text-text border-b border-border whitespace-nowrap font-medium">{row.phoneNumber}</td>
                   {/* Lead Name with avatar */}
-                  <td className="px-4 py-3 text-sm border-b border-neutral-800/50 whitespace-nowrap">
+                  <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-md bg-neutral-800 border border-neutral-700 flex items-center justify-center text-[11px] font-bold text-neutral-400 shrink-0">
+                      <div className="w-7 h-7 rounded-md bg-primary-50 border border-primary-100 flex items-center justify-center text-[11px] font-bold text-primary-700 shrink-0">
                         {row.leadName ? row.leadName.charAt(0).toUpperCase() : '?'}
                       </div>
-                      <span className="text-white font-medium">{row.leadName}</span>
+                      <span className="text-text font-medium">{row.leadName}</span>
                     </div>
                   </td>
                   {/* Status */}
-                  <td className="px-4 py-3 text-sm border-b border-neutral-800/50 whitespace-nowrap">
+                  <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                     {val ? (
                       <span className={`px-2 py-1 rounded-md text-xs font-medium border ${colorClass}`}>
                         {val.replace('_', ' ')}
@@ -411,7 +411,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
                     ) : '—'}
                   </td>
                   {/* Flow Status */}
-                  <td className="px-4 py-3 text-sm border-b border-neutral-800/50 whitespace-nowrap">
+                  <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                     {flowVal ? (
                       <span className={`px-2 py-1 rounded-md text-xs font-medium border ${flowColorClass}`}>
                         {flowVal.replace(/_/g, ' ')}
@@ -419,23 +419,23 @@ export default function Lead({ onSelectLead }: LeadProps) {
                     ) : '—'}
                   </td>
                   {/* Interested In */}
-                  <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">
+                  <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">
                     {row.interestedIn ? (INTERESTED_IN_LABELS[row.interestedIn] || row.interestedIn) : '—'}
                   </td>
                   {/* Agent Assigned */}
-                  <td className="px-4 py-3 text-sm text-neutral-400 border-b border-neutral-800/50 whitespace-nowrap">
+                  <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">
                     {row.agentName || '—'}
                   </td>
                   {/* Actions */}
                   {isAdmin && (
-                    <td className="px-4 py-3 text-sm border-b border-neutral-800/50 whitespace-nowrap text-right">
+                    <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-2">
                         <select
                           value={row.agentId || ''}
                           disabled={assigningId === row.id}
                           onClick={(e) => e.stopPropagation()}
                           onChange={(e) => handleAssignAgent(row.id, e.target.value, e)}
-                          className="bg-neutral-900 border border-neutral-700 rounded-md text-xs text-neutral-300 px-2 py-1.5 cursor-pointer hover:border-neutral-600 focus:outline-none focus:border-neutral-500 disabled:opacity-50 disabled:cursor-wait"
+                          className="bg-surface border border-border rounded-md text-xs text-text px-2 py-1.5 cursor-pointer hover:border-neutral-300 focus:outline-none focus:border-primary-400 disabled:opacity-50 disabled:cursor-wait"
                           title="Reassign lead"
                         >
                           {row.agentId == null && <option value="" disabled>Select agent…</option>}
@@ -445,7 +445,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
                         </select>
                         <button
                           onClick={(e) => handleDelete(row.id, e)}
-                          className="text-red-500 hover:text-red-400 transition-colors p-1.5 rounded hover:bg-red-500/10"
+                          className="text-danger-600 hover:text-danger-700 transition-colors p-1.5 rounded hover:bg-danger-50"
                           title="Delete Lead"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -462,7 +462,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
               })
             ) : (
               <tr>
-                <td colSpan={totalCols} className="text-center py-10 text-neutral-600">
+                <td colSpan={totalCols} className="text-center py-10 text-text-muted">
                   No leads yet — new submissions will appear here automatically
                 </td>
               </tr>

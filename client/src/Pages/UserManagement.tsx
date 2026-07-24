@@ -89,11 +89,11 @@ export default function UserManagement() {
   };
 
   return (
-    <div className="font-sans bg-black text-white min-h-screen flex flex-col">
+    <div className="font-sans bg-surface-muted text-text min-h-screen flex flex-col">
       <header className="px-8 pt-6 pb-4 flex items-center justify-between gap-4 max-md:px-4">
-        <h1 className="text-xl font-bold m-0">User Management</h1>
+        <h1 className="text-xl font-bold m-0 text-text">User Management</h1>
         <button
-          className="text-sm font-medium text-neutral-400 bg-transparent border border-neutral-700 rounded-lg px-4 py-2 cursor-pointer hover:bg-neutral-900"
+          className="text-sm font-medium text-text-muted bg-surface border border-border rounded-lg px-4 py-2 cursor-pointer hover:bg-neutral-50 hover:text-text"
           onClick={() => navigate('/')}
         >
           ← Back to CRM
@@ -101,42 +101,42 @@ export default function UserManagement() {
       </header>
 
       <div className="px-8 pb-8 flex flex-col gap-8 max-md:px-4">
-        <form onSubmit={handleCreate} className="flex flex-wrap items-end gap-3 bg-neutral-950 border border-neutral-800 rounded-xl p-5">
+        <form onSubmit={handleCreate} className="flex flex-wrap items-end gap-3 bg-surface border border-border rounded-xl p-5 shadow-card">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-neutral-400">Name</label>
+            <label className="text-xs font-medium text-text-muted">Name</label>
             <input
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-neutral-600"
+              className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text outline-none transition-colors focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-neutral-400">Email</label>
+            <label className="text-xs font-medium text-text-muted">Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-neutral-600"
+              className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text outline-none transition-colors focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-neutral-400">Temporary password</label>
+            <label className="text-xs font-medium text-text-muted">Temporary password</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-neutral-600"
+              className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text outline-none transition-colors focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-neutral-400">Role</label>
+            <label className="text-xs font-medium text-text-muted">Role</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as Role)}
-              className="bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-neutral-600"
+              className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text outline-none transition-colors focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
             >
               <option value="AGENT">Agent</option>
               <option value="ADMIN">Admin</option>
@@ -145,60 +145,62 @@ export default function UserManagement() {
           <button
             type="submit"
             disabled={submitting}
-            className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-white text-black border-none cursor-pointer hover:bg-neutral-200 disabled:opacity-50"
+            className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary-600 text-white border-none cursor-pointer hover:bg-primary-700 disabled:opacity-50"
           >
             {submitting ? 'Creating…' : 'Create user'}
           </button>
-          {error && <p className="text-sm text-red-400 m-0 basis-full">{error}</p>}
+          {error && <p className="text-sm text-danger-600 m-0 basis-full">{error}</p>}
         </form>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-lg border border-border bg-surface shadow-card">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="text-left text-neutral-500 border-b border-neutral-800">
-                <th className="py-2 pr-4 font-medium">Name</th>
-                <th className="py-2 pr-4 font-medium">Email</th>
-                <th className="py-2 pr-4 font-medium">Role</th>
-                <th className="py-2 pr-4 font-medium">Status</th>
-                <th className="py-2 pr-4 font-medium"></th>
+              <tr className="text-left text-text-muted bg-neutral-50 border-b border-border">
+                <th className="py-2.5 px-4 font-semibold text-xs uppercase tracking-wider">Name</th>
+                <th className="py-2.5 px-4 font-semibold text-xs uppercase tracking-wider">Email</th>
+                <th className="py-2.5 px-4 font-semibold text-xs uppercase tracking-wider">Role</th>
+                <th className="py-2.5 px-4 font-semibold text-xs uppercase tracking-wider">Status</th>
+                <th className="py-2.5 px-4 font-semibold text-xs uppercase tracking-wider"></th>
               </tr>
             </thead>
             <tbody>
               {users.map((u) => (
-                <tr key={u.id} className="border-b border-neutral-900">
-                  <td className="py-2.5 pr-4">{u.name}</td>
-                  <td className="py-2.5 pr-4 text-neutral-400">{u.email}</td>
-                  <td className="py-2.5 pr-4">
+                <tr key={u.id} className="border-b border-border last:border-b-0 hover:bg-neutral-50">
+                  <td className="py-2.5 px-4 text-text font-medium">{u.name}</td>
+                  <td className="py-2.5 px-4 text-text-muted">{u.email}</td>
+                  <td className="py-2.5 px-4">
                     <select
                       value={u.role}
                       onChange={(e) => changeRole(u, e.target.value as Role)}
-                      className="bg-neutral-900 border border-neutral-800 rounded px-2 py-1 text-xs text-white outline-none"
+                      className="bg-surface border border-border rounded px-2 py-1 text-xs text-text outline-none"
                     >
                       <option value="AGENT">Agent</option>
                       <option value="ADMIN">Admin</option>
                     </select>
                   </td>
-                  <td className="py-2.5 pr-4">
-                    <span className={u.isActive ? 'text-green-400' : 'text-neutral-500'}>
+                  <td className="py-2.5 px-4">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      u.isActive ? 'bg-success-50 text-success-600' : 'bg-neutral-100 text-text-muted'
+                    }`}>
                       {u.isActive ? 'Active' : 'Deactivated'}
                     </span>
                   </td>
-                  <td className="py-2.5 pr-4">
+                  <td className="py-2.5 px-4">
                     <div className="flex items-center gap-2">
                       <button
-                        className="text-xs font-medium text-neutral-400 bg-transparent border border-neutral-700 rounded px-3 py-1.5 cursor-pointer hover:bg-neutral-900"
+                        className="text-xs font-medium text-text-muted bg-surface border border-border rounded px-3 py-1.5 cursor-pointer hover:bg-neutral-50 hover:text-text"
                         onClick={() => toggleActive(u)}
                       >
                         {u.isActive ? 'Deactivate' : 'Reactivate'}
                       </button>
                       <button
-                        className="text-xs font-medium text-red-400 bg-transparent border border-red-900 rounded px-3 py-1.5 cursor-pointer hover:bg-red-950"
+                        className="text-xs font-medium text-danger-600 bg-danger-50 border border-danger-100 rounded px-3 py-1.5 cursor-pointer hover:bg-danger-100"
                         onClick={() => handleDelete(u)}
                       >
                         Delete
                       </button>
                       <button
-                        className="text-xs font-medium text-neutral-400 bg-transparent border border-neutral-700 rounded px-3 py-1.5 cursor-pointer hover:bg-neutral-900"
+                        className="text-xs font-medium text-text-muted bg-surface border border-border rounded px-3 py-1.5 cursor-pointer hover:bg-neutral-50 hover:text-text"
                         onClick={() => {
                           setResettingId(resettingId === u.id ? null : u.id);
                           setNewPassword('');
@@ -217,15 +219,15 @@ export default function UserManagement() {
                           placeholder="New password"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          className="bg-neutral-900 border border-neutral-800 rounded px-2 py-1.5 text-xs text-white outline-none focus:border-neutral-600"
+                          className="bg-surface border border-border rounded px-2 py-1.5 text-xs text-text outline-none focus:border-primary-400"
                         />
                         <button
-                          className="text-xs font-semibold bg-white text-black rounded px-3 py-1.5 cursor-pointer hover:bg-neutral-200"
+                          className="text-xs font-semibold bg-primary-600 text-white rounded px-3 py-1.5 cursor-pointer hover:bg-primary-700"
                           onClick={() => handleResetPassword(u.id)}
                         >
                           Save
                         </button>
-                        {resetError && <p className="text-xs text-red-400 m-0">{resetError}</p>}
+                        {resetError && <p className="text-xs text-danger-600 m-0">{resetError}</p>}
                       </div>
                     )}
                   </td>

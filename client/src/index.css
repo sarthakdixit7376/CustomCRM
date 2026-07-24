@@ -1,6 +1,92 @@
 /* ===== Global Reset & Base ===== */
 @import "tailwindcss";
 
+/* ===== Design Tokens (reference: BAFI dashboard mock) ===== */
+@theme {
+  /* Font */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* Neutrals — text / surfaces / borders */
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #f8f9fb;
+  --color-neutral-100: #f1f3f6;
+  --color-neutral-200: #e5e8ee;
+  --color-neutral-300: #d6dae3;
+  --color-neutral-400: #a6adbb;
+  --color-neutral-500: #7c8494;
+  --color-neutral-600: #5b6473;
+  --color-neutral-700: #414a5a;
+  --color-neutral-800: #262e3d;
+  --color-neutral-900: #12161f;
+
+  /* Primary — brand blue: "+New" button, active nav, links, logo */
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-300: #a5b4fc;
+  --color-primary-400: #7c90f5;
+  --color-primary-500: #4f69ee;
+  --color-primary-600: #3654e0;
+  --color-primary-700: #2b41b8;
+  --color-primary-800: #1f3190;
+  --color-primary-900: #16215f;
+
+  /* Success — Policies Sold icon, "Won" stage, up-trend badges */
+  --color-success-50: #eafbf1;
+  --color-success-100: #d3f5e0;
+  --color-success-500: #17a860;
+  --color-success-600: #12934f;
+  --color-success-700: #0d7a40;
+
+  /* Info (sky blue) — Quotes Sent icon, "Contacted"/"New" pills, This Week */
+  --color-info-50: #eaf3ff;
+  --color-info-100: #d6e8ff;
+  --color-info-500: #2e7bf6;
+  --color-info-600: #1868e0;
+
+  /* Violet — New Leads icon, "Negotiation" pill, New Lead pipeline stage */
+  --color-violet-50: #f5f0ff;
+  --color-violet-100: #eae0fe;
+  --color-violet-500: #8b5cf6;
+  --color-violet-600: #7440e8;
+
+  /* Amber — "Quote Sent" pill, Revenue icon, Today tasks */
+  --color-amber-50: #fff6e8;
+  --color-amber-100: #ffeacb;
+  --color-amber-500: #f5a524;
+  --color-amber-600: #db8b0e;
+
+  /* Teal — secondary chart accent */
+  --color-teal-50: #e7fbf7;
+  --color-teal-100: #cdf6ee;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0e9c8c;
+
+  /* Danger — Overdue tasks, notification dot, destructive actions */
+  --color-danger-50: #feeeee;
+  --color-danger-100: #fcd9d9;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+
+  /* Semantic aliases */
+  --color-surface: var(--color-neutral-0);
+  --color-surface-muted: var(--color-neutral-50);
+  --color-border: var(--color-neutral-200);
+  --color-text: var(--color-neutral-900);
+  --color-text-muted: var(--color-neutral-500);
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --shadow-dropdown: 0 4px 6px rgba(16, 24, 40, 0.05), 0 10px 15px rgba(16, 24, 40, 0.08);
+}
+
 /* ===== Reusable Scrollbar Utilities ===== */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;

@@ -95,16 +95,16 @@ export default function VehicleInfoDrawer({ vehicleNumber, onClose }: VehicleInf
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-      <div className="relative w-full max-w-md h-full bg-neutral-950 border-l border-neutral-800 shadow-2xl overflow-y-auto animate-slide-in-right">
-        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-neutral-900 border-b border-neutral-800">
+      <div className="absolute inset-0 bg-neutral-900/40 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+      <div className="relative w-full max-w-md h-full bg-surface border-l border-border shadow-dropdown overflow-y-auto animate-slide-in-right">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-surface border-b border-border">
           <div>
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wider">Vehicle Info</h2>
-            <p className="text-xs text-neutral-500 mt-0.5">Vehicle Number: {vehicleNumber}</p>
+            <h2 className="text-sm font-semibold text-text uppercase tracking-wider">Vehicle Info</h2>
+            <p className="text-xs text-text-muted mt-0.5">Vehicle Number: {vehicleNumber}</p>
           </div>
           <button
             onClick={onClose}
-            className="text-neutral-500 hover:text-neutral-300 transition-colors p-1.5 rounded hover:bg-neutral-800"
+            className="text-text-muted hover:text-text transition-colors p-1.5 rounded hover:bg-neutral-100"
             title="Close"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -118,19 +118,19 @@ export default function VehicleInfoDrawer({ vehicleNumber, onClose }: VehicleInf
           {loading ? (
             <div className="space-y-3 animate-pulse">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-4 bg-neutral-800 rounded w-full"></div>
+                <div key={i} className="h-4 bg-neutral-200 rounded w-full"></div>
               ))}
             </div>
           ) : error ? (
-            <div className="text-center py-10 text-red-500 text-sm">{error}</div>
+            <div className="text-center py-10 text-danger-600 text-sm">{error}</div>
           ) : data ? (
-            <div className="divide-y divide-neutral-800 border border-neutral-800 rounded-lg overflow-hidden">
+            <div className="divide-y divide-border border border-border rounded-lg overflow-hidden">
               {Object.entries(data)
                 .filter(([key]) => key !== '_id')
                 .map(([key, value]) => (
-                  <div key={key} className="flex flex-col gap-1 px-4 py-3 even:bg-[#050505]">
-                    <span className="text-[11px] font-semibold text-neutral-500 tracking-wider">{translateField(key)}</span>
-                    <span className="text-sm text-neutral-200 break-words">{value === null || value === undefined || value === '' ? '—' : String(value)}</span>
+                  <div key={key} className="flex flex-col gap-1 px-4 py-3 even:bg-neutral-50">
+                    <span className="text-[11px] font-semibold text-text-muted tracking-wider">{translateField(key)}</span>
+                    <span className="text-sm text-text break-words">{value === null || value === undefined || value === '' ? '—' : String(value)}</span>
                   </div>
                 ))}
             </div>
