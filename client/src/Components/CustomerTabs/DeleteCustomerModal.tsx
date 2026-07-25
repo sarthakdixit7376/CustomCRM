@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Trash2, X, AlertTriangle } from 'lucide-react';
 
 interface DeleteCustomerModalProps {
   isOpen: boolean;
@@ -47,22 +48,24 @@ export default function DeleteCustomerModal({
         {/* ── Header ── */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-border">
           <div className="flex items-center gap-3.5">
-            <div className="w-[42px] h-[42px] rounded-xl bg-danger-50 border border-danger-100 flex items-center justify-center text-xl">
-              🗑️
+            <div className="w-[42px] h-[42px] rounded-xl bg-danger-50 border border-danger-100 flex items-center justify-center">
+              <Trash2 size={20} className="text-danger-600" />
             </div>
             <div>
               <h2 className="m-0 text-xl font-bold text-text tracking-tight">Delete Customer</h2>
             </div>
           </div>
-          <button className="w-9 h-9 rounded-lg bg-transparent border border-transparent text-text-muted text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-neutral-100 hover:border-border hover:text-text" onClick={onClose} title="Close">
-            ✕
+          <button className="w-9 h-9 rounded-lg bg-transparent border border-transparent text-text-muted cursor-pointer flex items-center justify-center transition-all hover:bg-neutral-100 hover:border-border hover:text-text" onClick={onClose} title="Close">
+            <X size={18} />
           </button>
         </div>
 
         {/* ── Body ── */}
         <div className="p-6">
           <div className="flex flex-col items-center text-center">
-            <div className="text-4xl mb-4">⚠️</div>
+            <div className="w-14 h-14 rounded-full bg-amber-50 border border-amber-100 flex items-center justify-center mb-4">
+              <AlertTriangle size={26} className="text-amber-500" />
+            </div>
             <h3 className="text-lg font-bold text-text mb-2">Are you sure?</h3>
             <p className="text-sm text-text-muted leading-relaxed max-w-[320px]">
               This will permanently delete the customer{' '}
@@ -77,8 +80,8 @@ export default function DeleteCustomerModal({
           <button className="px-5 py-2.5 text-sm font-medium rounded-lg cursor-pointer transition-all border border-border bg-surface text-text-muted hover:bg-neutral-100 hover:text-text" onClick={onClose}>
             Cancel
           </button>
-          <button className="px-5 py-2.5 text-sm font-semibold rounded-lg cursor-pointer transition-all bg-danger-600 text-white border-none hover:bg-danger-700" onClick={onConfirm}>
-            🗑️ Delete Customer
+          <button className="px-5 py-2.5 text-sm font-semibold rounded-lg cursor-pointer transition-all bg-danger-600 text-white border-none hover:bg-danger-700 inline-flex items-center gap-2" onClick={onConfirm}>
+            <Trash2 size={16} /> Delete Customer
           </button>
         </div>
 

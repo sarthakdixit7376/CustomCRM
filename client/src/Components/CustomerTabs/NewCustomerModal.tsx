@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { User, X, IdCard, ClipboardList, Phone, MapPin, Plus, AlertTriangle } from 'lucide-react';
 
 /* ───────── Types ───────── */
 export interface CustomerFormData {
@@ -83,13 +84,13 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
         {/* Header */}
         <div className="flex items-center justify-between px-7 py-5 border-b border-border max-sm:px-5">
           <div className="flex items-center gap-3.5">
-            <div className="w-[42px] h-[42px] rounded-xl bg-primary-50 border border-primary-100 flex items-center justify-center text-xl">👤</div>
+            <div className="w-[42px] h-[42px] rounded-xl bg-primary-50 border border-primary-100 flex items-center justify-center"><User size={20} className="text-primary-600" /></div>
             <div>
               <h2 className="m-0 text-xl font-bold text-text tracking-tight">New Customer</h2>
               <p className="m-0 mt-0.5 text-[13px] text-text-muted">Fill in the customer details below</p>
             </div>
           </div>
-          <button className="w-9 h-9 rounded-lg bg-transparent border border-transparent text-text-muted text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-neutral-100 hover:border-border hover:text-text" onClick={onClose}>✕</button>
+          <button className="w-9 h-9 rounded-lg bg-transparent border border-transparent text-text-muted cursor-pointer flex items-center justify-center transition-all hover:bg-neutral-100 hover:border-border hover:text-text" onClick={onClose}><X size={18} /></button>
         </div>
 
         {/* Body */}
@@ -98,18 +99,18 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
           {/* ── Personal Information ── */}
           <div className="mb-7">
             <div className="flex items-center gap-2 text-xs font-semibold text-text-muted uppercase tracking-wider mb-4 pb-2.5 border-b border-border">
-              <span className="text-sm">🪪</span> Personal Information
+              <IdCard size={14} /> Personal Information
             </div>
             <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-text-muted">First Name <span className="text-danger-500">*</span></label>
                 <input type="text" className={`${inputBase} ${errors.firstName ? inputErr : inputOk}`} placeholder="Enter first name" value={form.firstName} onChange={(e) => handleChange('firstName', e.target.value)} />
-                {errors.firstName && <span className="text-[11px] text-danger-600 flex items-center gap-1">⚠ {errors.firstName}</span>}
+                {errors.firstName && <span className="text-[11px] text-danger-600 flex items-center gap-1"><AlertTriangle size={12} /> {errors.firstName}</span>}
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-text-muted">Last Name <span className="text-danger-500">*</span></label>
                 <input type="text" className={`${inputBase} ${errors.lastName ? inputErr : inputOk}`} placeholder="Enter last name" value={form.lastName} onChange={(e) => handleChange('lastName', e.target.value)} />
-                {errors.lastName && <span className="text-[11px] text-danger-600 flex items-center gap-1">⚠ {errors.lastName}</span>}
+                {errors.lastName && <span className="text-[11px] text-danger-600 flex items-center gap-1"><AlertTriangle size={12} /> {errors.lastName}</span>}
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-text-muted">Date of Birth</label>
@@ -138,13 +139,13 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
           {/* ── Policy Details ── */}
           <div className="mb-7">
             <div className="flex items-center gap-2 text-xs font-semibold text-text-muted uppercase tracking-wider mb-4 pb-2.5 border-b border-border">
-              <span className="text-sm">📋</span> Policy Details
+              <ClipboardList size={14} /> Policy Details
             </div>
             <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
               <div className="flex flex-col gap-1.5 col-span-full">
                 <label className="text-xs font-medium text-text-muted">Policy Number <span className="text-danger-500">*</span></label>
                 <input type="text" className={`${inputBase} ${errors.policyNumber ? inputErr : inputOk}`} placeholder="Enter policy number" value={form.policyNumber} onChange={(e) => handleChange('policyNumber', e.target.value)} />
-                {errors.policyNumber && <span className="text-[11px] text-danger-600 flex items-center gap-1">⚠ {errors.policyNumber}</span>}
+                {errors.policyNumber && <span className="text-[11px] text-danger-600 flex items-center gap-1"><AlertTriangle size={12} /> {errors.policyNumber}</span>}
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-text-muted">Policy Type <span className="text-danger-500">*</span></label>
@@ -178,13 +179,13 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
           {/* ── Contact Information ── */}
           <div className="mb-7">
             <div className="flex items-center gap-2 text-xs font-semibold text-text-muted uppercase tracking-wider mb-4 pb-2.5 border-b border-border">
-              <span className="text-sm">📞</span> Contact Information
+              <Phone size={14} /> Contact Information
             </div>
             <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-text-muted">Phone <span className="text-danger-500">*</span></label>
                 <input type="tel" className={`${inputBase} ${errors.phone ? inputErr : inputOk}`} placeholder="e.g., 052-8844475" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} />
-                {errors.phone && <span className="text-[11px] text-danger-600 flex items-center gap-1">⚠ {errors.phone}</span>}
+                {errors.phone && <span className="text-[11px] text-danger-600 flex items-center gap-1"><AlertTriangle size={12} /> {errors.phone}</span>}
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-text-muted">Mobile</label>
@@ -200,7 +201,7 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
           {/* ── Address ── */}
           <div className="mb-0">
             <div className="flex items-center gap-2 text-xs font-semibold text-text-muted uppercase tracking-wider mb-4 pb-2.5 border-b border-border">
-              <span className="text-sm">📍</span> Address
+              <MapPin size={14} /> Address
             </div>
             <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
               <div className="flex flex-col gap-1.5 col-span-full">
@@ -224,8 +225,8 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
           <button className="px-5 py-2.5 text-sm font-medium rounded-lg cursor-pointer transition-all border border-border bg-surface text-text-muted hover:bg-neutral-50 hover:text-text" onClick={onClose}>
             Cancel
           </button>
-          <button className="px-5 py-2.5 text-sm font-semibold rounded-lg cursor-pointer transition-all bg-primary-600 text-white border-none hover:bg-primary-700 hover:-translate-y-px hover:shadow-card" onClick={handleSubmit}>
-            + Add Customer
+          <button className="px-5 py-2.5 text-sm font-semibold rounded-lg cursor-pointer transition-all bg-primary-600 text-white border-none hover:bg-primary-700 hover:-translate-y-px hover:shadow-card inline-flex items-center gap-2" onClick={handleSubmit}>
+            <Plus size={16} strokeWidth={2.5} /> Add Customer
           </button>
         </div>
 

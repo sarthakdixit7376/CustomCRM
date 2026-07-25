@@ -19,9 +19,9 @@ export default function LeadsPage() {
 
   return (
     <div className="flex-1 flex flex-col h-full bg-surface-muted">
-      <div className="px-8 pt-6 pb-2 border-b border-border">
-        <h1 className="text-2xl font-bold text-text">Leads</h1>
-        <p className="text-sm text-text-muted mt-1">Manage and track incoming leads</p>
+      <div className="px-8 pt-6 pb-2 border-b border-border max-md:px-4 max-md:pt-4">
+        <h1 className="text-2xl font-bold text-text max-md:text-xl">Leads</h1>
+        <p className="text-sm text-text-muted mt-1 max-md:text-xs">Manage and track incoming leads</p>
       </div>
 
       <nav className="px-8 pt-5 flex items-center gap-1 overflow-x-auto relative border-b border-border max-md:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

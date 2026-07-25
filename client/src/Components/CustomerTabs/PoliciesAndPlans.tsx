@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Layers, Plus, X } from 'lucide-react';
 import { API_BASE } from '../../config';
 
 /* ───────── Types ───────── */
@@ -85,7 +86,7 @@ export default function PoliciesAndPlans() {
         {/* Header */}
         <div className="flex items-center justify-between px-7 py-5 border-b border-border bg-neutral-50 max-md:px-5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-primary-50 border border-primary-100 rounded-lg flex items-center justify-center text-base text-primary-600">◈</div>
+            <div className="w-9 h-9 bg-primary-50 border border-primary-100 rounded-lg flex items-center justify-center text-primary-600"><Layers size={18} /></div>
             <div>
               <div className="text-[15px] font-bold text-text">Add Policy / Plan</div>
               <div className="text-xs text-text-muted mt-0.5">Fill in the details and add a new insurance policy</div>
@@ -136,8 +137,8 @@ export default function PoliciesAndPlans() {
           <button className="px-5 py-2.5 text-sm font-medium rounded-lg cursor-pointer transition-all border border-border bg-surface text-text-muted hover:bg-neutral-100 hover:text-text" onClick={handleReset}>
             Reset
           </button>
-          <button className="px-5 py-2.5 text-sm font-semibold rounded-lg cursor-pointer transition-all bg-primary-600 text-white border-none hover:bg-primary-700" onClick={handleAdd}>
-            ➕ Add Policy
+          <button className="px-5 py-2.5 text-sm font-semibold rounded-lg cursor-pointer transition-all bg-primary-600 text-white border-none hover:bg-primary-700 inline-flex items-center gap-2" onClick={handleAdd}>
+            <Plus size={16} strokeWidth={2.5} /> Add Policy
           </button>
         </div>
       </div>
@@ -165,7 +166,7 @@ export default function PoliciesAndPlans() {
                     <td className="px-4 py-3 text-text border-b border-border">{p.startDate || '—'}</td>
                     <td className="px-4 py-3 text-text border-b border-border">{p.endDate || '—'}</td>
                     <td className="px-4 py-3 border-b border-border">
-                      <button className="bg-transparent border-none px-2 py-1 cursor-pointer text-text-muted text-sm rounded transition-all hover:text-danger-600 hover:bg-danger-50" onClick={() => handleRemovePolicy(i, p.id)}>✕</button>
+                      <button className="bg-transparent border-none px-2 py-1 cursor-pointer text-text-muted text-sm rounded transition-all hover:text-danger-600 hover:bg-danger-50" onClick={() => handleRemovePolicy(i, p.id)}><X size={14} /></button>
                     </td>
                   </tr>
                 ))}
@@ -174,7 +175,7 @@ export default function PoliciesAndPlans() {
           </div>
         ) : (
           <>
-            <div className="text-4xl text-neutral-300 animate-pulse-slow">◈</div>
+            <Layers size={42} className="text-neutral-300 animate-pulse-slow" />
             <div className="text-lg font-bold text-text">No policies added yet</div>
             <div className="text-sm text-text-muted max-w-[320px]">Use the form above to add new insurance policies and plans.</div>
           </>

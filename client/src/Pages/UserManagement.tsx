@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { API_BASE } from '../config';
 import type { Role } from '../context/AuthContext';
 
@@ -136,8 +137,9 @@ export default function UserManagement() {
 
   return (
     <div className="font-sans bg-surface-muted text-text min-h-screen flex flex-col">
-      <header className="px-8 pt-6 pb-4 flex items-center justify-between gap-4 max-md:px-4">
+      <header className="px-8 pt-6 pb-4 flex items-center justify-between gap-4 flex-wrap max-md:px-4 max-md:pt-4">
         <h1 className="text-xl font-bold m-0 text-text">User Management</h1>
+<<<<<<< HEAD
         <div className="flex items-center gap-2">
           <button
             className="text-sm font-medium text-white bg-primary-600 border-none rounded-lg px-4 py-2 cursor-pointer hover:bg-primary-700"
@@ -240,6 +242,19 @@ export default function UserManagement() {
 
         <form onSubmit={handleCreate} className="flex flex-wrap items-end gap-3 bg-surface border border-border rounded-xl p-5 shadow-card">
           <div className="flex flex-col gap-1.5">
+=======
+        <button
+          className="text-sm font-medium text-text-muted bg-surface border border-border rounded-lg px-4 py-2 cursor-pointer hover:bg-neutral-50 hover:text-text"
+          onClick={() => navigate('/')}
+        >
+          <ArrowLeft size={14} className="inline-block mr-1.5 -mt-0.5" />Back to CRM
+        </button>
+      </header>
+
+      <div className="px-8 pb-8 flex flex-col gap-8 max-md:px-4">
+        <form onSubmit={handleCreate} className="flex flex-wrap items-end gap-3 bg-surface border border-border rounded-xl p-5 shadow-card max-md:p-4">
+          <div className="flex flex-col gap-1.5 flex-1 min-w-[160px]">
+>>>>>>> 6b192bf8559b4b3d6b888fa23c298b2ac67d78ab
             <label className="text-xs font-medium text-text-muted">Name</label>
             <input
               required
@@ -248,7 +263,7 @@ export default function UserManagement() {
               className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text outline-none transition-colors focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
             />
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 flex-1 min-w-[200px]">
             <label className="text-xs font-medium text-text-muted">Email</label>
             <input
               type="email"
@@ -258,7 +273,7 @@ export default function UserManagement() {
               className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text outline-none transition-colors focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
             />
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 flex-1 min-w-[180px]">
             <label className="text-xs font-medium text-text-muted">Temporary password</label>
             <input
               type="password"
@@ -268,7 +283,7 @@ export default function UserManagement() {
               className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text outline-none transition-colors focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
             />
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 flex-1 min-w-[120px]">
             <label className="text-xs font-medium text-text-muted">Role</label>
             <select
               value={role}
@@ -282,7 +297,7 @@ export default function UserManagement() {
           <button
             type="submit"
             disabled={submitting}
-            className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary-600 text-white border-none cursor-pointer hover:bg-primary-700 disabled:opacity-50"
+            className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary-600 text-white border-none cursor-pointer hover:bg-primary-700 disabled:opacity-50 max-md:w-full"
           >
             {submitting ? 'Creating…' : 'Create user'}
           </button>
@@ -323,7 +338,7 @@ export default function UserManagement() {
                     </span>
                   </td>
                   <td className="py-2.5 px-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <button
                         className="text-xs font-medium text-text-muted bg-surface border border-border rounded px-3 py-1.5 cursor-pointer hover:bg-neutral-50 hover:text-text"
                         onClick={() => toggleActive(u)}

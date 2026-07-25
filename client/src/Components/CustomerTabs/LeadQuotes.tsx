@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Send, Loader2 } from 'lucide-react';
 import { API_BASE } from '../../config';
 
 type QuoteField = 'mandatoryPrice' | 'thirdPartyPrice' | 'complimentaryPrice';
@@ -154,9 +155,11 @@ export default function LeadQuotes() {
                       onClick={() => handleSend(row.id)}
                       disabled={sendingId === row.id}
                       title="Generate pricing PDF and send via WhatsApp"
-                      className="px-3 py-1.5 text-xs font-semibold rounded-md border border-border bg-surface text-text hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                      className="px-3 py-1.5 text-xs font-semibold rounded-md border border-border bg-surface text-text hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-wait inline-flex items-center gap-1.5"
                     >
-                      {sendingId === row.id ? 'Sending…' : 'Send'}
+                      {sendingId === row.id
+                        ? <><Loader2 size={12} className="animate-spin" /> Sending…</>
+                        : <><Send size={12} /> Send</>}
                     </button>
                   </td>
                 </tr>
