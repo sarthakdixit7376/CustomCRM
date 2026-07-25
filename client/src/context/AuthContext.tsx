@@ -14,9 +14,9 @@ export interface AuthUser {
 interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
-  signup: (name: string, email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshMe: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -25,12 +25,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const refreshMe = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/api/auth/me`);
+      setUser(res.data);
+    } catch {
+      setUser(null);
+    }
+  };
+
   useEffect(() => {
-    axios
-      .get(`${API_BASE}/api/auth/me`)
-      .then((res) => setUser(res.data))
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+    refreshMe().finally(() => setLoading(false));
   }, []);
 
   // If a request comes back 401 (e.g. session expired), drop the local user
@@ -48,11 +53,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => axios.interceptors.response.eject(id);
   }, []);
 
-  const signup = async (name: string, email: string, password: string) => {
-    const res = await axios.post(`${API_BASE}/api/auth/signup`, { name, email, password });
-    setUser(res.data);
-  };
-
   const login = async (email: string, password: string) => {
     const res = await axios.post(`${API_BASE}/api/auth/login`, { email, password });
     setUser(res.data);
@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
-  return <AuthContext.Provider value={{ user, loading, signup, login, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, loading, login, logout, refreshMe }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth(): AuthContextValue {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import logo from '../assets/Logo.png';
 import { useAuth } from '../context/AuthContext';
 
@@ -77,13 +77,6 @@ export default function Login() {
           >
             {submitting ? 'Signing in…' : 'Sign in'}
           </button>
-
-          <p className="text-xs text-text-muted text-center m-0">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-primary-600 hover:text-primary-700 font-medium">
-              Sign up
-            </Link>
-          </p>
         </form>
       </div>
     </div>

@@ -53,8 +53,25 @@ model User {
 
   leads     Lead[]
   customers Customer[]
+  invitationsSent Invitation[]
 
   @@map("users")
+}
+
+model Invitation {
+  id          String    @id @default(cuid())
+  email       String
+  name        String
+  role        Role      @default(AGENT)
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+
+  @@index([email])
+  @@map("invitations")
 }
 
 model Lead {
