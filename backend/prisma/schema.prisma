@@ -101,6 +101,10 @@ model Lead {
   thirdPartyPrice     Float?
   complimentaryPrice  Float?
 
+  // Optional fixed-price add-on services
+  glassAndMoreSelected     Boolean @default(false)
+  complementaryVipSelected Boolean @default(false)
+
   // Vehicle info fields (from Israeli gov vehicle API)
   misparRechev        String? // מספר רכב
   tozeretCd           String? // קוד תוצרת

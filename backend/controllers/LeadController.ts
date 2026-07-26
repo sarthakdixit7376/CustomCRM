@@ -117,9 +117,9 @@ export const updateLeadQuote = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    const { mandatoryPrice, thirdPartyPrice, complimentaryPrice } = req.body;
+    const { mandatoryPrice, thirdPartyPrice, complimentaryPrice, glassAndMoreSelected, complementaryVipSelected } = req.body;
     const fields = { mandatoryPrice, thirdPartyPrice, complimentaryPrice };
-    const data: Record<string, number> = {};
+    const numericData: Record<string, number> = {};
     for (const [key, value] of Object.entries(fields)) {
       if (value === undefined) continue;
       const num = Number(value);
@@ -127,10 +127,17 @@ export const updateLeadQuote = async (req: Request, res: Response): Promise<void
         res.status(400).json({ error: `${key} must be a number` });
         return;
       }
-      data[key] = num;
+      numericData[key] = num;
     }
 
-    const updated = await LeadModel.updateLeadQuote(req.params.id, data);
+    const boolFields = { glassAndMoreSelected, complementaryVipSelected };
+    const boolData: Record<string, boolean> = {};
+    for (const [key, value] of Object.entries(boolFields)) {
+      if (value === undefined) continue;
+      boolData[key] = Boolean(value);
+    }
+
+    const updated = await LeadModel.updateLeadQuote(req.params.id, { ...numericData, ...boolData });
     res.json(updated);
   } catch (error) {
     console.error('Error updating lead quote:', error);
