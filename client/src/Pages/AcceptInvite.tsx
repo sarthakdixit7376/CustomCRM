@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import logo from '../assets/Logo.png';
-import { API_BASE } from '../config';
+import { API_BASE, setAuthToken } from '../config';
 import { useAuth } from '../context/AuthContext';
 
 interface InvitationInfo {
@@ -46,7 +46,8 @@ export default function AcceptInvite() {
     setError('');
     setSubmitting(true);
     try {
-      await axios.post(`${API_BASE}/api/auth/invite/${token}/accept`, { password, confirmPassword });
+      const res = await axios.post(`${API_BASE}/api/auth/invite/${token}/accept`, { password, confirmPassword });
+      if (res.data?.token) setAuthToken(res.data.token);
       await refreshMe();
       navigate('/', { replace: true });
     } catch (err: any) {
