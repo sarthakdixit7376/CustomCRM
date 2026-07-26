@@ -14,6 +14,15 @@ interface ManagedUser {
   createdAt: string;
 }
 
+interface PendingInvitation {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  expiresAt: string;
+  createdAt: string;
+}
+
 export default function UserManagement() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<ManagedUser[]>([]);
@@ -27,14 +36,51 @@ export default function UserManagement() {
   const [newPassword, setNewPassword] = useState('');
   const [resetError, setResetError] = useState('');
 
+  const [invitations, setInvitations] = useState<PendingInvitation[]>([]);
+  const [inviting, setInviting] = useState(false);
+  const [inviteName, setInviteName] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<Role>('AGENT');
+  const [inviteError, setInviteError] = useState('');
+  const [inviteSubmitting, setInviteSubmitting] = useState(false);
+
   const fetchUsers = async () => {
     const res = await axios.get(`${API_BASE}/api/users`);
     setUsers(res.data);
   };
 
+  const fetchInvitations = async () => {
+    const res = await axios.get(`${API_BASE}/api/invitations`);
+    setInvitations(res.data);
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchInvitations();
   }, []);
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInviteError('');
+    setInviteSubmitting(true);
+    try {
+      await axios.post(`${API_BASE}/api/invitations`, { name: inviteName, email: inviteEmail, role: inviteRole });
+      setInviteName('');
+      setInviteEmail('');
+      setInviteRole('AGENT');
+      setInviting(false);
+      fetchInvitations();
+    } catch (err: any) {
+      setInviteError(err.response?.data?.error || 'Error sending invitation');
+    } finally {
+      setInviteSubmitting(false);
+    }
+  };
+
+  const handleRevoke = async (invitationId: string) => {
+    await axios.delete(`${API_BASE}/api/invitations/${invitationId}`);
+    fetchInvitations();
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,15 +139,106 @@ export default function UserManagement() {
     <div className="font-sans bg-surface-muted text-text min-h-screen flex flex-col">
       <header className="px-8 pt-6 pb-4 flex items-center justify-between gap-4 flex-wrap max-md:px-4 max-md:pt-4">
         <h1 className="text-xl font-bold m-0 text-text">User Management</h1>
-        <button
-          className="text-sm font-medium text-text-muted bg-surface border border-border rounded-lg px-4 py-2 cursor-pointer hover:bg-neutral-50 hover:text-text"
-          onClick={() => navigate('/')}
-        >
-          <ArrowLeft size={14} className="inline-block mr-1.5 -mt-0.5" />Back to CRM
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            className="text-sm font-medium text-white bg-primary-600 border-none rounded-lg px-4 py-2 cursor-pointer hover:bg-primary-700"
+            onClick={() => setInviting(!inviting)}
+          >
+            {inviting ? 'Cancel invite' : 'Invite user'}
+          </button>
+          <button
+            className="text-sm font-medium text-text-muted bg-surface border border-border rounded-lg px-4 py-2 cursor-pointer hover:bg-neutral-50 hover:text-text"
+            onClick={() => navigate('/')}
+          >
+            <ArrowLeft size={14} className="inline-block mr-1.5 -mt-0.5" />Back to CRM
+          </button>
+        </div>
       </header>
 
       <div className="px-8 pb-8 flex flex-col gap-8 max-md:px-4">
+        {inviting && (
+          <form onSubmit={handleInvite} className="flex flex-wrap items-end gap-3 bg-surface border border-border rounded-xl p-5 shadow-card">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-text-muted">Name</label>
+              <input
+                required
+                autoFocus
+                value={inviteName}
+                onChange={(e) => setInviteName(e.target.value)}
+                className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text outline-none transition-colors focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-text-muted">Email</label>
+              <input
+                type="email"
+                required
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text outline-none transition-colors focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-text-muted">Role</label>
+              <select
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value as Role)}
+                className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text outline-none transition-colors focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+              >
+                <option value="AGENT">Agent</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+            </div>
+            <button
+              type="submit"
+              disabled={inviteSubmitting}
+              className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary-600 text-white border-none cursor-pointer hover:bg-primary-700 disabled:opacity-50"
+            >
+              {inviteSubmitting ? 'Sending…' : 'Send invitation'}
+            </button>
+            {inviteError && <p className="text-sm text-danger-600 m-0 basis-full">{inviteError}</p>}
+          </form>
+        )}
+
+        {invitations.length > 0 && (
+          <div className="overflow-x-auto rounded-lg border border-border bg-surface shadow-card">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="text-left text-text-muted bg-neutral-50 border-b border-border">
+                  <th className="py-2.5 px-4 font-semibold text-xs uppercase tracking-wider" colSpan={5}>
+                    Pending invitations
+                  </th>
+                </tr>
+                <tr className="text-left text-text-muted bg-neutral-50 border-b border-border">
+                  <th className="py-2.5 px-4 font-semibold text-xs uppercase tracking-wider">Name</th>
+                  <th className="py-2.5 px-4 font-semibold text-xs uppercase tracking-wider">Email</th>
+                  <th className="py-2.5 px-4 font-semibold text-xs uppercase tracking-wider">Role</th>
+                  <th className="py-2.5 px-4 font-semibold text-xs uppercase tracking-wider">Expires</th>
+                  <th className="py-2.5 px-4 font-semibold text-xs uppercase tracking-wider"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {invitations.map((inv) => (
+                  <tr key={inv.id} className="border-b border-border last:border-b-0 hover:bg-neutral-50">
+                    <td className="py-2.5 px-4 text-text font-medium">{inv.name}</td>
+                    <td className="py-2.5 px-4 text-text-muted">{inv.email}</td>
+                    <td className="py-2.5 px-4 text-text-muted">{inv.role === 'ADMIN' ? 'Admin' : 'Agent'}</td>
+                    <td className="py-2.5 px-4 text-text-muted">{new Date(inv.expiresAt).toLocaleDateString()}</td>
+                    <td className="py-2.5 px-4">
+                      <button
+                        className="text-xs font-medium text-danger-600 bg-danger-50 border border-danger-100 rounded px-3 py-1.5 cursor-pointer hover:bg-danger-100"
+                        onClick={() => handleRevoke(inv.id)}
+                      >
+                        Revoke
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         <form onSubmit={handleCreate} className="flex flex-wrap items-end gap-3 bg-surface border border-border rounded-xl p-5 shadow-card max-md:p-4">
           <div className="flex flex-col gap-1.5 flex-1 min-w-[160px]">
             <label className="text-xs font-medium text-text-muted">Name</label>

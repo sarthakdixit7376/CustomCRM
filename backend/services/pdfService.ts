@@ -5,7 +5,12 @@ interface PricingLead {
   yearOfLicenseIssued?: string | null;
   mandatoryPrice?: number | null;
   complimentaryPrice?: number | null;
+  glassAndMoreSelected?: boolean | null;
+  complementaryVipSelected?: boolean | null;
 }
+
+const GLASS_AND_MORE_PRICE = 320;
+const COMPLEMENTARY_VIP_PRICE = 550;
 
 const formatCurrency = (amount: number): string => `₪${amount.toLocaleString('en-US')}`;
 
@@ -20,7 +25,10 @@ const formatValidUntil = (): string => {
 export function buildPricingHtml(lead: PricingLead): string {
   const mandatoryPrice = lead.mandatoryPrice ?? 0;
   const complimentaryPrice = lead.complimentaryPrice ?? 0;
-  const totalPrice = mandatoryPrice + complimentaryPrice;
+  const addonTotal =
+    (lead.glassAndMoreSelected ? GLASS_AND_MORE_PRICE : 0) +
+    (lead.complementaryVipSelected ? COMPLEMENTARY_VIP_PRICE : 0);
+  const totalPrice = mandatoryPrice + complimentaryPrice + addonTotal;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -124,6 +132,16 @@ export function buildPricingHtml(lead: PricingLead): string {
     <td>Comprehensive Payment</td>
     <td>Visa, up to 6 installments</td>
 </tr>
+
+${lead.glassAndMoreSelected ? `<tr>
+    <td>Glass and More</td>
+    <td>${formatCurrency(GLASS_AND_MORE_PRICE)}</td>
+</tr>` : ''}
+
+${lead.complementaryVipSelected ? `<tr>
+    <td>Complementary + VIP</td>
+    <td>${formatCurrency(COMPLEMENTARY_VIP_PRICE)}</td>
+</tr>` : ''}
 
 <tr>
     <td>Total Annual Price</td>

@@ -2,8 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { Role } from '@prisma/client';
 import prisma from '../config/prisma.js';
-
-const JWT_SECRET = process.env.JWT_SECRET as string;
+import { JWT_SECRET } from '../utils/authToken.js';
 
 export interface AuthUser {
   id: string;

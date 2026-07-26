@@ -53,8 +53,25 @@ model User {
 
   leads     Lead[]
   customers Customer[]
+  invitationsSent Invitation[]
 
   @@map("users")
+}
+
+model Invitation {
+  id          String    @id @default(cuid())
+  email       String
+  name        String
+  role        Role      @default(AGENT)
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+
+  @@index([email])
+  @@map("invitations")
 }
 
 model Lead {
@@ -83,6 +100,10 @@ model Lead {
   mandatoryPrice      Float?
   thirdPartyPrice     Float?
   complimentaryPrice  Float?
+
+  // Optional fixed-price add-on services
+  glassAndMoreSelected     Boolean @default(false)
+  complementaryVipSelected Boolean @default(false)
 
   // Vehicle info fields (from Israeli gov vehicle API)
   misparRechev        String? // מספר רכב

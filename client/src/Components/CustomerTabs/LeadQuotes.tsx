@@ -4,6 +4,7 @@ import { Send, Loader2 } from 'lucide-react';
 import { API_BASE } from '../../config';
 
 type QuoteField = 'mandatoryPrice' | 'thirdPartyPrice' | 'complimentaryPrice';
+type AddonField = 'glassAndMoreSelected' | 'complementaryVipSelected';
 
 interface QuoteRow {
   id: string;
@@ -12,6 +13,8 @@ interface QuoteRow {
   mandatoryPrice?: number;
   thirdPartyPrice?: number;
   complimentaryPrice?: number;
+  glassAndMoreSelected?: boolean;
+  complementaryVipSelected?: boolean;
   pricingPdfUrl?: string;
 }
 
@@ -19,6 +22,11 @@ const PRICE_COLUMNS: [string, QuoteField][] = [
   ['Mandatory', 'mandatoryPrice'],
   ['3rd Party', 'thirdPartyPrice'],
   ['Complimentary', 'complimentaryPrice'],
+];
+
+const ADDON_COLUMNS: [string, AddonField, number][] = [
+  ['Glass and More', 'glassAndMoreSelected', 320],
+  ['Complementary + VIP', 'complementaryVipSelected', 550],
 ];
 
 export default function LeadQuotes() {
@@ -41,6 +49,8 @@ export default function LeadQuotes() {
           mandatoryPrice: lead.mandatoryPrice,
           thirdPartyPrice: lead.thirdPartyPrice,
           complimentaryPrice: lead.complimentaryPrice,
+          glassAndMoreSelected: lead.glassAndMoreSelected,
+          complementaryVipSelected: lead.complementaryVipSelected,
           pricingPdfUrl: lead.pricingPdfUrl,
         }));
         setLeads(mapped);
@@ -77,6 +87,19 @@ export default function LeadQuotes() {
     }
   };
 
+  const handleAddonToggle = async (leadId: string, field: AddonField, checked: boolean) => {
+    const previous = leads.find((l) => l.id === leadId)?.[field];
+    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, [field]: checked } : l)));
+
+    try {
+      await axios.patch(`${API_BASE}/api/leads/${leadId}/quote`, { [field]: checked });
+    } catch (error) {
+      console.error('Failed to update addon selection:', error);
+      alert('Failed to save selection change');
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, [field]: previous } : l)));
+    }
+  };
+
   const handleSend = async (leadId: string) => {
     setSendingId(leadId);
     try {
@@ -92,7 +115,7 @@ export default function LeadQuotes() {
     }
   };
 
-  const totalCols = 2 + PRICE_COLUMNS.length + 1;
+  const totalCols = 2 + PRICE_COLUMNS.length + ADDON_COLUMNS.length + 1;
 
   return (
     <div className="flex-1 overflow-auto px-8 pb-8 max-md:px-4 max-md:pb-4 mt-8">
@@ -104,6 +127,9 @@ export default function LeadQuotes() {
               <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap">Lead Name</th>
               {PRICE_COLUMNS.map(([label]) => (
                 <th key={label} className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap">{label}</th>
+              ))}
+              {ADDON_COLUMNS.map(([label, , price]) => (
+                <th key={label} className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap">{label} (₪{price})</th>
               ))}
               <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-right bg-neutral-50 border-b border-border whitespace-nowrap">Send</th>
             </tr>
@@ -147,6 +173,16 @@ export default function LeadQuotes() {
                         defaultValue={row[field] ?? ''}
                         onBlur={(e) => handlePriceBlur(row.id, field, e.target.value)}
                         className="w-24 px-2.5 py-1.5 text-sm text-text bg-surface border border-border rounded-md outline-none transition-all hover:border-neutral-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+                      />
+                    </td>
+                  ))}
+                  {ADDON_COLUMNS.map(([, field]) => (
+                    <td key={field} className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={row[field] ?? false}
+                        onChange={(e) => handleAddonToggle(row.id, field, e.target.checked)}
+                        className="w-4 h-4 rounded border-border text-primary-600 focus:ring-2 focus:ring-primary-100"
                       />
                     </td>
                   ))}

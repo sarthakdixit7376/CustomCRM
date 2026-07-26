@@ -3,7 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './Components/ProtectedRoute';
 import AppLayout from './layouts/AppLayout';
 import Login from './Pages/Login';
-import Signup from './Pages/Signup';
+import AcceptInvite from './Pages/AcceptInvite';
 import CustomersPage from './Pages/CustomersPage';
 import LeadsPage from './Pages/LeadsPage';
 import UserManagement from './Pages/UserManagement';
@@ -15,7 +15,7 @@ function App() {
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+          <Route path="/invite" element={<AcceptInvite />} />
 
           {/* Protected routes with sidebar layout */}
           <Route element={<ProtectedRoute />}>

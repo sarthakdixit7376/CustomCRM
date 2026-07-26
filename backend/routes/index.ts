@@ -4,6 +4,7 @@ import leadRoutes from './leadRoutes.js';
 import customerRoutes from './customerRoutes.js';
 import policyRoutes from './policyRoutes.js';
 import userRoutes from './userRoutes.js';
+import invitationRoutes from './invitationRoutes.js';
 
 const router = Router();
 
@@ -12,5 +13,6 @@ router.use('/leads', leadRoutes);
 router.use('/customers', customerRoutes);
 router.use('/policies', policyRoutes);
 router.use('/users', userRoutes);
+router.use('/invitations', invitationRoutes);
 
 export default router;

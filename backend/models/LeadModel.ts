@@ -145,7 +145,13 @@ export const LeadModel = {
 
   updateLeadQuote: async (
     id: string,
-    data: { mandatoryPrice?: number; thirdPartyPrice?: number; complimentaryPrice?: number }
+    data: {
+      mandatoryPrice?: number;
+      thirdPartyPrice?: number;
+      complimentaryPrice?: number;
+      glassAndMoreSelected?: boolean;
+      complementaryVipSelected?: boolean;
+    }
   ) => {
     return prisma.lead.update({
       where: { id },
