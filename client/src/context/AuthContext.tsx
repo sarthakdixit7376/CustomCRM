@@ -54,13 +54,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => axios.interceptors.response.eject(id);
   }, []);
 
-  const signup = async (name: string, email: string, password: string) => {
-    const res = await axios.post(`${API_BASE}/api/auth/signup`, { name, email, password });
-    const { token, ...userData } = res.data;
-    if (token) setAuthToken(token);
-    setUser(userData);
-  };
-
   const login = async (email: string, password: string) => {
     const res = await axios.post(`${API_BASE}/api/auth/login`, { email, password });
     const { token, ...userData } = res.data;
