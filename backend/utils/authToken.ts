@@ -12,9 +12,11 @@ export const cookieOptions = {
   maxAge: TOKEN_MAX_AGE_MS,
 };
 
-export const issueAuthCookie = (res: Response, user: { id: string; role: Role }): void => {
+/** Sets the httpOnly cookie and returns the JWT for Bearer clients (e.g. Safari). */
+export const issueAuthCookie = (res: Response, user: { id: string; role: Role }): string => {
   const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '12h' });
   res.cookie('token', token, cookieOptions);
+  return token;
 };
 
 export const clearAuthCookie = (res: Response): void => {
