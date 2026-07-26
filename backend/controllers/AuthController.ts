@@ -40,7 +40,9 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 
     const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '12h' });
     res.cookie('token', token, cookieOptions);
-    res.status(201).json({ id: user.id, name: user.name, email: user.email, role: user.role });
+    // The token is also returned in the body because Safari (ITP) blocks
+    // cross-site cookies; those clients authenticate via Authorization header.
+    res.status(201).json({ id: user.id, name: user.name, email: user.email, role: user.role, token });
   } catch (error: any) {
     if (error.code === 'P2002') {
       res.status(409).json({ error: 'An account with that email already exists' });
@@ -74,7 +76,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '12h' });
     res.cookie('token', token, cookieOptions);
-    res.json({ id: user.id, name: user.name, email: user.email, role: user.role });
+    // The token is also returned in the body because Safari (ITP) blocks
+    // cross-site cookies; those clients authenticate via Authorization header.
+    res.json({ id: user.id, name: user.name, email: user.email, role: user.role, token });
   } catch (error) {
     console.error('Error logging in:', error);
     res.status(500).json({ error: 'Internal Server Error' });

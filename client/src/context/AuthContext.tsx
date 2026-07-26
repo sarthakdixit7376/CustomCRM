@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import axios from 'axios';
-import { API_BASE } from '../config';
+import { API_BASE, setAuthToken, clearAuthToken } from '../config';
 
 export type Role = 'ADMIN' | 'AGENT';
 
@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (res) => res,
       (error) => {
         if (error.response?.status === 401 && !String(error.config?.url).includes('/auth/login')) {
+          clearAuthToken();
           setUser(null);
         }
         return Promise.reject(error);
@@ -50,16 +51,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (name: string, email: string, password: string) => {
     const res = await axios.post(`${API_BASE}/api/auth/signup`, { name, email, password });
-    setUser(res.data);
+    const { token, ...userData } = res.data;
+    if (token) setAuthToken(token);
+    setUser(userData);
   };
 
   const login = async (email: string, password: string) => {
     const res = await axios.post(`${API_BASE}/api/auth/login`, { email, password });
-    setUser(res.data);
+    const { token, ...userData } = res.data;
+    if (token) setAuthToken(token);
+    setUser(userData);
   };
 
   const logout = async () => {
     await axios.post(`${API_BASE}/api/auth/logout`);
+    clearAuthToken();
     setUser(null);
   };
 
