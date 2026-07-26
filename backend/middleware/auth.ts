@@ -17,8 +17,16 @@ declare global {
   }
 }
 
+const extractToken = (req: Request): string | undefined => {
+  if (req.cookies?.token) return req.cookies.token;
+  // Fallback for browsers that block cross-site cookies (e.g. iOS Safari).
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) return authHeader.slice('Bearer '.length);
+  return undefined;
+};
+
 export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const token = req.cookies?.token;
+  const token = extractToken(req);
   if (!token) {
     res.status(401).json({ error: 'Not authenticated' });
     return;
