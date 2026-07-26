@@ -8,9 +8,10 @@ import { authenticate } from './middleware/auth';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 
-app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
+// Temporarily allow every origin. `origin: true` reflects the request origin
+// because browsers reject a literal "*" when credentials are enabled.
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 

@@ -69,9 +69,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await axios.post(`${API_BASE}/api/auth/logout`);
-    clearAuthToken();
-    setUser(null);
+    try {
+      await axios.post(`${API_BASE}/api/auth/logout`);
+    } catch {
+      // The server session will expire independently; do not block local logout.
+    } finally {
+      // Logging out locally must still succeed if the API is unavailable.
+      clearAuthToken();
+      setUser(null);
+    }
   };
 
   return <AuthContext.Provider value={{ user, loading, login, logout, refreshMe }}>{children}</AuthContext.Provider>;
