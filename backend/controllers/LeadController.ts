@@ -181,6 +181,44 @@ export const generatePricingPdf = async (req: Request, res: Response): Promise<v
   }
 };
 
+export const convertLeadToCustomer = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const existing = await LeadModel.getLeadById(req.params.id);
+    if (!existing) {
+      res.status(404).json({ error: 'Lead not found' });
+      return;
+    }
+    if (req.user!.role !== 'ADMIN' && existing.agentId !== req.user!.id) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const { policyNumber, policyType, type, insuranceCompany, startDate, endDate } = req.body;
+    if (!policyNumber || !policyType || !insuranceCompany || !startDate || !endDate) {
+      res.status(400).json({ error: 'policyNumber, policyType, insuranceCompany, startDate and endDate are required' });
+      return;
+    }
+    if (policyType === 'Car' && !type) {
+      res.status(400).json({ error: 'type is required when policyType is Car' });
+      return;
+    }
+
+    const customer = await LeadModel.convertToCustomer(req.params.id, {
+      policyNumber,
+      policyType,
+      type,
+      insuranceCompany,
+      startDate,
+      endDate,
+    });
+
+    res.status(201).json(customer);
+  } catch (error) {
+    console.error('Error converting lead to customer:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 export const updateLeadFlowStatus = async (req: Request, res: Response): Promise<void> => {
   try {
     const lead = await LeadModel.getLeadById(req.params.id);

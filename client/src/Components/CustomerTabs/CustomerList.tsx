@@ -25,6 +25,14 @@ export interface CustomerListProps {
 const POLICY_TYPES = ['All', 'Mandatory', 'Comprehensive', 'Life', 'Home'];
 const INSURANCE_COMPANIES = ['All', 'Phoenix', 'Clal', 'Migdal', 'Ayalon'];
 
+/* ───────── Helpers ───────── */
+const formatDate = (value: string): string => {
+  if (!value || value === '-') return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString();
+};
+
 /* ───────── Component ───────── */
 export default function CustomerList({ customers, onDeleteCustomer, onSelectCustomer }: CustomerListProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -177,8 +185,8 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                         {row.insuranceCompany}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{row.startDate}</td>
-                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{row.endDate}</td>
+                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{formatDate(row.startDate)}</td>
+                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{formatDate(row.endDate)}</td>
                     <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{row.type}</td>
                     <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full ${

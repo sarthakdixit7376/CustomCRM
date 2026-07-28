@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, UserCheck } from 'lucide-react';
 import { API_BASE } from '../../config';
+import ConvertToCustomerModal, { type ConvertToCustomerFormData } from './ConvertToCustomerModal';
 
 type QuoteField = 'mandatoryPrice' | 'thirdPartyPrice' | 'complimentaryPrice';
 type AddonField = 'glassAndMoreSelected' | 'complementaryVipSelected';
@@ -33,6 +34,8 @@ export default function LeadQuotes() {
   const [leads, setLeads] = useState<QuoteRow[]>([]);
   const [status, setStatus] = useState<'loading' | 'live' | 'error'>('loading');
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [convertingLead, setConvertingLead] = useState<QuoteRow | null>(null);
+  const [isConverting, setIsConverting] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -115,6 +118,21 @@ export default function LeadQuotes() {
     }
   };
 
+  const handleConvertSubmit = async (data: ConvertToCustomerFormData) => {
+    if (!convertingLead) return;
+    setIsConverting(true);
+    try {
+      await axios.post(`${API_BASE}/api/leads/${convertingLead.id}/convert-to-customer`, data);
+      setLeads((prev) => prev.filter((l) => l.id !== convertingLead.id));
+      setConvertingLead(null);
+    } catch (error) {
+      console.error('Failed to convert lead to customer:', error);
+      alert('Failed to transfer lead to customer. Please try again.');
+    } finally {
+      setIsConverting(false);
+    }
+  };
+
   const totalCols = 2 + PRICE_COLUMNS.length + ADDON_COLUMNS.length + 1;
 
   return (
@@ -187,16 +205,26 @@ export default function LeadQuotes() {
                     </td>
                   ))}
                   <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap text-right">
-                    <button
-                      onClick={() => handleSend(row.id)}
-                      disabled={sendingId === row.id}
-                      title="Generate pricing PDF and send via WhatsApp"
-                      className="px-3 py-1.5 text-xs font-semibold rounded-md border border-border bg-surface text-text hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-wait inline-flex items-center gap-1.5"
-                    >
-                      {sendingId === row.id
-                        ? <><Loader2 size={12} className="animate-spin" /> Sending…</>
-                        : <><Send size={12} /> Send</>}
-                    </button>
+                    <div className="inline-flex items-center gap-2">
+                      <button
+                        onClick={() => handleSend(row.id)}
+                        disabled={sendingId === row.id}
+                        title="Generate pricing PDF and send via WhatsApp"
+                        className="px-3 py-1.5 text-xs font-semibold rounded-md border border-border bg-surface text-text hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-wait inline-flex items-center gap-1.5"
+                      >
+                        {sendingId === row.id
+                          ? <><Loader2 size={12} className="animate-spin" /> Sending…</>
+                          : <><Send size={12} /> Send</>}
+                      </button>
+                      <button
+                        onClick={() => setConvertingLead(row)}
+                        disabled={!row.pricingPdfUrl}
+                        title={row.pricingPdfUrl ? 'Transfer this lead to a customer' : 'Generate the pricing PDF first'}
+                        className="px-3 py-1.5 text-xs font-semibold rounded-md border border-primary-200 bg-primary-50 text-primary-700 hover:bg-primary-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+                      >
+                        <UserCheck size={12} /> Transfer
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -210,6 +238,14 @@ export default function LeadQuotes() {
           </tbody>
         </table>
       </div>
+
+      <ConvertToCustomerModal
+        isOpen={!!convertingLead}
+        leadName={convertingLead?.leadName}
+        onClose={() => setConvertingLead(null)}
+        onSubmit={handleConvertSubmit}
+        isSubmitting={isConverting}
+      />
     </div>
   );
 }

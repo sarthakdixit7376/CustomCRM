@@ -5,6 +5,9 @@ export const PolicyModel = {
     return prisma.policy.findMany({
       where: agentId ? { customer: { agentId } } : undefined,
       orderBy: { id: 'desc' },
+      include: {
+        customer: { select: { id: true, customerName: true } },
+      },
     });
   },
 
@@ -21,7 +24,7 @@ export const PolicyModel = {
     });
   },
 
-  createPolicy: async (policyData: any, customerId?: string) => {
+  createPolicy: async (policyData: any, customerId: string) => {
     return prisma.policy.create({
       data: {
         policyNumber: policyData.policyNumber,
@@ -31,7 +34,7 @@ export const PolicyModel = {
         endDate: policyData.endDate || null,
         type: policyData.type || null,
         status: policyData.status || 'Active',
-        customerId: customerId || null,
+        customerId,
       },
     });
   },

@@ -1,8 +1,24 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Save, Pencil, Printer, Phone, Smartphone, User } from 'lucide-react';
+import { Save, Pencil, Printer, Phone, Smartphone, User, Car } from 'lucide-react';
 import type { LeadRow } from './Lead';
 import { API_BASE } from '../../config';
+
+/* ───────── Vehicle Information fields (only shown for Car policies) ───────── */
+const VEHICLE_FIELDS: [string, string][] = [
+  ['Vehicle Number', 'misparRechev'],
+  ['Manufacturer', 'tozeretNm'],
+  ['Model', 'degemNm'],
+  ['Year', 'shnatYitzur'],
+  ['Color', 'tzevaRechev'],
+  ['Fuel Type', 'sugDelekNm'],
+  ['Engine Volume', 'nefahManoa'],
+  ['Horsepower', 'koachSus'],
+  ['Doors', 'misparDlatot'],
+  ['Seats', 'misparMoshavim'],
+  ['Ownership', 'baalut'],
+  ['License Valid Until', 'tokefDt'],
+];
 
 /* ───────── Default Data ───────── */
 const DEFAULT_CUSTOMER = {
@@ -18,17 +34,6 @@ const DEFAULT_CUSTOMER = {
     { label: 'Agent Name', value: '' },
     { label: 'Purchase Type', value: '' },
   ],
-  extras: {
-    uniqueId: '',
-    pathNumber: '',
-    healthFund: '',
-    employer: '',
-    signedGoodFaith: 'No',
-    noFixedAddress: false,
-    memberId: '',
-    workPlace: '',
-    carBrand: '',
-  },
   contacts: [
     { icon: '📱', value: '', label: 'Mobile', type: 'mobile' },
     { icon: '📞', value: '', label: 'Phone', type: 'phone' },
@@ -56,24 +61,6 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
       newContacts[0] = { ...newContacts[0], value: ld.phoneNumber, label: displayName || 'Mobile' };
     }
 
-    const newExtras = { ...DEFAULT_CUSTOMER.extras };
-    if (ld) {
-      newExtras.carBrand = ld.degemNm || '';
-      newExtras.uniqueId = ld.horaatRishum || '';
-      newExtras.pathNumber = ld.misparRechev || '';
-    }
-    if (cust) {
-      newExtras.uniqueId = cust.uniqueId || '';
-      newExtras.pathNumber = cust.pathNumber || '';
-      newExtras.healthFund = cust.healthFund || '';
-      newExtras.employer = cust.employer || '';
-      newExtras.signedGoodFaith = cust.signedGoodFaith ? 'Yes' : 'No';
-      newExtras.noFixedAddress = cust.noFixedAddress || false;
-      newExtras.memberId = cust.memberId || '';
-      newExtras.workPlace = cust.workPlace || '';
-      newExtras.carBrand = cust.carBrand || '';
-    }
-
     return {
       ...DEFAULT_CUSTOMER,
       id: cust?.id || '',
@@ -89,11 +76,11 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
         { label: 'Purchase Type', value: cust?.purchaseType || DEFAULT_CUSTOMER.identity[6].value },
       ],
       contacts: newContacts,
-      extras: newExtras,
     };
   };
 
   const [localData, setLocalData] = useState(() => getInitialData(customer, lead));
+  const hasCarPolicy = Boolean(customer?.policies?.some((p: any) => p.policyType === 'Car'));
 
   useEffect(() => {
     setLocalData(getInitialData(customer, lead));
@@ -106,10 +93,6 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
       newIdentity[index] = { ...newIdentity[index], value };
       return { ...prev, identity: newIdentity };
     });
-  };
-
-  const handleExtraChange = (key: keyof typeof DEFAULT_CUSTOMER.extras, value: string | boolean) => {
-    setLocalData((prev) => ({ ...prev, extras: { ...prev.extras, [key]: value } }));
   };
 
   const handleContactChange = (index: number, value: string) => {
@@ -134,15 +117,6 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
         insuranceAgent: localData.identity[4].value,
         agentName: localData.identity[5].value,
         purchaseType: localData.identity[6].value,
-        uniqueId: localData.extras.uniqueId,
-        pathNumber: localData.extras.pathNumber,
-        healthFund: localData.extras.healthFund,
-        employer: localData.extras.employer,
-        signedGoodFaith: localData.extras.signedGoodFaith === 'Yes' || (localData.extras.signedGoodFaith as any) === true,
-        noFixedAddress: localData.extras.noFixedAddress,
-        memberId: localData.extras.memberId,
-        workPlace: localData.extras.workPlace,
-        carBrand: localData.extras.carBrand,
         contacts: localData.contacts.map((c: any) => ({ type: c.type, value: c.value, label: c.label, icon: c.icon }))
       };
       await axios.put(`${API_BASE}/api/customers/${localData.id}`, updatePayload);
@@ -156,7 +130,7 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
   const inputClass = "bg-surface border border-border rounded-md text-text text-sm px-3 py-1.5 w-full max-w-[200px] outline-none transition-all focus:border-primary-400 focus:ring-2 focus:ring-primary-100";
 
   return (
-    <div className="flex flex-col animate-fade-in-up">
+    <div className="flex-1 overflow-y-auto flex flex-col animate-fade-in-up">
 
       {/* Action Bar */}
       <div className="flex items-center gap-3 px-8 py-4 border-b border-border bg-surface flex-wrap max-md:px-4">
@@ -221,43 +195,31 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
           </div>
         </div>
 
-        {/* Right: Extra Details */}
-        <div className="px-8 py-6 max-md:px-4">
-          <div className="text-sm font-bold text-text mb-5 pb-3 border-b border-border flex items-center justify-between">
-            <span>Additional Details</span>
-            <span className="text-xs font-medium text-text-muted cursor-pointer hover:text-text transition-colors" onClick={() => setIsEditing(!isEditing)}>
-              {isEditing ? 'Done' : <span className="inline-flex items-center gap-1"><Pencil size={12} /> Edit</span>}
-            </span>
+        {/* Right: Vehicle Information */}
+        <div className="px-8 py-6 max-md:px-4 min-w-0">
+          <div className="text-sm font-bold text-text mb-5 pb-3 border-b border-border flex items-center gap-2">
+            <Car size={16} className="text-text-muted" />
+            <span>Vehicle Information</span>
           </div>
-          <div className="grid grid-cols-2 max-md:grid-cols-1">
-            {(Object.entries({
-              'Unique ID': 'uniqueId', 'Member ID': 'memberId', 'Path Number': 'pathNumber',
-              'Work Place': 'workPlace', 'Health Fund': 'healthFund', 'Car Brand': 'carBrand',
-              'Signed Good Faith': 'signedGoodFaith',
-            }) as [string, keyof typeof DEFAULT_CUSTOMER.extras][]).map(([label, key], idx) => (
-              <div key={key} className={`flex flex-col gap-1 py-3 border-b border-border ${idx % 2 === 0 ? 'pr-6 border-r border-r-border' : 'pl-6'} max-md:pr-0 max-md:pl-0 max-md:border-r-0`}>
-                <span className="text-xs text-text-muted">{label}</span>
-                {isEditing ? (
-                  <input type="text" className={inputClass} value={String(localData.extras[key])} onChange={(e) => handleExtraChange(key, e.target.value)} />
-                ) : (
-                  <span className={`text-sm ${localData.extras[key] ? 'text-text font-medium' : 'text-neutral-400 italic'}`}>
-                    {localData.extras[key] || '—'}
-                  </span>
-                )}
-              </div>
-            ))}
-            {/* Checkbox field */}
-            <div className="flex flex-col gap-1 py-3 border-b border-border pl-6 max-md:pl-0">
-              <span className="text-xs text-text-muted">No Fixed Address</span>
-              {isEditing ? (
-                <input type="checkbox" className="mt-1 w-4 h-4 accent-primary-600" checked={Boolean(localData.extras.noFixedAddress)} onChange={(e) => handleExtraChange('noFixedAddress', e.target.checked)} />
-              ) : (
-                <span className="text-sm text-text font-medium inline-flex items-center gap-1.5 bg-neutral-100 px-2.5 py-0.5 rounded-full w-fit text-xs mt-1">
-                  {localData.extras.noFixedAddress ? 'Yes' : 'No'}
-                </span>
-              )}
+          {hasCarPolicy ? (
+            <div className="grid grid-cols-2 max-md:grid-cols-1">
+              {VEHICLE_FIELDS.map(([label, key], idx) => {
+                const value = customer?.[key];
+                return (
+                  <div key={key} className={`flex flex-col gap-1 py-3 border-b border-border min-w-0 ${idx % 2 === 0 ? 'pr-6 border-r border-r-border' : 'pl-6'} max-md:pr-0 max-md:pl-0 max-md:border-r-0`}>
+                    <span className="text-xs text-text-muted">{label}</span>
+                    <span className={`text-sm break-words ${value ? 'text-text font-medium' : 'text-neutral-400 italic'}`}>
+                      {value || '—'}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          ) : (
+            <div className="py-10 text-center text-sm text-neutral-400 italic">
+              No vehicle information for this customer.
+            </div>
+          )}
         </div>
       </div>
 

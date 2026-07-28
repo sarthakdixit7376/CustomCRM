@@ -35,16 +35,19 @@ export const getPoliciesByCustomer = async (req: Request, res: Response): Promis
 
 export const createPolicy = async (req: Request, res: Response): Promise<void> => {
   try {
-    if (req.body.customerId) {
-      const customer = await CustomerModel.getCustomerById(req.body.customerId);
-      if (!customer) {
-        res.status(404).json({ error: 'Customer not found' });
-        return;
-      }
-      if (req.user!.role !== 'ADMIN' && customer.agentId !== req.user!.id) {
-        res.status(403).json({ error: 'Forbidden' });
-        return;
-      }
+    if (!req.body.customerId) {
+      res.status(400).json({ error: 'customerId is required' });
+      return;
+    }
+
+    const customer = await CustomerModel.getCustomerById(req.body.customerId);
+    if (!customer) {
+      res.status(404).json({ error: 'Customer not found' });
+      return;
+    }
+    if (req.user!.role !== 'ADMIN' && customer.agentId !== req.user!.id) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
     }
 
     const newPolicy = await PolicyModel.createPolicy(req.body, req.body.customerId);

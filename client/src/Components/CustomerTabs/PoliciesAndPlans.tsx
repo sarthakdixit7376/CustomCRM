@@ -5,6 +5,7 @@ import { API_BASE } from '../../config';
 
 /* ───────── Types ───────── */
 interface FilterState {
+  customerId: string;
   numberOfPolicies: string;
   agentName: string;
   insuranceCompany: string;
@@ -13,8 +14,13 @@ interface FilterState {
   typeOfInsurance: string;
 }
 
+interface CustomerOption {
+  id: string;
+  customerName: string;
+}
+
 const EMPTY_FILTERS: FilterState = {
-  numberOfPolicies: '', agentName: '', insuranceCompany: '',
+  customerId: '', numberOfPolicies: '', agentName: '', insuranceCompany: '',
   startDate: '', endDate: '', typeOfInsurance: '',
 };
 
@@ -24,24 +30,36 @@ const INSURANCE_TYPES = ['Life Insurance', 'Health Insurance', 'Car Insurance', 
 export default function PoliciesAndPlans() {
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
   const [policies, setPolicies] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [customerError, setCustomerError] = useState(false);
 
   useEffect(() => {
     axios.get(`${API_BASE}/api/policies`)
       .then(res => setPolicies(res.data))
       .catch(err => console.error("Failed to load policies", err));
+
+    axios.get(`${API_BASE}/api/customers`)
+      .then(res => setCustomers(res.data))
+      .catch(err => console.error("Failed to load customers", err));
   }, []);
 
   function handleChange(key: keyof FilterState, value: string) {
     setFilters((prev) => ({ ...prev, [key]: value }));
+    if (key === 'customerId' && value) setCustomerError(false);
   }
 
   function handleReset() { setFilters(EMPTY_FILTERS); }
 
   async function handleAdd() {
+    if (!filters.customerId) {
+      setCustomerError(true);
+      return;
+    }
     if (!filters.agentName.trim() && !filters.insuranceCompany.trim()) return;
 
     try {
       const newPolicy = {
+        customerId: filters.customerId,
         policyNumber: filters.numberOfPolicies,
         agentName: filters.agentName,
         insuranceCompany: filters.insuranceCompany,
@@ -54,6 +72,7 @@ export default function PoliciesAndPlans() {
       const res = await axios.post(`${API_BASE}/api/policies`, newPolicy);
       setPolicies((prev) => [res.data, ...prev]);
       setFilters(EMPTY_FILTERS);
+      setCustomerError(false);
     } catch (error) {
       console.error("Failed to add policy", error);
     }
@@ -78,7 +97,7 @@ export default function PoliciesAndPlans() {
   const selectBg = { backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23888\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'/%3E%3C/svg%3E")' };
 
   return (
-    <div className="flex flex-col gap-8 px-8 py-8 animate-fade-in-up max-md:px-4 max-md:py-6 max-md:gap-6">
+    <div className="flex-1 overflow-y-auto flex flex-col gap-8 px-8 py-8 animate-fade-in-up max-md:px-4 max-md:py-6 max-md:gap-6">
 
       {/* Form Card */}
       <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-card">
@@ -100,8 +119,21 @@ export default function PoliciesAndPlans() {
         </div>
 
         {/* Fields */}
-        <div className="p-7 max-md:p-5">
+        <div className="p-7 max-md:p-5 max-h-[360px] overflow-y-auto [&::-webkit-scrollbar]:w-[5px] [&::-webkit-scrollbar-track]:bg-surface [&::-webkit-scrollbar-thumb]:bg-neutral-300 [&::-webkit-scrollbar-thumb]:rounded">
           <div className="grid grid-cols-3 gap-5 max-lg:grid-cols-2 max-md:grid-cols-1">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-text-muted">Customer <span className="text-danger-500">*</span></label>
+              <select
+                className={`${selectClass} ${customerError ? 'border-danger-500 ring-1 ring-danger-500/20' : ''}`}
+                style={selectBg}
+                value={filters.customerId}
+                onChange={(e) => handleChange('customerId', e.target.value)}
+              >
+                <option value="">— Select Customer —</option>
+                {customers.map((c) => <option key={c.id} value={c.id}>{c.customerName}</option>)}
+              </select>
+              {customerError && <span className="text-[11px] text-danger-600">Customer is required</span>}
+            </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-text-muted">Policy Number</label>
               <input type="number" className={inputClass} placeholder="e.g. 637/2026" min="0" value={filters.numberOfPolicies} onChange={(e) => handleChange('numberOfPolicies', e.target.value)} />
@@ -150,7 +182,7 @@ export default function PoliciesAndPlans() {
             <table className="w-full border-collapse text-sm">
               <thead className="border-b border-border">
                 <tr>
-                  {['#', 'Agent Name', 'Insurance Company', 'Type', 'Policies', 'Start Date', 'End Date', ''].map((h) => (
+                  {['#', 'Customer', 'Agent Name', 'Insurance Company', 'Type', 'Policies', 'Start Date', 'End Date', ''].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
@@ -159,6 +191,7 @@ export default function PoliciesAndPlans() {
                 {policies.map((p, i) => (
                   <tr key={i} className="transition-colors hover:bg-neutral-50">
                     <td className="px-4 py-3 text-text-muted border-b border-border">{i + 1}</td>
+                    <td className="px-4 py-3 text-text border-b border-border">{p.customer?.customerName || '—'}</td>
                     <td className="px-4 py-3 text-text border-b border-border">{p.agentName || '—'}</td>
                     <td className="px-4 py-3 text-text border-b border-border">{p.insuranceCompany || '—'}</td>
                     <td className="px-4 py-3 text-text border-b border-border">{p.typeOfInsurance || p.type || p.policyType || '—'}</td>

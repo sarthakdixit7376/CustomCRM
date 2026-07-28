@@ -165,5 +165,100 @@ export const LeadModel = {
       data: { pricingPdfUrl },
     });
   },
+
+  convertToCustomer: async (
+    leadId: string,
+    policyData: {
+      policyNumber: string;
+      policyType: string;
+      type?: string | null;
+      insuranceCompany: string;
+      startDate?: string | null;
+      endDate?: string | null;
+    }
+  ) => {
+    return prisma.$transaction(async (tx) => {
+      const lead = await tx.lead.findUnique({ where: { id: leadId } });
+      if (!lead) throw new Error('Lead not found');
+
+      const customer = await tx.customer.create({
+        data: {
+          customerName: lead.leadName,
+          idNumber: lead.idNumber,
+          dateOfBirth: lead.dateOfBirth,
+          agentId: lead.agentId,
+
+          phoneNumber:          lead.phoneNumber,
+          age:                  lead.age,
+          cost:                 lead.cost,
+          yearOfLicenseIssued:  lead.yearOfLicenseIssued,
+          interestedIn:         lead.interestedIn,
+
+          mandatoryPrice:       lead.mandatoryPrice,
+          thirdPartyPrice:      lead.thirdPartyPrice,
+          complimentaryPrice:   lead.complimentaryPrice,
+
+          glassAndMoreSelected:     lead.glassAndMoreSelected,
+          complementaryVipSelected: lead.complementaryVipSelected,
+
+          misparRechev:         lead.misparRechev,
+          tozeretCd:            lead.tozeretCd,
+          sugDegem:             lead.sugDegem,
+          tozeretNm:            lead.tozeretNm,
+          degemCd:              lead.degemCd,
+          shnatYitzur:          lead.shnatYitzur,
+          degemNm:              lead.degemNm,
+          ramatGimur:           lead.ramatGimur,
+          ramatEivzurBetihuti:  lead.ramatEivzurBetihuti,
+          kvutzatZihum:         lead.kvutzatZihum,
+          tzevaCd:              lead.tzevaCd,
+          tzevaRechev:          lead.tzevaRechev,
+          zmigKidmi:            lead.zmigKidmi,
+          zmigAhori:            lead.zmigAhori,
+          sugDelekNm:           lead.sugDelekNm,
+          horaatRishum:         lead.horaatRishum,
+          moedAliyaLakvish:     lead.moedAliyaLakvish,
+          baalut:               lead.baalut,
+          misgeret:             lead.misgeret,
+          tozeretEretzNm:       lead.tozeretEretzNm,
+          mishkalKolel:         lead.mishkalKolel,
+          nefahManoa:           lead.nefahManoa,
+          kinuyMishari:         lead.kinuyMishari,
+          mivchanAcharonDt:     lead.mivchanAcharonDt,
+          tokefDt:              lead.tokefDt,
+          taarichPkikaDt:       lead.taarichPkikaDt,
+          taarichPkiah:         lead.taarichPkiah,
+          kvuzatAgra:           lead.kvuzatAgra,
+          mahozMoshav:          lead.mahozMoshav,
+          sugRechevNm:          lead.sugRechevNm,
+          degemManoa:           lead.degemManoa,
+          koachSus:             lead.koachSus,
+          misparDlatot:         lead.misparDlatot,
+          misparMoshavim:       lead.misparMoshavim,
+
+          contacts: lead.phoneNumber
+            ? { create: [{ type: 'mobile', value: lead.phoneNumber, label: 'Mobile', icon: 'phone' }] }
+            : undefined,
+
+          policies: {
+            create: [{
+              policyNumber:     policyData.policyNumber,
+              policyType:       policyData.policyType,
+              type:             policyData.type || null,
+              insuranceCompany: policyData.insuranceCompany,
+              startDate:        policyData.startDate ? new Date(policyData.startDate) : null,
+              endDate:          policyData.endDate ? new Date(policyData.endDate) : null,
+              status:           'Active',
+            }],
+          },
+        },
+        include: { contacts: true, policies: true },
+      });
+
+      await tx.lead.delete({ where: { id: leadId } });
+
+      return customer;
+    });
+  },
 };
 

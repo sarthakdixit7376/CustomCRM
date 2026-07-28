@@ -4,6 +4,7 @@ interface PricingLead {
   age?: string | null;
   yearOfLicenseIssued?: string | null;
   mandatoryPrice?: number | null;
+  thirdPartyPrice?: number | null;
   complimentaryPrice?: number | null;
   glassAndMoreSelected?: boolean | null;
   complementaryVipSelected?: boolean | null;
@@ -24,11 +25,12 @@ const formatValidUntil = (): string => {
 
 export function buildPricingHtml(lead: PricingLead): string {
   const mandatoryPrice = lead.mandatoryPrice ?? 0;
+  const thirdPartyPrice = lead.thirdPartyPrice ?? 0;
   const complimentaryPrice = lead.complimentaryPrice ?? 0;
   const addonTotal =
     (lead.glassAndMoreSelected ? GLASS_AND_MORE_PRICE : 0) +
     (lead.complementaryVipSelected ? COMPLEMENTARY_VIP_PRICE : 0);
-  const totalPrice = mandatoryPrice + complimentaryPrice + addonTotal;
+  const totalPrice = mandatoryPrice + thirdPartyPrice + complimentaryPrice + addonTotal;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -121,6 +123,11 @@ export function buildPricingHtml(lead: PricingLead): string {
 <tr>
     <td>Mandatory Insurance Payment</td>
     <td>Visa, up to 10 installments</td>
+</tr>
+
+<tr>
+    <td>3rd Party Insurance</td>
+    <td>${formatCurrency(thirdPartyPrice)}</td>
 </tr>
 
 <tr>
