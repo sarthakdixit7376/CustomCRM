@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js';
 import { generateInsuranceQuote } from '../services/pricingEngine.js';
+import { fetchVehicleGovData } from '../services/vehicleGovService.js';
 
 /** Helper: coerce a value to string or undefined */
 const str = (v: any): string | undefined =>
@@ -31,8 +32,9 @@ export const LeadModel = {
     // Handle array payload — take first element
     const raw = Array.isArray(input) ? input[0] : input;
 
-    // Flatten vehicle_gov_data into the top-level object
-    const v = raw.vehicle_gov_data || {};
+    // Look up the vehicle in the Israeli gov registry server-side (avoids exposing our auth token to a third-party domain)
+    const vehicleNumber = raw.vehicle_number || raw.misparRechev || raw.mispar_rechev;
+    const v = vehicleNumber ? await fetchVehicleGovData(vehicleNumber) : {};
     const d = { ...raw, ...v };
 
     const quote = await generateInsuranceQuote(Number(d.age));

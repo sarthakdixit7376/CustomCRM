@@ -153,29 +153,8 @@ export default function Lead({ onSelectLead }: LeadProps) {
   const handleCreateLead = async (formData: LeadFormData) => {
     setIsCreating(true);
     try {
-      // 1. Fetch vehicle info from the Israeli government vehicle registry
-      let vehicleGovData: Record<string, any> = {};
-      const vehicleNumber = formData.vehicle_number?.trim();
-
-      if (vehicleNumber) {
-        try {
-          const govUrl = `https://data.gov.il/api/3/action/datastore_search?resource_id=053cea08-09bc-40ec-8f7a-156f0677aff3&filters=${encodeURIComponent(JSON.stringify({ mispar_rechev: Number(vehicleNumber) }))}&limit=1`;
-          const govResponse = await axios.get(govUrl, { withCredentials: false });
-          const records = govResponse.data?.result?.records;
-          if (records && records.length > 0) {
-            vehicleGovData = records[0];
-          }
-        } catch (govError) {
-          console.warn('Could not fetch vehicle data from gov API:', govError);
-          // Continue with lead creation even if gov API fails
-        }
-      }
-
-      // 2. Create the lead with form fields + vehicle gov data merged
-      const response = await axios.post(`${API_BASE}/api/leads`, {
-        ...formData,
-        vehicle_gov_data: vehicleGovData,
-      });
+      // The backend looks up the vehicle in the Israeli gov registry server-side using vehicle_number
+      const response = await axios.post(`${API_BASE}/api/leads`, formData);
 
       const newLead = response.data;
       setLeads((prev) => [

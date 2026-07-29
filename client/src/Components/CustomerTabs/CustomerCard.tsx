@@ -4,20 +4,42 @@ import { Save, Pencil, Printer, Phone, Smartphone, User, Car } from 'lucide-reac
 import type { LeadRow } from './Lead';
 import { API_BASE } from '../../config';
 
-/* ───────── Vehicle Information fields (only shown for Car policies) ───────── */
+/* ───────── Vehicle Information fields (only shown for Car policies, only when populated) ───────── */
 const VEHICLE_FIELDS: [string, string][] = [
   ['Vehicle Number', 'misparRechev'],
   ['Manufacturer', 'tozeretNm'],
+  ['Manufacturer Code', 'tozeretCd'],
   ['Model', 'degemNm'],
+  ['Model Code', 'degemCd'],
+  ['Model Type', 'sugDegem'],
   ['Year', 'shnatYitzur'],
+  ['Trim Level', 'ramatGimur'],
+  ['Safety Equipment Level', 'ramatEivzurBetihuti'],
   ['Color', 'tzevaRechev'],
+  ['Color Code', 'tzevaCd'],
   ['Fuel Type', 'sugDelekNm'],
   ['Engine Volume', 'nefahManoa'],
+  ['Engine Code', 'degemManoa'],
   ['Horsepower', 'koachSus'],
   ['Doors', 'misparDlatot'],
   ['Seats', 'misparMoshavim'],
+  ['Front Tire', 'zmigKidmi'],
+  ['Rear Tire', 'zmigAhori'],
   ['Ownership', 'baalut'],
+  ['Chassis Number', 'misgeret'],
+  ['Country of Manufacture', 'tozeretEretzNm'],
+  ['Gross Weight', 'mishkalKolel'],
+  ['Commercial Name', 'kinuyMishari'],
+  ['Vehicle Type', 'sugRechevNm'],
+  ['Pollution Group', 'kvutzatZihum'],
+  ['Fee Group', 'kvuzatAgra'],
+  ['District', 'mahozMoshav'],
+  ['Registration Instruction', 'horaatRishum'],
+  ['Road Entry Date', 'moedAliyaLakvish'],
+  ['Last Test Date', 'mivchanAcharonDt'],
   ['License Valid Until', 'tokefDt'],
+  ['Expiry Date', 'taarichPkikaDt'],
+  ['Expiry Date (2)', 'taarichPkiah'],
 ];
 
 /* ───────── Default Data ───────── */
@@ -81,6 +103,7 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
 
   const [localData, setLocalData] = useState(() => getInitialData(customer, lead));
   const hasCarPolicy = Boolean(customer?.policies?.some((p: any) => p.policyType === 'Car'));
+  const populatedVehicleFields = VEHICLE_FIELDS.filter(([, key]) => customer?.[key]);
 
   useEffect(() => {
     setLocalData(getInitialData(customer, lead));
@@ -201,19 +224,14 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
             <Car size={16} className="text-text-muted" />
             <span>Vehicle Information</span>
           </div>
-          {hasCarPolicy ? (
+          {hasCarPolicy && populatedVehicleFields.length > 0 ? (
             <div className="grid grid-cols-2 max-md:grid-cols-1">
-              {VEHICLE_FIELDS.map(([label, key], idx) => {
-                const value = customer?.[key];
-                return (
-                  <div key={key} className={`flex flex-col gap-1 py-3 border-b border-border min-w-0 ${idx % 2 === 0 ? 'pr-6 border-r border-r-border' : 'pl-6'} max-md:pr-0 max-md:pl-0 max-md:border-r-0`}>
-                    <span className="text-xs text-text-muted">{label}</span>
-                    <span className={`text-sm break-words ${value ? 'text-text font-medium' : 'text-neutral-400 italic'}`}>
-                      {value || '—'}
-                    </span>
-                  </div>
-                );
-              })}
+              {populatedVehicleFields.map(([label, key], idx) => (
+                <div key={key} className={`flex flex-col gap-1 py-3 border-b border-border min-w-0 ${idx % 2 === 0 ? 'pr-6 border-r border-r-border' : 'pl-6'} max-md:pr-0 max-md:pl-0 max-md:border-r-0`}>
+                  <span className="text-xs text-text-muted">{label}</span>
+                  <span className="text-sm break-words text-text font-medium">{customer[key]}</span>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="py-10 text-center text-sm text-neutral-400 italic">

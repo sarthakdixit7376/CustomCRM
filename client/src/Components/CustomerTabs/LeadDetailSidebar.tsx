@@ -52,8 +52,12 @@ export interface LeadDetailSidebarProps {
 }
 
 export default function LeadDetailSidebar({ lead, onClose }: LeadDetailSidebarProps) {
+  const populatedFields = DETAIL_FIELDS.filter(([, key]) => {
+    const value = lead[key];
+    return value !== null && value !== undefined && value !== '';
+  });
+
   const renderValue = (key: keyof LeadRow, value: unknown) => {
-    if (value === null || value === undefined || value === '') return '—';
     if (key === 'createdAt') return new Date(String(value)).toLocaleString();
     if (key === 'pdfUrl' || key === 'pricingPdfUrl') {
       return (
@@ -97,14 +101,18 @@ export default function LeadDetailSidebar({ lead, onClose }: LeadDetailSidebarPr
         </div>
 
         <div className="px-6 py-5 max-sm:px-4">
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 max-[380px]:grid-cols-1">
-            {DETAIL_FIELDS.map(([label, key]) => (
-              <div key={key}>
-                <dt className="text-[11px] text-text-muted mb-0.5">{label}</dt>
-                <dd className="text-sm text-text break-words">{renderValue(key, lead[key])}</dd>
-              </div>
-            ))}
-          </dl>
+          {populatedFields.length > 0 ? (
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 max-[380px]:grid-cols-1">
+              {populatedFields.map(([label, key]) => (
+                <div key={key}>
+                  <dt className="text-[11px] text-text-muted mb-0.5">{label}</dt>
+                  <dd className="text-sm text-text break-words">{renderValue(key, lead[key])}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <div className="text-center text-sm text-neutral-400 italic py-10">No details available.</div>
+          )}
         </div>
       </div>
     </>

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Lead, LeadQuotes } from '../Components/CustomerTabs';
-import type { LeadRow } from '../Components/CustomerTabs/Lead';
 
 const TABS = [
   { key: 'leads', label: 'Leads' },
@@ -11,11 +10,6 @@ type TabKey = (typeof TABS)[number]['key'];
 
 export default function LeadsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('leads');
-
-  const handleSelectLead = (lead: LeadRow) => {
-    // In the future, this will open a Lead detail panel or navigate to a detail route.
-    console.log('Selected lead:', lead);
-  };
 
   return (
     <div className="flex-1 flex flex-col h-full bg-surface-muted">
@@ -40,7 +34,7 @@ export default function LeadsPage() {
         ))}
       </nav>
 
-      {activeTab === 'leads' ? <Lead onSelectLead={handleSelectLead} /> : <LeadQuotes />}
+      {activeTab === 'leads' ? <Lead /> : <LeadQuotes />}
     </div>
   );
 }

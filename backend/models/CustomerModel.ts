@@ -1,5 +1,12 @@
 import prisma from '../config/prisma.js';
 
+/** undefined -> undefined (skip field), '' / null -> null (clear), else -> Date */
+const toDate = (value: any): Date | null | undefined => {
+  if (value === undefined) return undefined;
+  if (!value) return null;
+  return new Date(value);
+};
+
 export const CustomerModel = {
   getCustomers: async (agentId?: string) => {
     return prisma.customer.findMany({
@@ -27,12 +34,18 @@ export const CustomerModel = {
   createCustomer: async (data: any, agentId: string) => {
     const { contacts, policies, ...customerData } = data;
 
+    const normalizedPolicies = policies?.map((p: any) => ({
+      ...p,
+      startDate: toDate(p.startDate) ?? null,
+      endDate: toDate(p.endDate) ?? null,
+    }));
+
     return prisma.customer.create({
       data: {
         ...customerData,
         agentId,
         contacts: contacts ? { create: contacts } : undefined,
-        policies: policies ? { create: policies } : undefined,
+        policies: normalizedPolicies ? { create: normalizedPolicies } : undefined,
       },
       include: {
         contacts: true,

@@ -1,5 +1,12 @@
 import prisma from '../config/prisma.js';
 
+/** undefined -> undefined (skip field), '' / null -> null (clear), else -> Date */
+const toDate = (value: any): Date | null | undefined => {
+  if (value === undefined) return undefined;
+  if (!value) return null;
+  return new Date(value);
+};
+
 export const PolicyModel = {
   getAllPolicies: async (agentId?: string) => {
     return prisma.policy.findMany({
@@ -30,8 +37,8 @@ export const PolicyModel = {
         policyNumber: policyData.policyNumber,
         policyType: policyData.policyType || 'General',
         insuranceCompany: policyData.insuranceCompany,
-        startDate: policyData.startDate || null,
-        endDate: policyData.endDate || null,
+        startDate: toDate(policyData.startDate) ?? null,
+        endDate: toDate(policyData.endDate) ?? null,
         type: policyData.type || null,
         status: policyData.status || 'Active',
         customerId,
@@ -46,8 +53,8 @@ export const PolicyModel = {
         policyNumber: policyData.policyNumber,
         policyType: policyData.policyType,
         insuranceCompany: policyData.insuranceCompany,
-        startDate: policyData.startDate,
-        endDate: policyData.endDate,
+        startDate: toDate(policyData.startDate),
+        endDate: toDate(policyData.endDate),
         type: policyData.type,
         status: policyData.status,
       },
