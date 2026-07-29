@@ -16,6 +16,7 @@ interface FilterState {
   manufacturer: string;
   glassAndMoreSelected: boolean;
   complementaryVipSelected: boolean;
+  amountPaid: string;
 }
 
 interface PoliciesAndPlansProps {
@@ -25,7 +26,7 @@ interface PoliciesAndPlansProps {
 const EMPTY_FILTERS: FilterState = {
   numberOfPolicies: '', agentName: '', insuranceCompany: '',
   startDate: '', endDate: '', policyType: 'Car', type: 'Mandatory', carNumber: '', manufacturer: '',
-  glassAndMoreSelected: false, complementaryVipSelected: false,
+  glassAndMoreSelected: false, complementaryVipSelected: false, amountPaid: '',
 };
 
 const POLICY_TYPE_OPTIONS = ['Car', 'Home', 'Travel'];
@@ -38,6 +39,12 @@ const formatDate = (value: string): string => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString();
+};
+
+const formatCurrency = (value: any): string => {
+  if (value === null || value === undefined || value === '') return '—';
+  const n = Number(value);
+  return Number.isNaN(n) ? String(value) : `₪${n.toLocaleString('en-US')}`;
 };
 
 /** Colors Start/End Date cells by whether the policy's end date has passed. */
@@ -99,6 +106,7 @@ export default function PoliciesAndPlans({ presetCustomer }: PoliciesAndPlansPro
         manufacturer: filters.manufacturer,
         glassAndMoreSelected: filters.glassAndMoreSelected,
         complementaryVipSelected: filters.complementaryVipSelected,
+        amountPaid: filters.amountPaid,
       };
 
       const res = await axios.post(`${API_BASE}/api/policies`, newPolicy);
@@ -170,6 +178,10 @@ export default function PoliciesAndPlans({ presetCustomer }: PoliciesAndPlansPro
                 </select>
               </div>
               <div className="flex flex-col gap-1.5 min-w-0">
+                <label className="text-xs font-medium text-text-muted">Amount Paid</label>
+                <input type="number" className={inputClass} placeholder="e.g. 1200" min="0" value={filters.amountPaid} onChange={(e) => handleChange('amountPaid', e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-1.5 min-w-0">
                 <label className="text-xs font-medium text-text-muted">Start Date</label>
                 <input type="date" className={inputClass} value={filters.startDate} onChange={(e) => handleChange('startDate', e.target.value)} />
               </div>
@@ -236,7 +248,7 @@ export default function PoliciesAndPlans({ presetCustomer }: PoliciesAndPlansPro
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                {['#', 'Customer', 'Agent Name', 'Insurance Company', 'Policy Type', 'Type', 'Car Number', 'Manufacturer', 'Glass and More', 'Complementary + VIP', 'Policy Number', 'Start Date', 'End Date', ''].map((h) => (
+                {['#', 'Customer', 'Agent Name', 'Insurance Company', 'Policy Type', 'Type', 'Car Number', 'Manufacturer', 'Glass and More', 'Complementary + VIP', 'Policy Number', 'Amount Paid', 'Start Date', 'End Date', ''].map((h) => (
                   <th key={h} className="text-left px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider bg-neutral-50 border-b border-border whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -255,6 +267,7 @@ export default function PoliciesAndPlans({ presetCustomer }: PoliciesAndPlansPro
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.glassAndMoreSelected ? 'Yes' : '—'}</td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.complementaryVipSelected ? 'Yes' : '—'}</td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.policyNumber || '—'}</td>
+                  <td className="px-4 py-3 text-text font-medium border-b border-border whitespace-nowrap">{formatCurrency(p.amountPaid)}</td>
                   <td className={`px-4 py-3 font-medium border-b border-border whitespace-nowrap ${expiryColorClass(p.endDate)}`}>{formatDate(p.startDate)}</td>
                   <td className={`px-4 py-3 font-medium border-b border-border whitespace-nowrap ${expiryColorClass(p.endDate)}`}>{formatDate(p.endDate)}</td>
                   <td className="px-4 py-3 border-b border-border whitespace-nowrap text-right">

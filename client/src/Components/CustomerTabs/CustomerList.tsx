@@ -12,6 +12,7 @@ export interface PolicyRow {
   startDate: string;
   endDate: string;
   type: string;
+  amountPaid: string;
   status: 'Active' | 'Cancelled';
 }
 
@@ -32,6 +33,12 @@ const formatDate = (value: string): string => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString();
+};
+
+const formatCurrency = (value: string): string => {
+  if (!value || value === '-') return '-';
+  const n = Number(value);
+  return Number.isNaN(n) ? value : `₪${n.toLocaleString('en-US')}`;
 };
 
 /** Colors Start/End Date cells by whether the policy's end date has passed. */
@@ -163,7 +170,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                 <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none" style={{ width: 40 }}>
                   <input type="checkbox" className="w-4 h-4 accent-primary-600 cursor-pointer" />
                 </th>
-                {['Customer', 'Policy Number', 'Policy Type', 'Insurance Company', 'Start Date', 'End Date', 'Type', 'Status'].map((h) => (
+                {['Customer', 'Policy Number', 'Policy Type', 'Insurance Company', 'Start Date', 'End Date', 'Type', 'Amount Paid', 'Status'].map((h) => (
                   <th key={h} className="group px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap select-none cursor-pointer hover:text-text transition-colors">
                     <span className="inline-flex items-center gap-1.5">{h} <ChevronDown size={12} className="opacity-0 group-hover:opacity-50 transition-opacity" /></span>
                   </th>
@@ -199,6 +206,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                     <td className={`px-4 py-3 text-sm font-medium border-b border-border whitespace-nowrap ${expiryColorClass(row.endDate)}`}>{formatDate(row.startDate)}</td>
                     <td className={`px-4 py-3 text-sm font-medium border-b border-border whitespace-nowrap ${expiryColorClass(row.endDate)}`}>{formatDate(row.endDate)}</td>
                     <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{row.type}</td>
+                    <td className="px-4 py-3 text-sm text-text font-medium border-b border-border whitespace-nowrap">{formatCurrency(row.amountPaid)}</td>
                     <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full ${
                         row.status === 'Active' ? 'bg-success-50 text-success-600' : 'bg-neutral-100 text-text-muted'
@@ -225,7 +233,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                 ))
               ) : (
                 <tr>
-                  <td colSpan={10} className="text-center py-10 text-text-muted">No results found</td>
+                  <td colSpan={11} className="text-center py-10 text-text-muted">No results found</td>
                 </tr>
               )}
             </tbody>

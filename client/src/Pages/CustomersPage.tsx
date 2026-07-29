@@ -57,6 +57,7 @@ export default function CustomersPage() {
               startDate: pol.startDate || '-',
               endDate: pol.endDate || '-',
               type: pol.type || '-',
+              amountPaid: pol.amountPaid != null ? String(pol.amountPaid) : '-',
               status: pol.status || 'Active',
             });
           });
@@ -70,6 +71,7 @@ export default function CustomersPage() {
             startDate: '-',
             endDate: '-',
             type: '-',
+            amountPaid: '-',
             status: 'Active',
           });
         }
@@ -107,6 +109,7 @@ export default function CustomersPage() {
             carNumber: data.carNumber,
             glassAndMoreSelected: data.glassAndMoreSelected,
             complementaryVipSelected: data.complementaryVipSelected,
+            amountPaid: data.amountPaid,
             startDate: data.startDate || undefined,
             endDate: data.endDate || undefined,
             type: data.insuranceType,

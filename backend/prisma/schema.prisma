@@ -260,6 +260,7 @@ model Policy {
   manufacturer     String?
   glassAndMoreSelected     Boolean @default(false)
   complementaryVipSelected Boolean @default(false)
+  amountPaid       Float?
   startDate        DateTime?
   endDate          DateTime?
   type             String?

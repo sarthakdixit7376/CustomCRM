@@ -8,6 +8,14 @@ const toDate = (value: any): Date | null | undefined => {
   return new Date(value);
 };
 
+/** undefined -> undefined (skip field), '' / null -> null (clear), else -> Number */
+const toNumber = (value: any): number | null | undefined => {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return null;
+  const n = Number(value);
+  return Number.isNaN(n) ? null : n;
+};
+
 export const CustomerModel = {
   getCustomers: async (agentId?: string) => {
     return prisma.customer.findMany({
@@ -39,6 +47,7 @@ export const CustomerModel = {
       ...p,
       startDate: toDate(p.startDate) ?? null,
       endDate: toDate(p.endDate) ?? null,
+      amountPaid: toNumber(p.amountPaid) ?? null,
     }));
 
     // Auto-fetch vehicle details from the gov registry so the customer's vehicle fields

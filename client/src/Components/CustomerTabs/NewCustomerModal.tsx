@@ -14,6 +14,7 @@ export interface CustomerFormData {
   carNumber: string;
   glassAndMoreSelected: boolean;
   complementaryVipSelected: boolean;
+  amountPaid: string;
   startDate: string;
   endDate: string;
   email: string;
@@ -33,7 +34,7 @@ interface NewCustomerModalProps {
 const INITIAL_FORM: CustomerFormData = {
   firstName: '', lastName: '', dateOfBirth: '', gender: '',
   policyNumber: '', policyType: 'Car', insuranceType: 'Mandatory', agentName: '', carNumber: '',
-  glassAndMoreSelected: false, complementaryVipSelected: false, startDate: '', endDate: '', email: '', phone: '',
+  glassAndMoreSelected: false, complementaryVipSelected: false, amountPaid: '', startDate: '', endDate: '', email: '', phone: '',
   mobile: '', insuranceCompany: '', purchaseType: 'Private', notes: '',
 };
 
@@ -214,6 +215,10 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-text-muted">Agent Name</label>
                 <input type="text" className={`${inputBase} ${inputOk}`} placeholder="Enter agent name" value={form.agentName} onChange={(e) => handleChange('agentName', e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-text-muted">Amount Paid</label>
+                <input type="number" className={`${inputBase} ${inputOk}`} placeholder="e.g. 1200" min="0" value={form.amountPaid} onChange={(e) => handleChange('amountPaid', e.target.value)} />
               </div>
             </div>
           </div>
