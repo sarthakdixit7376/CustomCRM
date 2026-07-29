@@ -22,7 +22,7 @@ export interface CustomerListProps {
 }
 
 /* ───────── Filter Options ───────── */
-const POLICY_TYPES = ['All', 'Mandatory', 'Comprehensive', 'Life', 'Home'];
+const POLICY_TYPES = ['All', 'Car', 'Home', 'Travel'];
 const INSURANCE_COMPANIES = ['All', 'Phoenix', 'Clal', 'Migdal', 'Ayalon'];
 
 /* ───────── Helpers ───────── */

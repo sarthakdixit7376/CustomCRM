@@ -11,7 +11,8 @@ interface FilterState {
   insuranceCompany: string;
   startDate: string;
   endDate: string;
-  typeOfInsurance: string;
+  policyType: string;
+  type: string;
 }
 
 interface CustomerOption {
@@ -21,10 +22,19 @@ interface CustomerOption {
 
 const EMPTY_FILTERS: FilterState = {
   customerId: '', numberOfPolicies: '', agentName: '', insuranceCompany: '',
-  startDate: '', endDate: '', typeOfInsurance: '',
+  startDate: '', endDate: '', policyType: 'Car', type: 'Mandatory',
 };
 
-const INSURANCE_TYPES = ['Life Insurance', 'Health Insurance', 'Car Insurance', 'Home Insurance', 'Travel Insurance', 'Pension Plan'];
+const POLICY_TYPE_OPTIONS = ['Car', 'Home', 'Travel'];
+const TYPE_OPTIONS = ['Mandatory', 'Comprehensive', '3rd Party'];
+
+/* ───────── Helpers ───────── */
+const formatDate = (value: string): string => {
+  if (!value || value === '-') return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString();
+};
 
 /* ───────── Component ───────── */
 export default function PoliciesAndPlans() {
@@ -44,7 +54,12 @@ export default function PoliciesAndPlans() {
   }, []);
 
   function handleChange(key: keyof FilterState, value: string) {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+    setFilters((prev) => {
+      const next = { ...prev, [key]: value };
+      if (key === 'policyType' && value !== 'Car') next.type = '';
+      if (key === 'policyType' && value === 'Car' && !prev.type) next.type = 'Mandatory';
+      return next;
+    });
     if (key === 'customerId' && value) setCustomerError(false);
   }
 
@@ -65,8 +80,8 @@ export default function PoliciesAndPlans() {
         insuranceCompany: filters.insuranceCompany,
         startDate: filters.startDate,
         endDate: filters.endDate,
-        type: filters.typeOfInsurance,
-        policyType: filters.typeOfInsurance,
+        policyType: filters.policyType,
+        type: filters.type,
       };
 
       const res = await axios.post(`${API_BASE}/api/policies`, newPolicy);
@@ -111,17 +126,12 @@ export default function PoliciesAndPlans() {
               <div className="text-xs text-text-muted mt-0.5">Fill in the details and add a new insurance policy</div>
             </div>
           </div>
-          {policies.length > 0 && (
-            <span className="text-xs text-primary-700 bg-primary-50 px-3 py-1 rounded-full font-medium">
-              {policies.length} {policies.length === 1 ? 'policy' : 'policies'} added
-            </span>
-          )}
         </div>
 
         {/* Fields */}
-        <div className="p-7 max-md:p-5 max-h-[360px] overflow-y-auto [&::-webkit-scrollbar]:w-[5px] [&::-webkit-scrollbar-track]:bg-surface [&::-webkit-scrollbar-thumb]:bg-neutral-300 [&::-webkit-scrollbar-thumb]:rounded">
+        <div className="p-7 max-md:p-5">
           <div className="grid grid-cols-3 gap-5 max-lg:grid-cols-2 max-md:grid-cols-1">
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 min-w-0">
               <label className="text-xs font-medium text-text-muted">Customer <span className="text-danger-500">*</span></label>
               <select
                 className={`${selectClass} ${customerError ? 'border-danger-500 ring-1 ring-danger-500/20' : ''}`}
@@ -134,33 +144,40 @@ export default function PoliciesAndPlans() {
               </select>
               {customerError && <span className="text-[11px] text-danger-600">Customer is required</span>}
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 min-w-0">
               <label className="text-xs font-medium text-text-muted">Policy Number</label>
               <input type="number" className={inputClass} placeholder="e.g. 637/2026" min="0" value={filters.numberOfPolicies} onChange={(e) => handleChange('numberOfPolicies', e.target.value)} />
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 min-w-0">
               <label className="text-xs font-medium text-text-muted">Agent Name</label>
               <input type="text" className={inputClass} placeholder="Enter agent name" value={filters.agentName} onChange={(e) => handleChange('agentName', e.target.value)} />
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 min-w-0">
               <label className="text-xs font-medium text-text-muted">Insurance Company</label>
               <input type="text" className={inputClass} placeholder="Enter insurance company" value={filters.insuranceCompany} onChange={(e) => handleChange('insuranceCompany', e.target.value)} />
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 min-w-0">
               <label className="text-xs font-medium text-text-muted">Start Date</label>
               <input type="date" className={inputClass} value={filters.startDate} onChange={(e) => handleChange('startDate', e.target.value)} />
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 min-w-0">
               <label className="text-xs font-medium text-text-muted">End Date</label>
               <input type="date" className={inputClass} value={filters.endDate} onChange={(e) => handleChange('endDate', e.target.value)} />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-text-muted">Type of Insurance</label>
-              <select className={selectClass} style={selectBg} value={filters.typeOfInsurance} onChange={(e) => handleChange('typeOfInsurance', e.target.value)}>
-                <option value="">— Select Type —</option>
-                {INSURANCE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+            <div className="flex flex-col gap-1.5 min-w-0">
+              <label className="text-xs font-medium text-text-muted">Policy Type</label>
+              <select className={selectClass} style={selectBg} value={filters.policyType} onChange={(e) => handleChange('policyType', e.target.value)}>
+                {POLICY_TYPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
+            {filters.policyType === 'Car' && (
+              <div className="flex flex-col gap-1.5 min-w-0">
+                <label className="text-xs font-medium text-text-muted">Type</label>
+                <select className={selectClass} style={selectBg} value={filters.type} onChange={(e) => handleChange('type', e.target.value)}>
+                  {TYPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+            )}
           </div>
         </div>
 
@@ -176,44 +193,43 @@ export default function PoliciesAndPlans() {
       </div>
 
       {/* Policies List */}
-      <div className="bg-surface border border-border rounded-xl px-8 py-16 flex flex-col items-center justify-center gap-4 text-center max-md:px-4 max-md:py-10 shadow-card">
-        {policies.length > 0 ? (
-          <div className="w-full overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead className="border-b border-border">
-                <tr>
-                  {['#', 'Customer', 'Agent Name', 'Insurance Company', 'Type', 'Policies', 'Start Date', 'End Date', ''].map((h) => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {policies.map((p, i) => (
-                  <tr key={i} className="transition-colors hover:bg-neutral-50">
-                    <td className="px-4 py-3 text-text-muted border-b border-border">{i + 1}</td>
-                    <td className="px-4 py-3 text-text border-b border-border">{p.customer?.customerName || '—'}</td>
-                    <td className="px-4 py-3 text-text border-b border-border">{p.agentName || '—'}</td>
-                    <td className="px-4 py-3 text-text border-b border-border">{p.insuranceCompany || '—'}</td>
-                    <td className="px-4 py-3 text-text border-b border-border">{p.typeOfInsurance || p.type || p.policyType || '—'}</td>
-                    <td className="px-4 py-3 text-text border-b border-border">{p.numberOfPolicies || p.policyNumber || '—'}</td>
-                    <td className="px-4 py-3 text-text border-b border-border">{p.startDate || '—'}</td>
-                    <td className="px-4 py-3 text-text border-b border-border">{p.endDate || '—'}</td>
-                    <td className="px-4 py-3 border-b border-border">
-                      <button className="bg-transparent border-none px-2 py-1 cursor-pointer text-text-muted text-sm rounded transition-all hover:text-danger-600 hover:bg-danger-50" onClick={() => handleRemovePolicy(i, p.id)}><X size={14} /></button>
-                    </td>
-                  </tr>
+      {policies.length > 0 ? (
+        <div className="border border-border rounded-xl overflow-x-auto hide-scrollbar bg-surface shadow-card">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr>
+                {['#', 'Customer', 'Agent Name', 'Insurance Company', 'Policy Type', 'Type', 'Policy Number', 'Start Date', 'End Date', ''].map((h) => (
+                  <th key={h} className="text-left px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider bg-neutral-50 border-b border-border whitespace-nowrap">{h}</th>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <>
-            <Layers size={42} className="text-neutral-300 animate-pulse-slow" />
-            <div className="text-lg font-bold text-text">No policies added yet</div>
-            <div className="text-sm text-text-muted max-w-[320px]">Use the form above to add new insurance policies and plans.</div>
-          </>
-        )}
-      </div>
+              </tr>
+            </thead>
+            <tbody>
+              {policies.map((p, i) => (
+                <tr key={i} className="transition-colors hover:bg-neutral-50">
+                  <td className="px-4 py-3 text-text-muted border-b border-border whitespace-nowrap">{i + 1}</td>
+                  <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.customer?.customerName || '—'}</td>
+                  <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.agentName || '—'}</td>
+                  <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.insuranceCompany || '—'}</td>
+                  <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.policyType || '—'}</td>
+                  <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.type || '—'}</td>
+                  <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.policyNumber || '—'}</td>
+                  <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{formatDate(p.startDate)}</td>
+                  <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{formatDate(p.endDate)}</td>
+                  <td className="px-4 py-3 border-b border-border whitespace-nowrap text-right">
+                    <button className="bg-transparent border-none px-2 py-1 cursor-pointer text-text-muted text-sm rounded transition-all hover:text-danger-600 hover:bg-danger-50" onClick={() => handleRemovePolicy(i, p.id)}><X size={14} /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="bg-surface border border-border rounded-xl px-8 py-16 flex flex-col items-center justify-center gap-4 text-center max-md:px-4 max-md:py-10 shadow-card">
+          <Layers size={42} className="text-neutral-300 animate-pulse-slow" />
+          <div className="text-lg font-bold text-text">No policies added yet</div>
+          <div className="text-sm text-text-muted max-w-[320px]">Use the form above to add new insurance policies and plans.</div>
+        </div>
+      )}
     </div>
   );
 }

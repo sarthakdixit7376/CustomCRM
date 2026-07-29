@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { User, X, IdCard, ClipboardList, Phone, MapPin, Plus, AlertTriangle } from 'lucide-react';
+import { User, X, IdCard, ClipboardList, Phone, Plus, AlertTriangle } from 'lucide-react';
 
 /* ───────── Types ───────── */
 export interface CustomerFormData {
@@ -10,13 +10,12 @@ export interface CustomerFormData {
   policyNumber: string;
   policyType: string;
   insuranceType: string;
+  agentName: string;
   startDate: string;
   endDate: string;
   email: string;
   phone: string;
   mobile: string;
-  address: string;
-  city: string;
   insuranceCompany: string;
   purchaseType: string;
   notes: string;
@@ -30,8 +29,8 @@ interface NewCustomerModalProps {
 
 const INITIAL_FORM: CustomerFormData = {
   firstName: '', lastName: '', dateOfBirth: '', gender: '',
-  policyNumber: '', policyType: 'Mandatory', insuranceType: 'Car Insurance', startDate: '', endDate: '', email: '', phone: '',
-  mobile: '', address: '', city: '', insuranceCompany: '', purchaseType: 'Private', notes: '',
+  policyNumber: '', policyType: 'Car', insuranceType: 'Mandatory', agentName: '', startDate: '', endDate: '', email: '', phone: '',
+  mobile: '', insuranceCompany: '', purchaseType: 'Private', notes: '',
 };
 
 /* ───────── Component ───────── */
@@ -54,7 +53,12 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
   if (!isOpen) return null;
 
   const handleChange = (field: keyof CustomerFormData, value: string) => {
-    setForm((p) => ({ ...p, [field]: value }));
+    setForm((p) => {
+      const next = { ...p, [field]: value };
+      if (field === 'policyType' && value !== 'Car') next.insuranceType = '';
+      if (field === 'policyType' && value === 'Car' && !p.insuranceType) next.insuranceType = 'Mandatory';
+      return next;
+    });
     if (errors[field]) setErrors((p) => { const n = { ...p }; delete n[field]; return n; });
   };
 
@@ -150,21 +154,21 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-text-muted">Policy Type <span className="text-danger-500">*</span></label>
                 <select className={selectClass} style={selectBg} value={form.policyType} onChange={(e) => handleChange('policyType', e.target.value)}>
-                  <option value="Mandatory">Mandatory</option>
-                  <option value="Comprehensive">Comprehensive</option>
+                  <option value="Car">Car</option>
+                  <option value="Home">Home</option>
+                  <option value="Travel">Travel</option>
                 </select>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-text-muted">Type <span className="text-danger-500">*</span></label>
-                <select className={selectClass} style={selectBg} value={form.insuranceType} onChange={(e) => handleChange('insuranceType', e.target.value)}>
-                  <option value="Car Insurance">Car Insurance</option>
-                  <option value="Life Insurance">Life Insurance</option>
-                  <option value="Property Insurance">Property Insurance</option>
-                  <option value="Health Insurance">Health Insurance</option>
-                  <option value="Home Insurance">Home Insurance</option>
-                  <option value="Travel Insurance">Travel Insurance</option>
-                </select>
-              </div>
+              {form.policyType === 'Car' && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-text-muted">Type <span className="text-danger-500">*</span></label>
+                  <select className={selectClass} style={selectBg} value={form.insuranceType} onChange={(e) => handleChange('insuranceType', e.target.value)}>
+                    <option value="Mandatory">Mandatory</option>
+                    <option value="Comprehensive">Comprehensive</option>
+                    <option value="3rd Party">3rd Party</option>
+                  </select>
+                </div>
+              )}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-text-muted">Start Date</label>
                 <input type="date" className={`${inputBase} ${inputOk}`} value={form.startDate} onChange={(e) => handleChange('startDate', e.target.value)} />
@@ -172,6 +176,14 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-text-muted">End Date</label>
                 <input type="date" className={`${inputBase} ${inputOk}`} value={form.endDate} onChange={(e) => handleChange('endDate', e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-text-muted">Insurance Company</label>
+                <input type="text" className={`${inputBase} ${inputOk}`} placeholder="Company name" value={form.insuranceCompany} onChange={(e) => handleChange('insuranceCompany', e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-text-muted">Agent Name</label>
+                <input type="text" className={`${inputBase} ${inputOk}`} placeholder="Enter agent name" value={form.agentName} onChange={(e) => handleChange('agentName', e.target.value)} />
               </div>
             </div>
           </div>
@@ -194,27 +206,6 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
               <div className="flex flex-col gap-1.5 col-span-full">
                 <label className="text-xs font-medium text-text-muted">Email</label>
                 <input type="email" className={`${inputBase} ${inputOk}`} placeholder="customer@example.com" value={form.email} onChange={(e) => handleChange('email', e.target.value)} />
-              </div>
-            </div>
-          </div>
-
-          {/* ── Address ── */}
-          <div className="mb-0">
-            <div className="flex items-center gap-2 text-xs font-semibold text-text-muted uppercase tracking-wider mb-4 pb-2.5 border-b border-border">
-              <MapPin size={14} /> Address
-            </div>
-            <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-              <div className="flex flex-col gap-1.5 col-span-full">
-                <label className="text-xs font-medium text-text-muted">Street Address</label>
-                <input type="text" className={`${inputBase} ${inputOk}`} placeholder="Enter street address" value={form.address} onChange={(e) => handleChange('address', e.target.value)} />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-text-muted">City</label>
-                <input type="text" className={`${inputBase} ${inputOk}`} placeholder="Enter city" value={form.city} onChange={(e) => handleChange('city', e.target.value)} />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-text-muted">Insurance Company</label>
-                <input type="text" className={`${inputBase} ${inputOk}`} placeholder="Company name" value={form.insuranceCompany} onChange={(e) => handleChange('insuranceCompany', e.target.value)} />
               </div>
             </div>
           </div>

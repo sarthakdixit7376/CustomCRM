@@ -172,7 +172,6 @@ model Customer {
   healthFund      String?
   employer        String?
   signedGoodFaith Boolean  @default(false)
-  noFixedAddress  Boolean  @default(false)
   memberId        String?
   workPlace       String?
   carBrand        String?
@@ -256,6 +255,7 @@ model Policy {
   policyNumber     String
   policyType       String
   insuranceCompany String
+  agentName        String?
   startDate        DateTime?
   endDate          DateTime?
   type             String?

@@ -94,6 +94,7 @@ export default function CustomersPage() {
       const newCustomer = {
         customerName: `${data.firstName} ${data.lastName}`,
         insuranceAgent: data.insuranceCompany,
+        agentName: data.agentName,
         dateOfBirth: data.dateOfBirth,
         gender: data.gender,
         policies: [
@@ -101,6 +102,7 @@ export default function CustomersPage() {
             policyNumber: data.policyNumber,
             policyType: data.policyType,
             insuranceCompany: data.insuranceCompany || 'Unassigned',
+            agentName: data.agentName,
             startDate: data.startDate || undefined,
             endDate: data.endDate || undefined,
             type: data.insuranceType,
