@@ -147,7 +147,7 @@ export default function PoliciesAndPlans({ presetCustomer }: PoliciesAndPlansPro
         <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-card">
 
           {/* Header */}
-          <div className="flex items-center justify-between px-7 py-5 border-b border-border bg-neutral-50 max-md:px-5">
+          <div className="flex items-center justify-between px-7 py-5 border-b border-border bg-neutral-50 max-md:px-5 max-md:flex-col max-md:items-stretch max-md:gap-3">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-primary-50 border border-primary-100 rounded-lg flex items-center justify-center text-primary-600"><Layers size={18} /></div>
               <div>
@@ -156,6 +156,14 @@ export default function PoliciesAndPlans({ presetCustomer }: PoliciesAndPlansPro
                   <UserCircle2 size={13} /> Adding policy for <span className="font-semibold text-text">{presetCustomer.customerName}</span>
                 </div>
               </div>
+            </div>
+            <div className="flex items-center gap-3 max-md:justify-end">
+              <button className="px-5 py-2.5 text-sm font-medium rounded-lg cursor-pointer transition-all border border-border bg-surface text-text-muted hover:bg-neutral-100 hover:text-text" onClick={handleReset}>
+                Reset
+              </button>
+              <button className="px-5 py-2.5 text-sm font-semibold rounded-lg cursor-pointer transition-all bg-primary-600 text-white border-none hover:bg-primary-700 inline-flex items-center gap-2" onClick={handleAdd}>
+                <Plus size={16} strokeWidth={2.5} /> Add Policy
+              </button>
             </div>
           </div>
 
@@ -222,16 +230,6 @@ export default function PoliciesAndPlans({ presetCustomer }: PoliciesAndPlansPro
                 </>
               )}
             </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 px-7 py-5 border-t border-border bg-neutral-50 max-md:px-5">
-            <button className="px-5 py-2.5 text-sm font-medium rounded-lg cursor-pointer transition-all border border-border bg-surface text-text-muted hover:bg-neutral-100 hover:text-text" onClick={handleReset}>
-              Reset
-            </button>
-            <button className="px-5 py-2.5 text-sm font-semibold rounded-lg cursor-pointer transition-all bg-primary-600 text-white border-none hover:bg-primary-700 inline-flex items-center gap-2" onClick={handleAdd}>
-              <Plus size={16} strokeWidth={2.5} /> Add Policy
-            </button>
           </div>
         </div>
       ) : (
