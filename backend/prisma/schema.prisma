@@ -256,6 +256,10 @@ model Policy {
   policyType       String
   insuranceCompany String
   agentName        String?
+  carNumber        String?
+  manufacturer     String?
+  glassAndMoreSelected     Boolean @default(false)
+  complementaryVipSelected Boolean @default(false)
   startDate        DateTime?
   endDate          DateTime?
   type             String?

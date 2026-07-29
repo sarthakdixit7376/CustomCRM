@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, ChevronDown, X, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronDown, X, Trash2, ChevronLeft, ChevronRight, FilePlus2 } from 'lucide-react';
 import DeleteCustomerModal from './DeleteCustomerModal';
 
 /* ───────── Types ───────── */
@@ -19,6 +19,7 @@ export interface CustomerListProps {
   customers: PolicyRow[];
   onDeleteCustomer: (id: string) => void;
   onSelectCustomer?: (customer: PolicyRow) => void;
+  onAddPolicy?: (customer: PolicyRow) => void;
 }
 
 /* ───────── Filter Options ───────── */
@@ -33,8 +34,18 @@ const formatDate = (value: string): string => {
   return date.toLocaleDateString();
 };
 
+/** Colors Start/End Date cells by whether the policy's end date has passed. */
+const expiryColorClass = (endDate: string): string => {
+  if (!endDate || endDate === '-') return 'text-text-muted';
+  const end = new Date(endDate);
+  if (Number.isNaN(end.getTime())) return 'text-text-muted';
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return end < today ? 'text-danger-600' : 'text-success-600';
+};
+
 /* ───────── Component ───────── */
-export default function CustomerList({ customers, onDeleteCustomer, onSelectCustomer }: CustomerListProps) {
+export default function CustomerList({ customers, onDeleteCustomer, onSelectCustomer, onAddPolicy }: CustomerListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('All');
   const [selectedCompany, setSelectedCompany] = useState('All');
@@ -185,8 +196,8 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                         {row.insuranceCompany}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{formatDate(row.startDate)}</td>
-                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{formatDate(row.endDate)}</td>
+                    <td className={`px-4 py-3 text-sm font-medium border-b border-border whitespace-nowrap ${expiryColorClass(row.endDate)}`}>{formatDate(row.startDate)}</td>
+                    <td className={`px-4 py-3 text-sm font-medium border-b border-border whitespace-nowrap ${expiryColorClass(row.endDate)}`}>{formatDate(row.endDate)}</td>
                     <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{row.type}</td>
                     <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full ${
@@ -197,11 +208,18 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
-                      <button
-                        className="text-text-muted hover:text-danger-600 bg-transparent border-none cursor-pointer transition-colors p-1.5 rounded hover:bg-danger-50"
-                        title="Delete customer"
-                        onClick={() => setDeleteTarget(row)}
-                      ><Trash2 size={16} /></button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          className="text-text-muted hover:text-primary-600 bg-transparent border-none cursor-pointer transition-colors p-1.5 rounded hover:bg-primary-50"
+                          title="Add policy for this customer"
+                          onClick={() => onAddPolicy?.(row)}
+                        ><FilePlus2 size={16} /></button>
+                        <button
+                          className="text-text-muted hover:text-danger-600 bg-transparent border-none cursor-pointer transition-colors p-1.5 rounded hover:bg-danger-50"
+                          title="Delete customer"
+                          onClick={() => setDeleteTarget(row)}
+                        ><Trash2 size={16} /></button>
+                      </div>
                     </td>
                   </tr>
                 ))

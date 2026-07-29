@@ -36,6 +36,7 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<PolicyRow[]>([]);
   const [rawCustomers, setRawCustomers] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<PolicyRow | null>(null);
+  const [policyTargetCustomer, setPolicyTargetCustomer] = useState<{ id: string; customerName: string } | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -103,6 +104,9 @@ export default function CustomersPage() {
             policyType: data.policyType,
             insuranceCompany: data.insuranceCompany || 'Unassigned',
             agentName: data.agentName,
+            carNumber: data.carNumber,
+            glassAndMoreSelected: data.glassAndMoreSelected,
+            complementaryVipSelected: data.complementaryVipSelected,
             startDate: data.startDate || undefined,
             endDate: data.endDate || undefined,
             type: data.insuranceType,
@@ -136,15 +140,20 @@ export default function CustomersPage() {
     setActiveTab('card');
   };
 
+  const handleAddPolicyForCustomer = (customer: PolicyRow) => {
+    setPolicyTargetCustomer({ id: customer.id, customerName: customer.customerName });
+    setActiveTab('policies');
+  };
+
   const tabsWithBadge = TABS.map((tab) => ({
     ...tab,
     badge: tab.key === 'list' ? rawCustomers.length : tab.badge,
   }));
 
   const TAB_COMPONENTS: Record<TabKey, React.FC> = {
-    list: () => <CustomerList customers={customers} onDeleteCustomer={handleDeleteCustomer} onSelectCustomer={handleSelectCustomer} />,
+    list: () => <CustomerList customers={customers} onDeleteCustomer={handleDeleteCustomer} onSelectCustomer={handleSelectCustomer} onAddPolicy={handleAddPolicyForCustomer} />,
     card: () => <CustomerCard customer={selectedCustomer} lead={null} />,
-    service: OngoingService, policies: () => <PoliciesAndPlans />, quotes: Quotes, claims: Claims, documents: Documents,
+    service: OngoingService, policies: () => <PoliciesAndPlans presetCustomer={policyTargetCustomer} />, quotes: Quotes, claims: Claims, documents: Documents,
   };
 
   const ActiveTabComponent = TAB_COMPONENTS[activeTab];
@@ -174,7 +183,7 @@ export default function CustomersPage() {
                 ? 'text-primary-700 bg-primary-50 font-semibold'
                 : 'text-text-muted hover:text-text hover:bg-neutral-50'
             }`}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => { setActiveTab(tab.key); setPolicyTargetCustomer(null); }}
           >
             {tab.label}
             {tab.badge !== null && (

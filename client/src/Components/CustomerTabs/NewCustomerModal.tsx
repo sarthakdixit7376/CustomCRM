@@ -11,6 +11,9 @@ export interface CustomerFormData {
   policyType: string;
   insuranceType: string;
   agentName: string;
+  carNumber: string;
+  glassAndMoreSelected: boolean;
+  complementaryVipSelected: boolean;
   startDate: string;
   endDate: string;
   email: string;
@@ -29,9 +32,12 @@ interface NewCustomerModalProps {
 
 const INITIAL_FORM: CustomerFormData = {
   firstName: '', lastName: '', dateOfBirth: '', gender: '',
-  policyNumber: '', policyType: 'Car', insuranceType: 'Mandatory', agentName: '', startDate: '', endDate: '', email: '', phone: '',
+  policyNumber: '', policyType: 'Car', insuranceType: 'Mandatory', agentName: '', carNumber: '',
+  glassAndMoreSelected: false, complementaryVipSelected: false, startDate: '', endDate: '', email: '', phone: '',
   mobile: '', insuranceCompany: '', purchaseType: 'Private', notes: '',
 };
+
+const INSURANCE_COMPANIES = ['Phoenix', 'Clal', 'Migdal'];
 
 /* ───────── Component ───────── */
 export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCustomerModalProps) {
@@ -55,11 +61,18 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
   const handleChange = (field: keyof CustomerFormData, value: string) => {
     setForm((p) => {
       const next = { ...p, [field]: value };
-      if (field === 'policyType' && value !== 'Car') next.insuranceType = '';
+      if (field === 'policyType' && value !== 'Car') {
+        next.insuranceType = ''; next.carNumber = '';
+        next.glassAndMoreSelected = false; next.complementaryVipSelected = false;
+      }
       if (field === 'policyType' && value === 'Car' && !p.insuranceType) next.insuranceType = 'Mandatory';
       return next;
     });
     if (errors[field]) setErrors((p) => { const n = { ...p }; delete n[field]; return n; });
+  };
+
+  const handleCheckboxChange = (field: 'glassAndMoreSelected' | 'complementaryVipSelected', checked: boolean) => {
+    setForm((p) => ({ ...p, [field]: checked }));
   };
 
   const validate = (): boolean => {
@@ -160,14 +173,28 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
                 </select>
               </div>
               {form.policyType === 'Car' && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-text-muted">Type <span className="text-danger-500">*</span></label>
-                  <select className={selectClass} style={selectBg} value={form.insuranceType} onChange={(e) => handleChange('insuranceType', e.target.value)}>
-                    <option value="Mandatory">Mandatory</option>
-                    <option value="Comprehensive">Comprehensive</option>
-                    <option value="3rd Party">3rd Party</option>
-                  </select>
-                </div>
+                <>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-text-muted">Type <span className="text-danger-500">*</span></label>
+                    <select className={selectClass} style={selectBg} value={form.insuranceType} onChange={(e) => handleChange('insuranceType', e.target.value)}>
+                      <option value="Mandatory">Mandatory</option>
+                      <option value="Comprehensive">Comprehensive</option>
+                      <option value="3rd Party">3rd Party</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-text-muted">Car Number</label>
+                    <input type="text" className={`${inputBase} ${inputOk}`} placeholder="Enter car number" value={form.carNumber} onChange={(e) => handleChange('carNumber', e.target.value)} />
+                  </div>
+                  <div className="flex items-center gap-2 pt-6">
+                    <input type="checkbox" id="glassAndMoreSelected" className="w-4 h-4 accent-primary-600 cursor-pointer" checked={form.glassAndMoreSelected} onChange={(e) => handleCheckboxChange('glassAndMoreSelected', e.target.checked)} />
+                    <label htmlFor="glassAndMoreSelected" className="text-sm text-text cursor-pointer">Glass and More (₪320)</label>
+                  </div>
+                  <div className="flex items-center gap-2 pt-6">
+                    <input type="checkbox" id="complementaryVipSelected" className="w-4 h-4 accent-primary-600 cursor-pointer" checked={form.complementaryVipSelected} onChange={(e) => handleCheckboxChange('complementaryVipSelected', e.target.checked)} />
+                    <label htmlFor="complementaryVipSelected" className="text-sm text-text cursor-pointer">Complementary + VIP (₪550)</label>
+                  </div>
+                </>
               )}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-text-muted">Start Date</label>
@@ -179,7 +206,10 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-text-muted">Insurance Company</label>
-                <input type="text" className={`${inputBase} ${inputOk}`} placeholder="Company name" value={form.insuranceCompany} onChange={(e) => handleChange('insuranceCompany', e.target.value)} />
+                <select className={selectClass} style={selectBg} value={form.insuranceCompany} onChange={(e) => handleChange('insuranceCompany', e.target.value)}>
+                  <option value="">— Select Company —</option>
+                  {INSURANCE_COMPANIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-text-muted">Agent Name</label>

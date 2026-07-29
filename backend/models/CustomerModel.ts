@@ -1,4 +1,5 @@
 import prisma from '../config/prisma.js';
+import { fetchVehicleGovData, mapVehicleGovFields } from '../services/vehicleGovService.js';
 
 /** undefined -> undefined (skip field), '' / null -> null (clear), else -> Date */
 const toDate = (value: any): Date | null | undefined => {
@@ -40,9 +41,19 @@ export const CustomerModel = {
       endDate: toDate(p.endDate) ?? null,
     }));
 
+    // Auto-fetch vehicle details from the gov registry so the customer's vehicle fields
+    // (shown on the Customer Card) aren't left blank when created directly (not via lead conversion).
+    const carPolicy = normalizedPolicies?.find((p: any) => p.policyType === 'Car' && p.carNumber);
+    const vehicleGovData = carPolicy ? await fetchVehicleGovData(carPolicy.carNumber) : {};
+    const vehicleFields = mapVehicleGovFields(vehicleGovData);
+    if (carPolicy && !carPolicy.manufacturer) {
+      carPolicy.manufacturer = vehicleFields.tozeretNm ?? null;
+    }
+
     return prisma.customer.create({
       data: {
         ...customerData,
+        ...vehicleFields,
         agentId,
         contacts: contacts ? { create: contacts } : undefined,
         policies: normalizedPolicies ? { create: normalizedPolicies } : undefined,
