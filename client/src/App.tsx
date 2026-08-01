@@ -7,6 +7,7 @@ import AcceptInvite from './Pages/AcceptInvite';
 import CustomersPage from './Pages/CustomersPage';
 import LeadsPage from './Pages/LeadsPage';
 import UserManagement from './Pages/UserManagement';
+import EmailPage from './Pages/EmailPage';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
               <Route index element={<Navigate to="/leads" replace />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="customers" element={<CustomersPage />} />
+              <Route path="email" element={<EmailPage />} />
               <Route element={<ProtectedRoute allow={['ADMIN']} />}>
                 <Route path="admin/users" element={<UserManagement />} />
               </Route>

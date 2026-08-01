@@ -5,6 +5,7 @@ import customerRoutes from './customerRoutes.js';
 import policyRoutes from './policyRoutes.js';
 import userRoutes from './userRoutes.js';
 import invitationRoutes from './invitationRoutes.js';
+import emailRoutes from './emailRoutes.js';
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use('/customers', customerRoutes);
 router.use('/policies', policyRoutes);
 router.use('/users', userRoutes);
 router.use('/invitations', invitationRoutes);
+router.use('/email', emailRoutes);
 
 export default router;

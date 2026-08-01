@@ -54,8 +54,25 @@ model User {
   leads     Lead[]
   customers Customer[]
   invitationsSent Invitation[]
+  emailAccounts EmailAccount[]
 
   @@map("users")
+}
+
+model EmailAccount {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email        String
+  accessToken  String
+  refreshToken String
+  tokenExpiry  DateTime
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, email])
+  @@map("email_accounts")
 }
 
 model Invitation {

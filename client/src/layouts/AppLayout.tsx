@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { ClipboardList, Users, Settings, LogOut, Menu, X } from 'lucide-react';
+import { ClipboardList, Users, Settings, LogOut, Menu, X, Mail } from 'lucide-react';
 import logo from '../assets/Logo.png';
 import { useAuth } from '../context/AuthContext';
 
@@ -17,6 +17,7 @@ export default function AppLayout() {
   const navItems = [
     { label: 'Leads', path: '/leads', icon: ClipboardList },
     { label: 'Customers', path: '/customers', icon: Users },
+    { label: 'Email', path: '/email', icon: Mail },
     // We can add Quotes, Policies, Conversations later
   ];
 
