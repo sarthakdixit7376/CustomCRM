@@ -148,7 +148,7 @@ export default function UserManagement() {
           </button>
           <button
             className="text-sm font-medium text-text-muted bg-surface border border-border rounded-lg px-4 py-2 cursor-pointer hover:bg-neutral-50 hover:text-text"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/leads')}
           >
             <ArrowLeft size={14} className="inline-block mr-1.5 -mt-0.5" />Back to CRM
           </button>

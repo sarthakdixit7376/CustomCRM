@@ -12,7 +12,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const from = (location.state as { from?: string })?.from || '/';
+  const from = (location.state as { from?: string })?.from || '/leads';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

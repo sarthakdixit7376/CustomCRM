@@ -24,7 +24,7 @@ export default function ProtectedRoute({ children, allow }: ProtectedRouteProps)
   }
 
   if (allow && !allow.includes(user.role)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/leads" replace />;
   }
 
   return children ? <>{children}</> : <Outlet />;

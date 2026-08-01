@@ -5,6 +5,10 @@
       "destination": "https://customcrm.up.railway.app/api/:path*"
     },
     {
+      "source": "/googlebf060c82de20c527.html",
+      "destination": "/googlebf060c82de20c527.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }

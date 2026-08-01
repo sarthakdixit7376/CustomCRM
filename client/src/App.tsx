@@ -9,6 +9,7 @@ import LeadsPage from './Pages/LeadsPage';
 import UserManagement from './Pages/UserManagement';
 import EmailPage from './Pages/EmailPage';
 import PrivacyPolicy from './Pages/PrivacyPolicy';
+import Home from './Pages/Home';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
       <AuthProvider>
         <Routes>
           {/* Public routes */}
+          <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/invite" element={<AcceptInvite />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -23,7 +25,6 @@ function App() {
           {/* Protected routes with sidebar layout */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
-              <Route index element={<Navigate to="/leads" replace />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="customers" element={<CustomersPage />} />
               <Route path="email" element={<EmailPage />} />
