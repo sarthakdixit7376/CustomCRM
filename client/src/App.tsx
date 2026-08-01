@@ -8,6 +8,7 @@ import CustomersPage from './Pages/CustomersPage';
 import LeadsPage from './Pages/LeadsPage';
 import UserManagement from './Pages/UserManagement';
 import EmailPage from './Pages/EmailPage';
+import PrivacyPolicy from './Pages/PrivacyPolicy';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/invite" element={<AcceptInvite />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
 
           {/* Protected routes with sidebar layout */}
           <Route element={<ProtectedRoute />}>
