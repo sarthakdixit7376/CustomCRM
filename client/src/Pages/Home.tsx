@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ClipboardList, Users as UsersIcon, Mail, Send, AtSign, ShieldCheck } from 'lucide-react';
+import { ClipboardList, Users as UsersIcon, Mail, Send, AtSign, ShieldCheck, FileText } from 'lucide-react';
 import logo from '../assets/Logo.png';
 import { useAuth } from '../context/AuthContext';
 
@@ -7,12 +7,19 @@ const FEATURES = [
   {
     icon: ClipboardList,
     title: 'Lead management',
-    description: 'Track leads from first contact through quoting, documents, and policy issuance in one flow.',
+    description:
+      'MdarAI tracks every lead from first contact through quoting, document collection, and policy issuance, so nothing falls through the cracks.',
+  },
+  {
+    icon: FileText,
+    title: 'Automated quoting & pricing',
+    description:
+      'MdarAI calculates insurance pricing for each lead and generates pricing documents automatically, moving leads toward a signed quote faster.',
   },
   {
     icon: UsersIcon,
     title: 'Customer & policy records',
-    description: 'Keep customer details, contacts, and active insurance policies organized and up to date.',
+    description: 'MdarAI keeps customer details, contacts, and active insurance policies organized and up to date in one place.',
   },
   {
     icon: Mail,
@@ -68,11 +75,13 @@ export default function Home() {
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-16 flex flex-col gap-16">
         <section className="flex flex-col items-center text-center gap-5">
           <h1 className="text-3xl md:text-4xl font-bold text-text max-w-2xl">
-            The CRM built for insurance agencies
+            MdarAI — the CRM built for insurance agencies
           </h1>
-          <p className="text-base text-text-muted max-w-xl">
-            MdarAI helps insurance agents manage leads, customers, and policies in one place — and, with an optional
-            Gmail connection, read and send customer email without leaving the app.
+          <p className="text-base text-text-muted max-w-2xl">
+            MdarAI is a customer relationship management (CRM) platform purpose-built for insurance agencies. MdarAI
+            helps agents manage leads, calculate and send insurance quotes, track documents and signatures through to
+            policy issuance, and keep customer and policy records organized — all in one place. MdarAI also offers an
+            optional Gmail integration so agents can read and send customer email without ever leaving the app.
           </p>
           <Link
             to={user ? '/leads' : '/login'}
@@ -82,7 +91,7 @@ export default function Home() {
           </Link>
         </section>
 
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {FEATURES.map(({ icon: Icon, title, description }) => (
             <div key={title} className="flex flex-col gap-3 bg-surface border border-border rounded-xl p-6 shadow-card">
               <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-primary-50 text-primary-600">
