@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useSearchParams } from 'react-router-dom';
-import { Mail, Plus, Star, Trash2, Paperclip, PenSquare } from 'lucide-react';
+import { Mail, Plus, Star, Trash2, Paperclip, PenSquare, ArrowLeft } from 'lucide-react';
 import { API_BASE } from '../config';
 import ComposeModal from '../Components/Email/ComposeModal';
 
@@ -150,6 +150,11 @@ export default function EmailPage() {
   const handleShowNewMessages = () => {
     setMessages((prev) => [...pendingNewMessages, ...prev]);
     setPendingNewMessages([]);
+  };
+
+  const handleBackToList = () => {
+    setSelectedMessageId(null);
+    setSelectedMessage(null);
   };
 
   const handleSelectMessage = async (message: MessageSummary) => {
@@ -301,8 +306,12 @@ export default function EmailPage() {
             </select>
           </div>
 
-          <div className="flex-1 min-h-0 px-8 pb-8 max-md:px-4 flex gap-4 max-md:flex-col">
-            <div className="w-80 max-md:w-full shrink-0 border border-border rounded-lg bg-surface overflow-y-auto">
+          <div className="flex-1 min-h-0 px-8 pb-8 max-md:px-4 flex gap-4">
+            <div
+              className={`w-80 max-md:w-full shrink-0 border border-border rounded-lg bg-surface overflow-y-auto ${
+                selectedMessageId ? 'max-md:hidden' : ''
+              }`}
+            >
               {pendingNewMessages.length > 0 && (
                 <button
                   onClick={handleShowNewMessages}
@@ -358,7 +367,18 @@ export default function EmailPage() {
               )}
             </div>
 
-            <div className="flex-1 min-w-0 border border-border rounded-lg bg-surface overflow-y-auto flex flex-col">
+            <div
+              className={`flex-1 min-w-0 border border-border rounded-lg bg-surface overflow-y-auto flex flex-col ${
+                selectedMessageId ? '' : 'max-md:hidden'
+              }`}
+            >
+              <button
+                onClick={handleBackToList}
+                className="hidden max-md:flex shrink-0 items-center gap-1.5 text-sm font-medium text-text-muted px-4 py-3 border-b border-border cursor-pointer hover:text-text"
+              >
+                <ArrowLeft size={16} />
+                Back to inbox
+              </button>
               {loadingDetail ? (
                 <p className="text-sm text-text-muted p-6">Loading message…</p>
               ) : !selectedMessage ? (
