@@ -21,7 +21,7 @@ export const PolicyModel = {
       where: agentId ? { customer: { agentId } } : undefined,
       orderBy: { id: 'desc' },
       include: {
-        customer: { select: { id: true, customerName: true } },
+        customer: { select: { id: true, customerName: true, email: true } },
       },
     });
   },

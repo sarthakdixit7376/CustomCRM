@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Search, ChevronDown, X, Trash2, ChevronLeft, ChevronRight, FilePlus2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, ChevronDown, X, Trash2, ChevronLeft, ChevronRight, FilePlus2, Mail } from 'lucide-react';
 import DeleteCustomerModal from './DeleteCustomerModal';
 
 /* ───────── Types ───────── */
 export interface PolicyRow {
   id: string;
   customerName: string;
+  email?: string;
   policyNumber: string;
   policyType: string;
   insuranceCompany: string;
@@ -53,6 +55,7 @@ const expiryColorClass = (endDate: string): string => {
 
 /* ───────── Component ───────── */
 export default function CustomerList({ customers, onDeleteCustomer, onSelectCustomer, onAddPolicy }: CustomerListProps) {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('All');
   const [selectedCompany, setSelectedCompany] = useState('All');
@@ -217,6 +220,12 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                     </td>
                     <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                       <div className="flex items-center gap-1">
+                        <button
+                          className="text-text-muted hover:text-primary-600 bg-transparent border-none cursor-pointer transition-colors p-1.5 rounded hover:bg-primary-50 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                          title={row.email ? `Email ${row.customerName}` : 'No email on file'}
+                          disabled={!row.email}
+                          onClick={() => row.email && navigate(`/email?search=${encodeURIComponent(row.email)}`)}
+                        ><Mail size={16} /></button>
                         <button
                           className="text-text-muted hover:text-primary-600 bg-transparent border-none cursor-pointer transition-colors p-1.5 rounded hover:bg-primary-50"
                           title="Add policy for this customer"

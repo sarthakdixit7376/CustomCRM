@@ -77,10 +77,12 @@ export interface MessageSummary {
   date: string;
   snippet: string;
   isUnread: boolean;
+  isSent: boolean;
 }
 
 const toMessageSummary = (message: gmail_v1.Schema$Message): MessageSummary => {
   const headers = message.payload?.headers;
+  const labelIds = message.labelIds || [];
   return {
     id: message.id!,
     threadId: message.threadId!,
@@ -88,7 +90,8 @@ const toMessageSummary = (message: gmail_v1.Schema$Message): MessageSummary => {
     subject: getHeader(headers, 'Subject'),
     date: getHeader(headers, 'Date'),
     snippet: message.snippet || '',
-    isUnread: (message.labelIds || []).includes('UNREAD'),
+    isUnread: labelIds.includes('UNREAD'),
+    isSent: labelIds.includes('SENT'),
   };
 };
 
@@ -138,13 +141,14 @@ export interface ListMessagesResult {
 
 export const listMessages = async (
   gmail: gmail_v1.Gmail,
-  opts: { pageToken?: string } = {}
+  opts: { pageToken?: string; q?: string } = {}
 ): Promise<ListMessagesResult> => {
   const { data } = await gmail.users.messages.list({
     userId: 'me',
-    labelIds: ['INBOX'],
     maxResults: 25,
     pageToken: opts.pageToken,
+    // A search query searches the whole mailbox (Sent included); without one, default to just the inbox.
+    ...(opts.q ? { q: opts.q } : { labelIds: ['INBOX'] }),
   });
 
   const messages = await Promise.all(

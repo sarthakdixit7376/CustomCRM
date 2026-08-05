@@ -178,6 +178,7 @@ model Customer {
   id              String   @id @default(uuid())
   createdAt       DateTime @default(now())
   customerName    String
+  email           String?
   idNumber        String?
   dateOfBirth     String?
   gender          String?

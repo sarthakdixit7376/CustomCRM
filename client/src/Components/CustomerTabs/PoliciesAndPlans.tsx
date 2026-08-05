@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Layers, Plus, X, UserCircle2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Layers, Plus, X, UserCircle2, Mail } from 'lucide-react';
 import { API_BASE } from '../../config';
 
 /* ───────── Types ───────── */
@@ -59,6 +60,7 @@ const expiryColorClass = (endDate: string): string => {
 
 /* ───────── Component ───────── */
 export default function PoliciesAndPlans({ presetCustomer }: PoliciesAndPlansProps) {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
   const [policies, setPolicies] = useState<any[]>([]);
 
@@ -269,7 +271,15 @@ export default function PoliciesAndPlans({ presetCustomer }: PoliciesAndPlansPro
                   <td className={`px-4 py-3 font-medium border-b border-border whitespace-nowrap ${expiryColorClass(p.endDate)}`}>{formatDate(p.startDate)}</td>
                   <td className={`px-4 py-3 font-medium border-b border-border whitespace-nowrap ${expiryColorClass(p.endDate)}`}>{formatDate(p.endDate)}</td>
                   <td className="px-4 py-3 border-b border-border whitespace-nowrap text-right">
-                    <button className="bg-transparent border-none px-2 py-1 cursor-pointer text-text-muted text-sm rounded transition-all hover:text-danger-600 hover:bg-danger-50" onClick={() => handleRemovePolicy(i, p.id)}><X size={14} /></button>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        className="bg-transparent border-none px-2 py-1 cursor-pointer text-text-muted text-sm rounded transition-all hover:text-primary-600 hover:bg-primary-50 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                        title={p.customer?.email ? `Email ${p.customer.customerName}` : 'No email on file'}
+                        disabled={!p.customer?.email}
+                        onClick={() => p.customer?.email && navigate(`/email?search=${encodeURIComponent(p.customer.email)}`)}
+                      ><Mail size={14} /></button>
+                      <button className="bg-transparent border-none px-2 py-1 cursor-pointer text-text-muted text-sm rounded transition-all hover:text-danger-600 hover:bg-danger-50" onClick={() => handleRemovePolicy(i, p.id)}><X size={14} /></button>
+                    </div>
                   </td>
                 </tr>
               ))}

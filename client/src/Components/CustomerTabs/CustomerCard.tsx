@@ -55,6 +55,7 @@ const DEFAULT_CUSTOMER = {
     { label: 'Insurance Agent', value: '' },
     { label: 'Agent Name', value: '' },
     { label: 'Purchase Type', value: '' },
+    { label: 'Email', value: '' },
   ],
   contacts: [
     { icon: '📱', value: '', label: 'Mobile', type: 'mobile' },
@@ -96,6 +97,7 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
         { label: 'Insurance Agent', value: insuranceAgent },
         { label: 'Agent Name', value: cust?.agentName || DEFAULT_CUSTOMER.identity[5].value },
         { label: 'Purchase Type', value: cust?.purchaseType || DEFAULT_CUSTOMER.identity[6].value },
+        { label: 'Email', value: cust?.email || '' },
       ],
       contacts: newContacts,
     };
@@ -140,6 +142,7 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
         insuranceAgent: localData.identity[4].value,
         agentName: localData.identity[5].value,
         purchaseType: localData.identity[6].value,
+        email: localData.identity[7].value || null,
         contacts: localData.contacts.map((c: any) => ({ type: c.type, value: c.value, label: c.label, icon: c.icon }))
       };
       await axios.put(`${API_BASE}/api/customers/${localData.id}`, updatePayload);

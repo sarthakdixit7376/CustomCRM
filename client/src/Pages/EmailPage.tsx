@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useSearchParams } from 'react-router-dom';
-import { Mail, Plus, Star, Trash2, Paperclip, PenSquare, ArrowLeft } from 'lucide-react';
+import { Mail, Plus, Star, Trash2, Paperclip, PenSquare, ArrowLeft, Search, X } from 'lucide-react';
 import { API_BASE } from '../config';
 import ComposeModal from '../Components/Email/ComposeModal';
 
@@ -20,6 +20,7 @@ interface MessageSummary {
   date: string;
   snippet: string;
   isUnread: boolean;
+  isSent: boolean;
 }
 
 interface MessageDetail {
@@ -62,6 +63,10 @@ export default function EmailPage() {
   const messagesRef = useRef<MessageSummary[]>([]);
   const selectedAccountIdRef = useRef<string | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') || '');
+  const [activeSearch, setActiveSearch] = useState(() => searchParams.get('search') || '');
+  const activeSearchRef = useRef(activeSearch);
+
   const errorCode = searchParams.get('error');
 
   useEffect(() => {
@@ -71,6 +76,10 @@ export default function EmailPage() {
   useEffect(() => {
     selectedAccountIdRef.current = selectedAccountId;
   }, [selectedAccountId]);
+
+  useEffect(() => {
+    activeSearchRef.current = activeSearch;
+  }, [activeSearch]);
 
   const fetchAccounts = async () => {
     setLoadingAccounts(true);
@@ -93,11 +102,11 @@ export default function EmailPage() {
     }
   }, [accounts, selectedAccountId]);
 
-  const fetchMessages = async (accountId: string, pageToken?: string) => {
+  const fetchMessages = async (accountId: string, pageToken?: string, search?: string) => {
     setLoadingMessages(true);
     if (!pageToken) setReauthNeeded(false);
     try {
-      const res = await axios.get(`${API_BASE}/api/email/messages`, { params: { accountId, pageToken } });
+      const res = await axios.get(`${API_BASE}/api/email/messages`, { params: { accountId, pageToken, search: search || undefined } });
       setMessages((prev) => (pageToken ? [...prev, ...res.data.messages] : res.data.messages));
       setNextPageToken(res.data.nextPageToken);
     } catch (err: any) {
@@ -118,13 +127,40 @@ export default function EmailPage() {
       setSelectedMessageId(null);
       setSelectedMessage(null);
       setPendingNewMessages([]);
-      fetchMessages(selectedAccountId);
+      fetchMessages(selectedAccountId, undefined, activeSearch);
     }
   }, [selectedAccountId]);
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedAccountId) return;
+    setActiveSearch(searchQuery);
+    setMessages([]);
+    setNextPageToken(null);
+    setSelectedMessageId(null);
+    setSelectedMessage(null);
+    setPendingNewMessages([]);
+    fetchMessages(selectedAccountId, undefined, searchQuery);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setActiveSearch('');
+    searchParams.delete('search');
+    setSearchParams(searchParams, { replace: true });
+    if (selectedAccountId) {
+      setMessages([]);
+      setNextPageToken(null);
+      setSelectedMessageId(null);
+      setSelectedMessage(null);
+      setPendingNewMessages([]);
+      fetchMessages(selectedAccountId, undefined, '');
+    }
+  };
+
   const pollForNewMessages = async (accountId: string) => {
     try {
-      const res = await axios.get(`${API_BASE}/api/email/messages`, { params: { accountId } });
+      const res = await axios.get(`${API_BASE}/api/email/messages`, { params: { accountId, search: activeSearchRef.current || undefined } });
       if (selectedAccountIdRef.current !== accountId) return; // account switched while this request was in flight
       const existingIds = new Set(messagesRef.current.map((m) => m.id));
       setPendingNewMessages((prevPending) => {
@@ -291,7 +327,7 @@ export default function EmailPage() {
 
       {accounts.length > 0 && (
         <>
-          <div className="shrink-0 px-8 pb-2 max-md:px-4 flex items-center gap-2">
+          <div className="shrink-0 px-8 pb-2 max-md:px-4 flex items-center gap-2 flex-wrap">
             <label className="text-xs font-medium text-text-muted">Viewing inbox for</label>
             <select
               value={selectedAccountId || ''}
@@ -304,7 +340,38 @@ export default function EmailPage() {
                 </option>
               ))}
             </select>
+
+            <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5 flex-1 min-w-[220px] max-w-sm ml-auto">
+              <div className="relative flex-1">
+                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by customer email"
+                  className="w-full bg-surface border border-border rounded-lg pl-8 pr-2.5 py-1.5 text-sm text-text outline-none focus:border-primary-400"
+                />
+              </div>
+              {activeSearch && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  title="Clear search"
+                  className="text-text-muted hover:text-text bg-transparent border-none cursor-pointer p-1.5 rounded hover:bg-neutral-100"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </form>
           </div>
+
+          {activeSearch && (
+            <div className="shrink-0 px-8 pb-2 max-md:px-4">
+              <p className="text-xs text-text-muted">
+                Showing mail sent to or received from <span className="font-medium text-text">{activeSearch}</span>
+              </p>
+            </div>
+          )}
 
           <div className="flex-1 min-h-0 px-8 pb-8 max-md:px-4 flex gap-4">
             <div
@@ -333,7 +400,9 @@ export default function EmailPage() {
                   </button>
                 </div>
               ) : messages.length === 0 ? (
-                <p className="text-sm text-text-muted p-4">No messages in this inbox.</p>
+                <p className="text-sm text-text-muted p-4">
+                  {activeSearch ? `No messages found for "${activeSearch}".` : 'No messages in this inbox.'}
+                </p>
               ) : (
                 <>
                   {messages.map((message) => (
@@ -345,7 +414,14 @@ export default function EmailPage() {
                       }`}
                     >
                       <div className={`flex items-center justify-between gap-2 text-sm ${message.isUnread ? 'font-semibold text-text' : 'text-text-muted'}`}>
-                        <span className="truncate">{message.from}</span>
+                        <span className="truncate flex items-center gap-1.5">
+                          {message.isSent && (
+                            <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-neutral-100 text-text-muted">
+                              Sent
+                            </span>
+                          )}
+                          <span className="truncate">{message.from}</span>
+                        </span>
                         <span className="shrink-0 text-xs">{message.date && new Date(message.date).toLocaleDateString()}</span>
                       </div>
                       <p className={`text-sm truncate ${message.isUnread ? 'font-semibold text-text' : 'text-text'}`}>{message.subject || '(no subject)'}</p>
@@ -355,7 +431,7 @@ export default function EmailPage() {
                   {nextPageToken && (
                     <div className="p-3 text-center">
                       <button
-                        onClick={() => selectedAccountId && fetchMessages(selectedAccountId, nextPageToken)}
+                        onClick={() => selectedAccountId && fetchMessages(selectedAccountId, nextPageToken, activeSearch)}
                         disabled={loadingMessages}
                         className="text-xs font-medium text-text-muted bg-surface border border-border rounded px-3 py-1.5 cursor-pointer hover:bg-neutral-50 hover:text-text disabled:opacity-50"
                       >

@@ -51,6 +51,7 @@ export default function CustomersPage() {
             mappedPolicies.push({
               id: cust.id, // Using customer id so we can select the customer
               customerName: cust.customerName,
+              email: cust.email || '',
               policyNumber: pol.policyNumber,
               policyType: pol.policyType,
               insuranceCompany: pol.insuranceCompany,
@@ -65,6 +66,7 @@ export default function CustomersPage() {
           mappedPolicies.push({
             id: cust.id,
             customerName: cust.customerName,
+            email: cust.email || '',
             policyNumber: '-',
             policyType: '-',
             insuranceCompany: cust.insuranceAgent || '-',
@@ -96,6 +98,7 @@ export default function CustomersPage() {
     try {
       const newCustomer = {
         customerName: `${data.firstName} ${data.lastName}`,
+        email: data.email || undefined,
         insuranceAgent: data.insuranceCompany,
         agentName: data.agentName,
         dateOfBirth: data.dateOfBirth,

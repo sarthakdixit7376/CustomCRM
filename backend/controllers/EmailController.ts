@@ -29,6 +29,14 @@ const getOwnedAccount = async (userId: string, accountId: string): Promise<Email
   return account;
 };
 
+/** Builds a Gmail search query that matches mail sent OR received from the given address, across the whole mailbox. */
+const buildSearchQuery = (search: unknown): string | undefined => {
+  if (typeof search !== 'string') return undefined;
+  const value = search.trim().replace(/"/g, '');
+  if (!value) return undefined;
+  return `(from:"${value}" OR to:"${value}")`;
+};
+
 const isReauthError = (err: any): boolean =>
   err?.response?.status === 401 ||
   err?.response?.data?.error === 'invalid_grant' ||
@@ -139,7 +147,7 @@ export const disconnectAccount = async (req: Request, res: Response): Promise<vo
 };
 
 export const listMessages = async (req: Request, res: Response): Promise<void> => {
-  const { accountId, pageToken } = req.query;
+  const { accountId, pageToken, search } = req.query;
 
   if (!accountId || typeof accountId !== 'string') {
     res.status(400).json({ error: 'accountId is required' });
@@ -154,7 +162,8 @@ export const listMessages = async (req: Request, res: Response): Promise<void> =
     }
 
     const gmail = getAuthorizedClient(account);
-    const result = await gmailListMessages(gmail, { pageToken: typeof pageToken === 'string' ? pageToken : undefined });
+    const q = buildSearchQuery(search);
+    const result = await gmailListMessages(gmail, { pageToken: typeof pageToken === 'string' ? pageToken : undefined, q });
     res.json(result);
   } catch (error: any) {
     if (isReauthError(error)) {
