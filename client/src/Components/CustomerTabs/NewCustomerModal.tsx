@@ -82,6 +82,8 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
     if (!form.lastName.trim()) e.lastName = 'Required';
     if (!form.policyNumber.trim()) e.policyNumber = 'Required';
     if (!form.phone.trim() && !form.mobile.trim()) e.phone = 'At least one phone required';
+    if (!form.email.trim()) e.email = 'Required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = 'Enter a valid email';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -239,8 +241,9 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
                 <input type="tel" className={`${inputBase} ${inputOk}`} placeholder="e.g., 054-3952229" value={form.mobile} onChange={(e) => handleChange('mobile', e.target.value)} />
               </div>
               <div className="flex flex-col gap-1.5 col-span-full">
-                <label className="text-xs font-medium text-text-muted">Email</label>
-                <input type="email" className={`${inputBase} ${inputOk}`} placeholder="customer@example.com" value={form.email} onChange={(e) => handleChange('email', e.target.value)} />
+                <label className="text-xs font-medium text-text-muted">Email <span className="text-danger-500">*</span></label>
+                <input type="email" className={`${inputBase} ${errors.email ? inputErr : inputOk}`} placeholder="customer@example.com" value={form.email} onChange={(e) => handleChange('email', e.target.value)} />
+                {errors.email && <span className="text-[11px] text-danger-600 flex items-center gap-1"><AlertTriangle size={12} /> {errors.email}</span>}
               </div>
             </div>
           </div>

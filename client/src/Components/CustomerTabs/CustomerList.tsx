@@ -4,81 +4,65 @@ import { Search, ChevronDown, X, Trash2, ChevronLeft, ChevronRight, FilePlus2, M
 import DeleteCustomerModal from './DeleteCustomerModal';
 
 /* ───────── Types ───────── */
-export interface PolicyRow {
+export interface CustomerRow {
   id: string;
   customerName: string;
   email?: string;
-  policyNumber: string;
-  policyType: string;
-  insuranceCompany: string;
-  startDate: string;
-  endDate: string;
-  type: string;
-  amountPaid: string;
-  status: 'Active' | 'Cancelled';
+  insuranceAgent: string;
+  agentName: string;
+  policyCount: number;
+  status: 'Active' | 'Inactive' | 'No Policies';
+  policyTypes: string[];
+  insuranceCompanies: string[];
 }
 
 export interface CustomerListProps {
-  customers: PolicyRow[];
+  customers: CustomerRow[];
   onDeleteCustomer: (id: string) => void;
-  onSelectCustomer?: (customer: PolicyRow) => void;
-  onAddPolicy?: (customer: PolicyRow) => void;
+  onSelectCustomer?: (customer: CustomerRow) => void;
+  onAddPolicy?: (customer: CustomerRow) => void;
+  onViewPolicies?: (customer: CustomerRow | null) => void;
+  viewedCustomerId?: string | null;
 }
 
 /* ───────── Filter Options ───────── */
 const POLICY_TYPES = ['All', 'Car', 'Home', 'Travel'];
 const INSURANCE_COMPANIES = ['All', 'Phoenix', 'Clal', 'Migdal', 'Ayalon'];
 
-/* ───────── Helpers ───────── */
-const formatDate = (value: string): string => {
-  if (!value || value === '-') return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString();
-};
-
-const formatCurrency = (value: string): string => {
-  if (!value || value === '-') return '-';
-  const n = Number(value);
-  return Number.isNaN(n) ? value : `₪${n.toLocaleString('en-US')}`;
-};
-
-/** Colors Start/End Date cells by whether the policy's end date has passed. */
-const expiryColorClass = (endDate: string): string => {
-  if (!endDate || endDate === '-') return 'text-text-muted';
-  const end = new Date(endDate);
-  if (Number.isNaN(end.getTime())) return 'text-text-muted';
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return end < today ? 'text-danger-600' : 'text-success-600';
-};
-
 /* ───────── Component ───────── */
-export default function CustomerList({ customers, onDeleteCustomer, onSelectCustomer, onAddPolicy }: CustomerListProps) {
+export default function CustomerList({ customers, onDeleteCustomer, onSelectCustomer, onAddPolicy, onViewPolicies, viewedCustomerId = null }: CustomerListProps) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('All');
   const [selectedCompany, setSelectedCompany] = useState('All');
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<PolicyRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<CustomerRow | null>(null);
+
+  const handleViewPoliciesToggle = (row: CustomerRow, checked: boolean) => {
+    onViewPolicies?.(checked ? row : null);
+  };
 
   const filteredData = customers.filter((row) => {
     const q = searchQuery.toLowerCase();
     const matchesSearch = searchQuery === '' ||
       row.customerName.toLowerCase().includes(q) ||
-      row.policyNumber.toLowerCase().includes(q) ||
-      row.policyType.toLowerCase().includes(q) ||
-      row.insuranceCompany.toLowerCase().includes(q) ||
-      row.type.toLowerCase().includes(q);
-    const matchesType = selectedType === 'All' || row.policyType === selectedType;
-    const matchesCompany = selectedCompany === 'All' || row.insuranceCompany === selectedCompany;
+      (row.email ?? '').toLowerCase().includes(q) ||
+      row.insuranceAgent.toLowerCase().includes(q) ||
+      row.agentName.toLowerCase().includes(q);
+    const matchesType = selectedType === 'All' || row.policyTypes.includes(selectedType);
+    const matchesCompany = selectedCompany === 'All' || row.insuranceCompanies.includes(selectedCompany);
     return matchesSearch && matchesType && matchesCompany;
   });
 
   const handleDeleteConfirm = () => {
     if (deleteTarget) { onDeleteCustomer(deleteTarget.id); setDeleteTarget(null); }
   };
+
+  const statusBadgeClass = (status: CustomerRow['status']) =>
+    status === 'Active' ? 'bg-success-50 text-success-600' : 'bg-neutral-100 text-text-muted';
+  const statusDotClass = (status: CustomerRow['status']) =>
+    status === 'Active' ? 'bg-success-500' : 'bg-neutral-400';
 
   return (
     <>
@@ -90,7 +74,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
           <input
             type="text"
             className="w-full py-2.5 pr-4 pl-10 text-sm text-text bg-surface border border-border rounded-lg outline-none transition-all placeholder:text-neutral-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
-            placeholder="Search by name, policy, type, company..."
+            placeholder="Search by name, email, agent..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -173,7 +157,8 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                 <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none" style={{ width: 40 }}>
                   <input type="checkbox" className="w-4 h-4 accent-primary-600 cursor-pointer" />
                 </th>
-                {['Customer', 'Policy Number', 'Policy Type', 'Insurance Company', 'Start Date', 'End Date', 'Type', 'Amount Paid', 'Status'].map((h) => (
+                <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none" style={{ width: 50 }}>#</th>
+                {['Customer', 'Email', 'Insurance Agent', 'Agent Name', 'No. of Policies', 'Status'].map((h) => (
                   <th key={h} className="group px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap select-none cursor-pointer hover:text-text transition-colors">
                     <span className="inline-flex items-center gap-1.5">{h} <ChevronDown size={12} className="opacity-0 group-hover:opacity-50 transition-opacity" /></span>
                   </th>
@@ -184,10 +169,17 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
             <tbody>
               {filteredData.length > 0 ? (
                 filteredData.map((row, index) => (
-                  <tr key={`${row.id}-${index}`} className="transition-colors hover:bg-neutral-50">
+                  <tr key={row.id} className="transition-colors hover:bg-neutral-50">
                     <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">
-                      <input type="checkbox" className="w-4 h-4 accent-primary-600 cursor-pointer" />
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 accent-primary-600 cursor-pointer"
+                        title="View this customer's policies in Policies & Plans"
+                        checked={viewedCustomerId === row.id}
+                        onChange={(e) => handleViewPoliciesToggle(row, e.target.checked)}
+                      />
                     </td>
+                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{index + 1}</td>
                     <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                       <div className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => onSelectCustomer?.(row)}>
                         <div className="w-7 h-7 rounded-md bg-primary-50 border border-primary-100 flex items-center justify-center text-[11px] font-bold text-primary-700 shrink-0">
@@ -196,25 +188,13 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                         <span className="text-text font-medium">{row.customerName}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-text border-b border-border whitespace-nowrap font-medium">{row.policyNumber}</td>
-                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{row.policyType}</td>
-                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-md bg-info-50 border border-info-100 flex items-center justify-center text-[11px] font-bold text-info-600 shrink-0">
-                          {row.insuranceCompany.charAt(0)}
-                        </div>
-                        {row.insuranceCompany}
-                      </div>
-                    </td>
-                    <td className={`px-4 py-3 text-sm font-medium border-b border-border whitespace-nowrap ${expiryColorClass(row.endDate)}`}>{formatDate(row.startDate)}</td>
-                    <td className={`px-4 py-3 text-sm font-medium border-b border-border whitespace-nowrap ${expiryColorClass(row.endDate)}`}>{formatDate(row.endDate)}</td>
-                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{row.type}</td>
-                    <td className="px-4 py-3 text-sm text-text font-medium border-b border-border whitespace-nowrap">{formatCurrency(row.amountPaid)}</td>
+                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{row.email || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{row.insuranceAgent}</td>
+                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{row.agentName}</td>
+                    <td className="px-4 py-3 text-sm text-text font-medium border-b border-border whitespace-nowrap">{row.policyCount}</td>
                     <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full ${
-                        row.status === 'Active' ? 'bg-success-50 text-success-600' : 'bg-neutral-100 text-text-muted'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${row.status === 'Active' ? 'bg-success-500' : 'bg-neutral-400'}`} />
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full ${statusBadgeClass(row.status)}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${statusDotClass(row.status)}`} />
                         {row.status}
                       </span>
                     </td>
@@ -242,7 +222,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                 ))
               ) : (
                 <tr>
-                  <td colSpan={11} className="text-center py-10 text-text-muted">No results found</td>
+                  <td colSpan={9} className="text-center py-10 text-text-muted">No results found</td>
                 </tr>
               )}
             </tbody>

@@ -22,6 +22,7 @@ interface FilterState {
 
 interface PoliciesAndPlansProps {
   presetCustomer?: { id: string; customerName: string } | null;
+  filterCustomer?: { id: string; customerName: string } | null;
 }
 
 const EMPTY_FILTERS: FilterState = {
@@ -59,7 +60,7 @@ const expiryColorClass = (endDate: string): string => {
 };
 
 /* ───────── Component ───────── */
-export default function PoliciesAndPlans({ presetCustomer }: PoliciesAndPlansProps) {
+export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: PoliciesAndPlansProps) {
   const navigate = useNavigate();
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
   const [policies, setPolicies] = useState<any[]>([]);
@@ -137,8 +138,10 @@ export default function PoliciesAndPlans({ presetCustomer }: PoliciesAndPlansPro
   const selectClass = `${inputClass} appearance-none cursor-pointer pr-9 bg-no-repeat bg-[right_14px_center] [&>option]:bg-surface [&>option]:text-text`;
   const selectBg = { backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23888\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'/%3E%3C/svg%3E")' };
 
-  const displayedPolicies = presetCustomer
-    ? policies.filter((p) => p.customerId === presetCustomer.id)
+  const activeFilterCustomer = presetCustomer || filterCustomer;
+
+  const displayedPolicies = activeFilterCustomer
+    ? policies.filter((p) => p.customerId === activeFilterCustomer.id)
     : policies;
 
   return (
@@ -234,6 +237,13 @@ export default function PoliciesAndPlans({ presetCustomer }: PoliciesAndPlansPro
             </div>
           </div>
         </div>
+      ) : filterCustomer ? (
+        <div className="bg-surface border border-border rounded-xl px-7 py-5 flex items-center gap-3 shadow-card">
+          <UserCircle2 size={20} className="text-primary-600 shrink-0" />
+          <div className="text-sm text-text">
+            Showing policies for <span className="font-semibold">{filterCustomer.customerName}</span>
+          </div>
+        </div>
       ) : (
         <div className="bg-surface border border-border rounded-xl px-8 py-10 flex flex-col items-center justify-center gap-3 text-center shadow-card">
           <UserCircle2 size={36} className="text-neutral-300" />
@@ -291,7 +301,7 @@ export default function PoliciesAndPlans({ presetCustomer }: PoliciesAndPlansPro
           <Layers size={42} className="text-neutral-300 animate-pulse-slow" />
           <div className="text-lg font-bold text-text">No policies added yet</div>
           <div className="text-sm text-text-muted max-w-[320px]">
-            {presetCustomer ? `${presetCustomer.customerName} has no policies yet. Use the form above to add one.` : 'Add a policy from the Customer List tab to see it here.'}
+            {activeFilterCustomer ? `${activeFilterCustomer.customerName} has no policies yet.${presetCustomer ? ' Use the form above to add one.' : ''}` : 'Add a policy from the Customer List tab to see it here.'}
           </div>
         </div>
       )}

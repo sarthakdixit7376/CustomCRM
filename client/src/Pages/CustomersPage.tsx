@@ -12,7 +12,7 @@ import {
 } from '../Components/CustomerTabs';
 import NewCustomerModal from '../Components/CustomerTabs/NewCustomerModal';
 import type { CustomerFormData } from '../Components/CustomerTabs/NewCustomerModal';
-import type { PolicyRow } from '../Components/CustomerTabs/CustomerList';
+import type { CustomerRow } from '../Components/CustomerTabs/CustomerList';
 import { API_BASE } from '../config';
 
 /* ───────── Tab Definitions ───────── */
@@ -33,10 +33,11 @@ interface Toast { id: number; message: string; type: 'success' | 'error'; }
 /* ───────── Customer Page ───────── */
 export default function CustomersPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('list');
-  const [customers, setCustomers] = useState<PolicyRow[]>([]);
+  const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [rawCustomers, setRawCustomers] = useState<any[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<PolicyRow | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerRow | null>(null);
   const [policyTargetCustomer, setPolicyTargetCustomer] = useState<{ id: string; customerName: string } | null>(null);
+  const [viewedPolicyCustomer, setViewedPolicyCustomer] = useState<{ id: string; customerName: string } | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -44,41 +45,22 @@ export default function CustomersPage() {
     try {
       const response = await axios.get(`${API_BASE}/api/customers`);
       setRawCustomers(response.data);
-      const mappedPolicies: PolicyRow[] = [];
-      response.data.forEach((cust: any) => {
-        if (cust.policies && cust.policies.length > 0) {
-          cust.policies.forEach((pol: any) => {
-            mappedPolicies.push({
-              id: cust.id, // Using customer id so we can select the customer
-              customerName: cust.customerName,
-              email: cust.email || '',
-              policyNumber: pol.policyNumber,
-              policyType: pol.policyType,
-              insuranceCompany: pol.insuranceCompany,
-              startDate: pol.startDate || '-',
-              endDate: pol.endDate || '-',
-              type: pol.type || '-',
-              amountPaid: pol.amountPaid != null ? String(pol.amountPaid) : '-',
-              status: pol.status || 'Active',
-            });
-          });
-        } else {
-          mappedPolicies.push({
-            id: cust.id,
-            customerName: cust.customerName,
-            email: cust.email || '',
-            policyNumber: '-',
-            policyType: '-',
-            insuranceCompany: cust.insuranceAgent || '-',
-            startDate: '-',
-            endDate: '-',
-            type: '-',
-            amountPaid: '-',
-            status: 'Active',
-          });
-        }
+      const mappedCustomers: CustomerRow[] = response.data.map((cust: any) => {
+        const policies = cust.policies || [];
+        const hasActive = policies.some((p: any) => (p.status || 'Active') === 'Active');
+        return {
+          id: cust.id,
+          customerName: cust.customerName,
+          email: cust.email || '',
+          insuranceAgent: cust.insuranceAgent || '-',
+          agentName: cust.agentName || '-',
+          policyCount: policies.length,
+          status: policies.length === 0 ? 'No Policies' : hasActive ? 'Active' : 'Inactive',
+          policyTypes: [...new Set(policies.map((p: any) => p.policyType).filter(Boolean))] as string[],
+          insuranceCompanies: [...new Set(policies.map((p: any) => p.insuranceCompany).filter(Boolean))] as string[],
+        };
       });
-      setCustomers(mappedPolicies);
+      setCustomers(mappedCustomers);
     } catch (error) {
       console.error('Error fetching customers:', error);
     }
@@ -139,30 +121,26 @@ export default function CustomersPage() {
     }
   };
 
-  const handleSelectCustomer = (customer: PolicyRow) => {
+  const handleSelectCustomer = (customer: CustomerRow) => {
     // Pass the full customer object based on ID
     const fullCustomer = rawCustomers.find(c => c.id === customer.id) || customer;
     setSelectedCustomer(fullCustomer);
     setActiveTab('card');
   };
 
-  const handleAddPolicyForCustomer = (customer: PolicyRow) => {
+  const handleAddPolicyForCustomer = (customer: CustomerRow) => {
     setPolicyTargetCustomer({ id: customer.id, customerName: customer.customerName });
     setActiveTab('policies');
+  };
+
+  const handleViewPolicies = (customer: CustomerRow | null) => {
+    setViewedPolicyCustomer(customer ? { id: customer.id, customerName: customer.customerName } : null);
   };
 
   const tabsWithBadge = TABS.map((tab) => ({
     ...tab,
     badge: tab.key === 'list' ? rawCustomers.length : tab.badge,
   }));
-
-  const TAB_COMPONENTS: Record<TabKey, React.FC> = {
-    list: () => <CustomerList customers={customers} onDeleteCustomer={handleDeleteCustomer} onSelectCustomer={handleSelectCustomer} onAddPolicy={handleAddPolicyForCustomer} />,
-    card: () => <CustomerCard customer={selectedCustomer} lead={null} />,
-    service: OngoingService, policies: () => <PoliciesAndPlans presetCustomer={policyTargetCustomer} />, quotes: Quotes, claims: Claims, documents: Documents,
-  };
-
-  const ActiveTabComponent = TAB_COMPONENTS[activeTab];
 
   return (
     <div className="font-sans bg-surface-muted text-text h-full flex flex-col">
@@ -204,7 +182,22 @@ export default function CustomersPage() {
       </nav>
 
       {/* Content */}
-      <ActiveTabComponent />
+      {activeTab === 'list' && (
+        <CustomerList
+          customers={customers}
+          onDeleteCustomer={handleDeleteCustomer}
+          onSelectCustomer={handleSelectCustomer}
+          onAddPolicy={handleAddPolicyForCustomer}
+          onViewPolicies={handleViewPolicies}
+          viewedCustomerId={viewedPolicyCustomer?.id ?? null}
+        />
+      )}
+      {activeTab === 'card' && <CustomerCard customer={selectedCustomer} lead={null} />}
+      {activeTab === 'service' && <OngoingService />}
+      {activeTab === 'policies' && <PoliciesAndPlans presetCustomer={policyTargetCustomer} filterCustomer={viewedPolicyCustomer} />}
+      {activeTab === 'quotes' && <Quotes />}
+      {activeTab === 'claims' && <Claims />}
+      {activeTab === 'documents' && <Documents />}
 
       {/* New Customer Modal */}
       <NewCustomerModal isOpen={isNewModalOpen} onClose={() => setIsNewModalOpen(false)} onSubmit={handleAddCustomer} />

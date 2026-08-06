@@ -101,7 +101,7 @@ export interface LeadProps {
 export default function Lead({ onSelectLead }: LeadProps) {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
-  const totalCols = COLUMNS.length + (isAdmin ? 1 : 0);
+  const totalCols = COLUMNS.length + 1 + (isAdmin ? 1 : 0);
 
   const [leads, setLeads] = useState<LeadRow[]>([]);
   const [status, setStatus] = useState<'loading' | 'live' | 'error'>('loading');
@@ -319,6 +319,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
         <table className="w-full border-collapse table-auto">
           <thead className="sticky top-0 z-[2]">
             <tr>
+              <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap select-none" style={{ width: 50 }}>#</th>
               {COLUMNS.map(([h]) => (
                 <th key={h} className="group px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap select-none cursor-pointer hover:text-text transition-colors">
                   <span className="inline-flex items-center gap-1.5">{h} <ChevronDown size={12} className="opacity-0 group-hover:opacity-50 transition-opacity" /></span>
@@ -351,7 +352,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
                 </td>
               </tr>
             ) : leads.length > 0 ? (
-              leads.map((row) => {
+              leads.map((row, index) => {
                 const val = row.leadStatus;
                 let colorClass = 'text-text-muted bg-neutral-100 border-neutral-200';
                 if (val === 'NEW') colorClass = 'text-info-600 bg-info-50 border-info-100';
@@ -367,6 +368,8 @@ export default function Lead({ onSelectLead }: LeadProps) {
                   onClick={() => handleRowClick(row)}
                   className="transition-colors hover:bg-neutral-50 cursor-pointer"
                 >
+                  {/* Row number */}
+                  <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{index + 1}</td>
                   {/* Phone Number */}
                   <td className="px-4 py-3 text-sm text-text border-b border-border whitespace-nowrap font-medium">{row.phoneNumber}</td>
                   {/* Lead Name with avatar */}
