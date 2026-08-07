@@ -67,9 +67,10 @@ const DEFAULT_CUSTOMER = {
 export interface CustomerCardProps {
   customer?: any | null; // using any to accept full db object
   lead?: LeadRow | null;
+  onCustomerUpdated?: (customer: any) => void;
 }
 
-export default function CustomerCard({ customer, lead }: CustomerCardProps) {
+export default function CustomerCard({ customer, lead, onCustomerUpdated }: CustomerCardProps) {
   const [isEditing, setIsEditing] = useState(false);
 
   const getInitialData = (cust: any | null | undefined, ld: LeadRow | null | undefined) => {
@@ -100,6 +101,7 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
         { label: 'Email', value: cust?.email || '' },
       ],
       contacts: newContacts,
+      vehicle: VEHICLE_FIELDS.map(([label, key]) => ({ label, key, value: cust?.[key] ?? '' })),
     };
   };
 
@@ -128,6 +130,13 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
     });
   };
 
+  const handleVehicleChange = (key: string, value: string) => {
+    setLocalData((prev) => ({
+      ...prev,
+      vehicle: prev.vehicle.map((v) => (v.key === key ? { ...v, value } : v)),
+    }));
+  };
+
   const handleSave = async () => {
     if (!localData.id) {
        setIsEditing(false);
@@ -143,9 +152,11 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
         agentName: localData.identity[5].value,
         purchaseType: localData.identity[6].value,
         email: localData.identity[7].value || null,
-        contacts: localData.contacts.map((c: any) => ({ type: c.type, value: c.value, label: c.label, icon: c.icon }))
+        contacts: localData.contacts.map((c: any) => ({ type: c.type, value: c.value, label: c.label, icon: c.icon })),
+        ...Object.fromEntries(localData.vehicle.map((v) => [v.key, v.value || null])),
       };
-      await axios.put(`${API_BASE}/api/customers/${localData.id}`, updatePayload);
+      const response = await axios.put(`${API_BASE}/api/customers/${localData.id}`, updatePayload);
+      onCustomerUpdated?.(response.data);
       setIsEditing(false);
     } catch (error) {
       console.error('Failed to save customer', error);
@@ -229,12 +240,19 @@ export default function CustomerCard({ customer, lead }: CustomerCardProps) {
           </div>
           {hasCarPolicy && populatedVehicleFields.length > 0 ? (
             <div className="grid grid-cols-2 max-md:grid-cols-1">
-              {populatedVehicleFields.map(([label, key], idx) => (
-                <div key={key} className={`flex flex-col gap-1 py-3 border-b border-border min-w-0 ${idx % 2 === 0 ? 'pr-6 border-r border-r-border' : 'pl-6'} max-md:pr-0 max-md:pl-0 max-md:border-r-0`}>
-                  <span className="text-xs text-text-muted">{label}</span>
-                  <span className="text-sm break-words text-text font-medium">{customer[key]}</span>
-                </div>
-              ))}
+              {populatedVehicleFields.map(([label, key], idx) => {
+                const fieldValue = localData.vehicle.find((v) => v.key === key)?.value ?? '';
+                return (
+                  <div key={key} className={`flex flex-col gap-1 py-3 border-b border-border min-w-0 ${idx % 2 === 0 ? 'pr-6 border-r border-r-border' : 'pl-6'} max-md:pr-0 max-md:pl-0 max-md:border-r-0`}>
+                    <span className="text-xs text-text-muted">{label}</span>
+                    {isEditing ? (
+                      <input type="text" className={inputClass + " max-w-none"} value={fieldValue} onChange={(e) => handleVehicleChange(key, e.target.value)} />
+                    ) : (
+                      <span className="text-sm break-words text-text font-medium">{fieldValue || '—'}</span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="py-10 text-center text-sm text-neutral-400 italic">

@@ -142,7 +142,7 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
 
   const displayedPolicies = activeFilterCustomer
     ? policies.filter((p) => p.customerId === activeFilterCustomer.id)
-    : policies;
+    : [];
 
   return (
     <div className="flex-1 overflow-y-auto flex flex-col gap-8 px-8 py-8 animate-fade-in-up max-md:px-4 max-md:py-6 max-md:gap-6">
@@ -254,11 +254,11 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
 
       {/* Policies List */}
       {displayedPolicies.length > 0 ? (
-        <div className="border border-border rounded-xl overflow-x-auto hide-scrollbar bg-surface shadow-card">
+        <div className="border border-border rounded-xl overflow-x-auto bg-surface shadow-card">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                {['#', 'Customer', 'Agent Name', 'Insurance Company', 'Policy Type', 'Type', 'Car Number', 'Manufacturer', 'Glass and More', 'Complementary + VIP', 'Policy Number', 'Amount Paid', 'Start Date', 'End Date', ''].map((h) => (
+                {['#', 'Customer', 'Agent Name', 'Insurance Company', 'Policy Type', 'Type', 'Car Number', 'Start Date', 'End Date', 'Manufacturer', 'Glass and More', 'Complementary + VIP', 'Policy Number', 'Amount Paid', ''].map((h) => (
                   <th key={h} className="text-left px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider bg-neutral-50 border-b border-border whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -273,13 +273,13 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.policyType || '—'}</td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.type || '—'}</td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.carNumber || '—'}</td>
+                  <td className={`px-4 py-3 font-medium border-b border-border whitespace-nowrap ${expiryColorClass(p.endDate)}`}>{formatDate(p.startDate)}</td>
+                  <td className={`px-4 py-3 font-medium border-b border-border whitespace-nowrap ${expiryColorClass(p.endDate)}`}>{formatDate(p.endDate)}</td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.manufacturer || '—'}</td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.glassAndMoreSelected ? 'Yes' : '—'}</td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.complementaryVipSelected ? 'Yes' : '—'}</td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.policyNumber || '—'}</td>
                   <td className="px-4 py-3 text-text font-medium border-b border-border whitespace-nowrap">{formatCurrency(p.amountPaid)}</td>
-                  <td className={`px-4 py-3 font-medium border-b border-border whitespace-nowrap ${expiryColorClass(p.endDate)}`}>{formatDate(p.startDate)}</td>
-                  <td className={`px-4 py-3 font-medium border-b border-border whitespace-nowrap ${expiryColorClass(p.endDate)}`}>{formatDate(p.endDate)}</td>
                   <td className="px-4 py-3 border-b border-border whitespace-nowrap text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button

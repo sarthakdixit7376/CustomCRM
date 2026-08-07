@@ -315,7 +315,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
         </button>
       </div>
 
-      <div className="border border-border rounded-lg overflow-x-auto hide-scrollbar bg-surface shadow-card mt-0 animate-fade-in-up">
+      <div className="border border-border rounded-lg overflow-x-auto bg-surface shadow-card mt-0 animate-fade-in-up">
         <table className="w-full border-collapse table-auto">
           <thead className="sticky top-0 z-[2]">
             <tr>

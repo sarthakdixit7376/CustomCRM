@@ -41,26 +41,27 @@ export default function CustomersPage() {
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  const mapCustomerRow = (cust: any): CustomerRow => {
+    const policies = cust.policies || [];
+    const hasActive = policies.some((p: any) => (p.status || 'Active') === 'Active');
+    return {
+      id: cust.id,
+      customerName: cust.customerName,
+      email: cust.email || '',
+      insuranceAgent: cust.insuranceAgent || '-',
+      agentName: cust.agentName || '-',
+      policyCount: policies.length,
+      status: policies.length === 0 ? 'No Policies' : hasActive ? 'Active' : 'Inactive',
+      policyTypes: [...new Set(policies.map((p: any) => p.policyType).filter(Boolean))] as string[],
+      insuranceCompanies: [...new Set(policies.map((p: any) => p.insuranceCompany).filter(Boolean))] as string[],
+    };
+  };
+
   const fetchCustomers = async () => {
     try {
       const response = await axios.get(`${API_BASE}/api/customers`);
       setRawCustomers(response.data);
-      const mappedCustomers: CustomerRow[] = response.data.map((cust: any) => {
-        const policies = cust.policies || [];
-        const hasActive = policies.some((p: any) => (p.status || 'Active') === 'Active');
-        return {
-          id: cust.id,
-          customerName: cust.customerName,
-          email: cust.email || '',
-          insuranceAgent: cust.insuranceAgent || '-',
-          agentName: cust.agentName || '-',
-          policyCount: policies.length,
-          status: policies.length === 0 ? 'No Policies' : hasActive ? 'Active' : 'Inactive',
-          policyTypes: [...new Set(policies.map((p: any) => p.policyType).filter(Boolean))] as string[],
-          insuranceCompanies: [...new Set(policies.map((p: any) => p.insuranceCompany).filter(Boolean))] as string[],
-        };
-      });
-      setCustomers(mappedCustomers);
+      setCustomers(response.data.map(mapCustomerRow));
     } catch (error) {
       console.error('Error fetching customers:', error);
     }
@@ -128,6 +129,12 @@ export default function CustomersPage() {
     setActiveTab('card');
   };
 
+  const handleCustomerUpdated = (updated: any) => {
+    setSelectedCustomer(updated);
+    setRawCustomers((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    setCustomers((prev) => prev.map((c) => (c.id === updated.id ? mapCustomerRow(updated) : c)));
+  };
+
   const handleAddPolicyForCustomer = (customer: CustomerRow) => {
     setPolicyTargetCustomer({ id: customer.id, customerName: customer.customerName });
     setActiveTab('policies');
@@ -192,7 +199,7 @@ export default function CustomersPage() {
           viewedCustomerId={viewedPolicyCustomer?.id ?? null}
         />
       )}
-      {activeTab === 'card' && <CustomerCard customer={selectedCustomer} lead={null} />}
+      {activeTab === 'card' && <CustomerCard customer={selectedCustomer} lead={null} onCustomerUpdated={handleCustomerUpdated} />}
       {activeTab === 'service' && <OngoingService />}
       {activeTab === 'policies' && <PoliciesAndPlans presetCustomer={policyTargetCustomer} filterCustomer={viewedPolicyCustomer} />}
       {activeTab === 'quotes' && <Quotes />}
