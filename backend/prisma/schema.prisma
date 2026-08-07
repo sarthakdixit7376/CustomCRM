@@ -212,7 +212,19 @@ model Customer {
   glassAndMoreSelected     Boolean @default(false)
   complementaryVipSelected Boolean @default(false)
 
-  // Vehicle info fields (from Israeli gov vehicle API, carried over from the Lead)
+  contacts Contact[]
+  policies Policy[]
+  vehicles Vehicle[]
+
+  @@map("customers")
+}
+
+model Vehicle {
+  id         String   @id @default(uuid())
+  customerId String
+  createdAt  DateTime @default(now())
+
+  // Vehicle info fields (from Israeli gov vehicle API)
   misparRechev        String? // מספר רכב
   tozeretCd           String? // קוד תוצרת
   sugDegem            String? // סוג דגם
@@ -248,10 +260,10 @@ model Customer {
   misparDlatot        String? // מספר דלתות
   misparMoshavim      String? // מספר מושבים
 
-  contacts Contact[]
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   policies Policy[]
 
-  @@map("customers")
+  @@map("vehicles")
 }
 
 model Contact {
@@ -270,6 +282,7 @@ model Contact {
 model Policy {
   id               String    @id @default(uuid())
   customerId       String
+  carId            String?
   policyNumber     String
   policyType       String
   insuranceCompany String
@@ -285,6 +298,7 @@ model Policy {
   status           String    @default("Active") // 'Active' or 'Cancelled'
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  car      Vehicle? @relation(fields: [carId], references: [id], onDelete: Cascade)
 
   @@map("policies")
 }

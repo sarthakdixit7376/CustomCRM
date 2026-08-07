@@ -1,5 +1,15 @@
 import prisma from '../config/prisma.js';
 
+/** Resolves the carNumber/manufacturer snapshot stored on the policy row from its linked Vehicle, if any. */
+const resolveCarSnapshot = async (carId: string | null | undefined) => {
+  if (!carId) return { carNumber: null, manufacturer: null };
+  const vehicle = await prisma.vehicle.findUnique({ where: { id: carId } });
+  return {
+    carNumber: vehicle?.misparRechev ?? null,
+    manufacturer: vehicle?.tozeretNm ?? null,
+  };
+};
+
 /** undefined -> undefined (skip field), '' / null -> null (clear), else -> Date */
 const toDate = (value: any): Date | null | undefined => {
   if (value === undefined) return undefined;
@@ -40,14 +50,18 @@ export const PolicyModel = {
   },
 
   createPolicy: async (policyData: any, customerId: string) => {
+    const carId = policyData.policyType === 'Car' ? (policyData.carId || null) : null;
+    const carSnapshot = await resolveCarSnapshot(carId);
+
     return prisma.policy.create({
       data: {
         policyNumber: policyData.policyNumber,
         policyType: policyData.policyType || 'General',
         insuranceCompany: policyData.insuranceCompany,
         agentName: policyData.agentName || null,
-        carNumber: policyData.carNumber || null,
-        manufacturer: policyData.manufacturer || null,
+        carId,
+        carNumber: carSnapshot.carNumber,
+        manufacturer: carSnapshot.manufacturer,
         glassAndMoreSelected: Boolean(policyData.glassAndMoreSelected),
         complementaryVipSelected: Boolean(policyData.complementaryVipSelected),
         amountPaid: toNumber(policyData.amountPaid) ?? null,
@@ -57,10 +71,16 @@ export const PolicyModel = {
         status: policyData.status || 'Active',
         customerId,
       },
+      include: {
+        customer: { select: { id: true, customerName: true, email: true } },
+      },
     });
   },
 
   updatePolicy: async (id: string, policyData: any) => {
+    const carIdProvided = policyData.carId !== undefined;
+    const carSnapshot = carIdProvided ? await resolveCarSnapshot(policyData.carId) : null;
+
     return prisma.policy.update({
       where: { id },
       data: {
@@ -68,8 +88,9 @@ export const PolicyModel = {
         policyType: policyData.policyType,
         insuranceCompany: policyData.insuranceCompany,
         agentName: policyData.agentName,
-        carNumber: policyData.carNumber,
-        manufacturer: policyData.manufacturer,
+        carId: carIdProvided ? (policyData.carId || null) : undefined,
+        carNumber: carSnapshot ? carSnapshot.carNumber : policyData.carNumber,
+        manufacturer: carSnapshot ? carSnapshot.manufacturer : policyData.manufacturer,
         glassAndMoreSelected: policyData.glassAndMoreSelected,
         complementaryVipSelected: policyData.complementaryVipSelected,
         amountPaid: toNumber(policyData.amountPaid),
@@ -77,6 +98,9 @@ export const PolicyModel = {
         endDate: toDate(policyData.endDate),
         type: policyData.type,
         status: policyData.status,
+      },
+      include: {
+        customer: { select: { id: true, customerName: true, email: true } },
       },
     });
   },

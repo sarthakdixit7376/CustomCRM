@@ -170,64 +170,78 @@ export const LeadModel = {
           glassAndMoreSelected:     lead.glassAndMoreSelected,
           complementaryVipSelected: lead.complementaryVipSelected,
 
-          misparRechev:         lead.misparRechev,
-          tozeretCd:            lead.tozeretCd,
-          sugDegem:             lead.sugDegem,
-          tozeretNm:            lead.tozeretNm,
-          degemCd:              lead.degemCd,
-          shnatYitzur:          lead.shnatYitzur,
-          degemNm:              lead.degemNm,
-          ramatGimur:           lead.ramatGimur,
-          ramatEivzurBetihuti:  lead.ramatEivzurBetihuti,
-          kvutzatZihum:         lead.kvutzatZihum,
-          tzevaCd:              lead.tzevaCd,
-          tzevaRechev:          lead.tzevaRechev,
-          zmigKidmi:            lead.zmigKidmi,
-          zmigAhori:            lead.zmigAhori,
-          sugDelekNm:           lead.sugDelekNm,
-          horaatRishum:         lead.horaatRishum,
-          moedAliyaLakvish:     lead.moedAliyaLakvish,
-          baalut:               lead.baalut,
-          misgeret:             lead.misgeret,
-          tozeretEretzNm:       lead.tozeretEretzNm,
-          mishkalKolel:         lead.mishkalKolel,
-          nefahManoa:           lead.nefahManoa,
-          kinuyMishari:         lead.kinuyMishari,
-          mivchanAcharonDt:     lead.mivchanAcharonDt,
-          tokefDt:              lead.tokefDt,
-          taarichPkikaDt:       lead.taarichPkikaDt,
-          taarichPkiah:         lead.taarichPkiah,
-          kvuzatAgra:           lead.kvuzatAgra,
-          mahozMoshav:          lead.mahozMoshav,
-          sugRechevNm:          lead.sugRechevNm,
-          degemManoa:           lead.degemManoa,
-          koachSus:             lead.koachSus,
-          misparDlatot:         lead.misparDlatot,
-          misparMoshavim:       lead.misparMoshavim,
-
           contacts: lead.phoneNumber
             ? { create: [{ type: 'mobile', value: lead.phoneNumber, label: 'Mobile', icon: 'phone' }] }
             : undefined,
-
-          policies: {
-            create: [{
-              policyNumber:     policyData.policyNumber,
-              policyType:       policyData.policyType,
-              type:             policyData.type || null,
-              insuranceCompany: policyData.insuranceCompany,
-              manufacturer:     policyData.policyType === 'Car' ? lead.tozeretNm : null,
-              startDate:        policyData.startDate ? new Date(policyData.startDate) : null,
-              endDate:          policyData.endDate ? new Date(policyData.endDate) : null,
-              status:           'Active',
-            }],
-          },
         },
-        include: { contacts: true, policies: true },
+      });
+
+      // The lead represents (at most) one car pre-conversion; carry it over into its own Vehicle row.
+      let vehicle = null;
+      if (lead.misparRechev) {
+        vehicle = await tx.vehicle.create({
+          data: {
+            customerId:           customer.id,
+            misparRechev:         lead.misparRechev,
+            tozeretCd:            lead.tozeretCd,
+            sugDegem:             lead.sugDegem,
+            tozeretNm:            lead.tozeretNm,
+            degemCd:              lead.degemCd,
+            shnatYitzur:          lead.shnatYitzur,
+            degemNm:              lead.degemNm,
+            ramatGimur:           lead.ramatGimur,
+            ramatEivzurBetihuti:  lead.ramatEivzurBetihuti,
+            kvutzatZihum:         lead.kvutzatZihum,
+            tzevaCd:              lead.tzevaCd,
+            tzevaRechev:          lead.tzevaRechev,
+            zmigKidmi:            lead.zmigKidmi,
+            zmigAhori:            lead.zmigAhori,
+            sugDelekNm:           lead.sugDelekNm,
+            horaatRishum:         lead.horaatRishum,
+            moedAliyaLakvish:     lead.moedAliyaLakvish,
+            baalut:               lead.baalut,
+            misgeret:             lead.misgeret,
+            tozeretEretzNm:       lead.tozeretEretzNm,
+            mishkalKolel:         lead.mishkalKolel,
+            nefahManoa:           lead.nefahManoa,
+            kinuyMishari:         lead.kinuyMishari,
+            mivchanAcharonDt:     lead.mivchanAcharonDt,
+            tokefDt:              lead.tokefDt,
+            taarichPkikaDt:       lead.taarichPkikaDt,
+            taarichPkiah:         lead.taarichPkiah,
+            kvuzatAgra:           lead.kvuzatAgra,
+            mahozMoshav:          lead.mahozMoshav,
+            sugRechevNm:          lead.sugRechevNm,
+            degemManoa:           lead.degemManoa,
+            koachSus:             lead.koachSus,
+            misparDlatot:         lead.misparDlatot,
+            misparMoshavim:       lead.misparMoshavim,
+          },
+        });
+      }
+
+      await tx.policy.create({
+        data: {
+          policyNumber:     policyData.policyNumber,
+          policyType:       policyData.policyType,
+          type:             policyData.type || null,
+          insuranceCompany: policyData.insuranceCompany,
+          carId:            policyData.policyType === 'Car' ? vehicle?.id ?? null : null,
+          carNumber:        policyData.policyType === 'Car' ? vehicle?.misparRechev ?? null : null,
+          manufacturer:     policyData.policyType === 'Car' ? vehicle?.tozeretNm ?? null : null,
+          startDate:        policyData.startDate ? new Date(policyData.startDate) : null,
+          endDate:          policyData.endDate ? new Date(policyData.endDate) : null,
+          status:           'Active',
+          customerId:       customer.id,
+        },
       });
 
       await tx.lead.delete({ where: { id: leadId } });
 
-      return customer;
+      return tx.customer.findUnique({
+        where: { id: customer.id },
+        include: { contacts: true, policies: true, vehicles: true },
+      });
     });
   },
 };

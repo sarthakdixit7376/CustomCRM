@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Save, Pencil, Printer, Phone, Smartphone, User, Car } from 'lucide-react';
+import { Save, Pencil, Printer, Phone, Smartphone, User, Car, Plus, Trash2, X } from 'lucide-react';
 import type { LeadRow } from './Lead';
 import { API_BASE } from '../../config';
 
-/* ───────── Vehicle Information fields (only shown for Car policies, only when populated) ───────── */
+/* ───────── Vehicle Information fields (per car, only shown when populated) ───────── */
 const VEHICLE_FIELDS: [string, string][] = [
   ['Vehicle Number', 'misparRechev'],
   ['Manufacturer', 'tozeretNm'],
@@ -72,6 +72,11 @@ export interface CustomerCardProps {
 
 export default function CustomerCard({ customer, lead, onCustomerUpdated }: CustomerCardProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [vehicles, setVehicles] = useState<any[]>(customer?.vehicles ?? []);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(customer?.vehicles?.[0]?.id ?? null);
+  const [isAddingCar, setIsAddingCar] = useState(false);
+  const [newCarNumber, setNewCarNumber] = useState('');
+  const [isSavingCar, setIsSavingCar] = useState(false);
 
   const getInitialData = (cust: any | null | undefined, ld: LeadRow | null | undefined) => {
     const displayName = cust?.customerName || ld?.leadName || DEFAULT_CUSTOMER.name;
@@ -101,17 +106,18 @@ export default function CustomerCard({ customer, lead, onCustomerUpdated }: Cust
         { label: 'Email', value: cust?.email || '' },
       ],
       contacts: newContacts,
-      vehicle: VEHICLE_FIELDS.map(([label, key]) => ({ label, key, value: cust?.[key] ?? '' })),
     };
   };
 
   const [localData, setLocalData] = useState(() => getInitialData(customer, lead));
-  const hasCarPolicy = Boolean(customer?.policies?.some((p: any) => p.policyType === 'Car'));
-  const populatedVehicleFields = VEHICLE_FIELDS.filter(([, key]) => customer?.[key]);
 
   useEffect(() => {
     setLocalData(getInitialData(customer, lead));
+    setVehicles(customer?.vehicles ?? []);
+    setSelectedVehicleId(customer?.vehicles?.[0]?.id ?? null);
     setIsEditing(false);
+    setIsAddingCar(false);
+    setNewCarNumber('');
   }, [customer, lead]);
 
   const handleIdentityChange = (index: number, value: string) => {
@@ -130,11 +136,48 @@ export default function CustomerCard({ customer, lead, onCustomerUpdated }: Cust
     });
   };
 
-  const handleVehicleChange = (key: string, value: string) => {
-    setLocalData((prev) => ({
-      ...prev,
-      vehicle: prev.vehicle.map((v) => (v.key === key ? { ...v, value } : v)),
-    }));
+  const handleVehicleFieldChange = (vehicleId: string, key: string, value: string) => {
+    setVehicles((prev) => prev.map((v) => (v.id === vehicleId ? { ...v, [key]: value } : v)));
+  };
+
+  const refreshCustomer = async () => {
+    const fresh = await axios.get(`${API_BASE}/api/customers/${localData.id}`);
+    onCustomerUpdated?.(fresh.data);
+    return fresh.data;
+  };
+
+  const handleAddCar = async () => {
+    if (!localData.id || !newCarNumber.trim()) return;
+    setIsSavingCar(true);
+    try {
+      const res = await axios.post(`${API_BASE}/api/vehicles/customer/${localData.id}`, { carNumber: newCarNumber.trim() });
+      setNewCarNumber('');
+      setIsAddingCar(false);
+      await refreshCustomer();
+      setSelectedVehicleId(res.data.id);
+    } catch (error) {
+      console.error('Failed to add car', error);
+      alert('Failed to add car');
+    } finally {
+      setIsSavingCar(false);
+    }
+  };
+
+  const handleRemoveCar = async (vehicleId: string) => {
+    const linkedPolicyCount = (customer?.policies || []).filter((p: any) => p.carId === vehicleId).length;
+    const message = linkedPolicyCount > 0
+      ? `Deleting this car will also delete ${linkedPolicyCount} linked polic${linkedPolicyCount === 1 ? 'y' : 'ies'}. Continue?`
+      : 'Delete this car?';
+    if (!window.confirm(message)) return;
+
+    try {
+      await axios.delete(`${API_BASE}/api/vehicles/${vehicleId}`);
+      const fresh = await refreshCustomer();
+      setSelectedVehicleId(fresh.vehicles?.[0]?.id ?? null);
+    } catch (error) {
+      console.error('Failed to delete car', error);
+      alert('Failed to delete car');
+    }
   };
 
   const handleSave = async () => {
@@ -143,6 +186,14 @@ export default function CustomerCard({ customer, lead, onCustomerUpdated }: Cust
        return;
     }
     try {
+      if (selectedVehicleId) {
+        const selectedVehicle = vehicles.find((v) => v.id === selectedVehicleId);
+        if (selectedVehicle) {
+          const vehicleFields = Object.fromEntries(VEHICLE_FIELDS.map(([, key]) => [key, selectedVehicle[key] ?? null]));
+          await axios.put(`${API_BASE}/api/vehicles/${selectedVehicleId}`, vehicleFields);
+        }
+      }
+
       const updatePayload = {
         customerName: localData.name,
         idNumber: localData.identity[0].value,
@@ -153,7 +204,6 @@ export default function CustomerCard({ customer, lead, onCustomerUpdated }: Cust
         purchaseType: localData.identity[6].value,
         email: localData.identity[7].value || null,
         contacts: localData.contacts.map((c: any) => ({ type: c.type, value: c.value, label: c.label, icon: c.icon })),
-        ...Object.fromEntries(localData.vehicle.map((v) => [v.key, v.value || null])),
       };
       const response = await axios.put(`${API_BASE}/api/customers/${localData.id}`, updatePayload);
       onCustomerUpdated?.(response.data);
@@ -165,6 +215,9 @@ export default function CustomerCard({ customer, lead, onCustomerUpdated }: Cust
   };
 
   const inputClass = "bg-surface border border-border rounded-md text-text text-sm px-3 py-1.5 w-full max-w-[200px] outline-none transition-all focus:border-primary-400 focus:ring-2 focus:ring-primary-100";
+
+  const selectedVehicle = vehicles.find((v) => v.id === selectedVehicleId) ?? null;
+  const populatedVehicleFields = selectedVehicle ? VEHICLE_FIELDS.filter(([, key]) => selectedVehicle[key]) : [];
 
   return (
     <div className="flex-1 overflow-y-auto flex flex-col animate-fade-in-up">
@@ -234,25 +287,80 @@ export default function CustomerCard({ customer, lead, onCustomerUpdated }: Cust
 
         {/* Right: Vehicle Information */}
         <div className="px-8 py-6 max-md:px-4 min-w-0">
-          <div className="text-sm font-bold text-text mb-5 pb-3 border-b border-border flex items-center gap-2">
-            <Car size={16} className="text-text-muted" />
-            <span>Vehicle Information</span>
+          <div className="mb-5 pb-3 border-b border-border flex items-center justify-between gap-3 flex-wrap">
+            <div className="text-sm font-bold text-text flex items-center gap-2">
+              <Car size={16} className="text-text-muted" />
+              <span>Vehicle Information</span>
+            </div>
+            {customer && (
+              isAddingCar ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    autoFocus
+                    className={inputClass}
+                    placeholder="Car number"
+                    value={newCarNumber}
+                    onChange={(e) => setNewCarNumber(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddCar();
+                      if (e.key === 'Escape') { setIsAddingCar(false); setNewCarNumber(''); }
+                    }}
+                  />
+                  <button
+                    className="px-3 py-1.5 text-xs font-semibold rounded-md cursor-pointer transition-all bg-primary-600 text-white border-none hover:bg-primary-700 disabled:opacity-50"
+                    disabled={isSavingCar}
+                    onClick={handleAddCar}
+                  >Add</button>
+                  <button
+                    className="w-7 h-7 flex items-center justify-center rounded-md cursor-pointer transition-all text-text-muted bg-transparent border border-border hover:bg-neutral-50"
+                    onClick={() => { setIsAddingCar(false); setNewCarNumber(''); }}
+                  ><X size={14} /></button>
+                </div>
+              ) : (
+                <button
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md cursor-pointer transition-all text-primary-700 bg-primary-50 border border-primary-100 hover:bg-primary-100"
+                  onClick={() => setIsAddingCar(true)}
+                ><Plus size={14} /> Add Car</button>
+              )
+            )}
           </div>
-          {hasCarPolicy && populatedVehicleFields.length > 0 ? (
+
+          {vehicles.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap mb-4">
+              {vehicles.map((v, idx) => (
+                <button
+                  key={v.id}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-full cursor-pointer transition-all border ${
+                    selectedVehicleId === v.id
+                      ? 'bg-primary-600 text-white border-primary-600'
+                      : 'text-text-muted bg-surface border-border hover:bg-neutral-50 hover:text-text'
+                  }`}
+                  onClick={() => setSelectedVehicleId(v.id)}
+                >{v.misparRechev || `Car ${idx + 1}`}</button>
+              ))}
+              {selectedVehicle && (
+                <button
+                  className="w-7 h-7 flex items-center justify-center rounded-full cursor-pointer transition-all text-text-muted bg-transparent border-none hover:text-danger-600 hover:bg-danger-50"
+                  title="Delete this car"
+                  onClick={() => handleRemoveCar(selectedVehicle.id)}
+                ><Trash2 size={14} /></button>
+              )}
+            </div>
+          )}
+
+          {selectedVehicle && populatedVehicleFields.length > 0 ? (
             <div className="grid grid-cols-2 max-md:grid-cols-1">
-              {populatedVehicleFields.map(([label, key], idx) => {
-                const fieldValue = localData.vehicle.find((v) => v.key === key)?.value ?? '';
-                return (
-                  <div key={key} className={`flex flex-col gap-1 py-3 border-b border-border min-w-0 ${idx % 2 === 0 ? 'pr-6 border-r border-r-border' : 'pl-6'} max-md:pr-0 max-md:pl-0 max-md:border-r-0`}>
-                    <span className="text-xs text-text-muted">{label}</span>
-                    {isEditing ? (
-                      <input type="text" className={inputClass + " max-w-none"} value={fieldValue} onChange={(e) => handleVehicleChange(key, e.target.value)} />
-                    ) : (
-                      <span className="text-sm break-words text-text font-medium">{fieldValue || '—'}</span>
-                    )}
-                  </div>
-                );
-              })}
+              {populatedVehicleFields.map(([label, key], idx) => (
+                <div key={key} className={`flex flex-col gap-1 py-3 border-b border-border min-w-0 ${idx % 2 === 0 ? 'pr-6 border-r border-r-border' : 'pl-6'} max-md:pr-0 max-md:pl-0 max-md:border-r-0`}>
+                  <span className="text-xs text-text-muted">{label}</span>
+                  {isEditing ? (
+                    <input type="text" className={inputClass + " max-w-none"} value={selectedVehicle[key] || ''} onChange={(e) => handleVehicleFieldChange(selectedVehicle.id, key, e.target.value)} />
+                  ) : (
+                    <span className="text-sm break-words text-text font-medium">{selectedVehicle[key] || '—'}</span>
+                  )}
+                </div>
+              ))}
             </div>
           ) : (
             <div className="py-10 text-center text-sm text-neutral-400 italic">

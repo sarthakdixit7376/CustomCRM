@@ -13,8 +13,6 @@ interface FilterState {
   endDate: string;
   policyType: string;
   type: string;
-  carNumber: string;
-  manufacturer: string;
   glassAndMoreSelected: boolean;
   complementaryVipSelected: boolean;
   amountPaid: string;
@@ -27,9 +25,12 @@ interface PoliciesAndPlansProps {
 
 const EMPTY_FILTERS: FilterState = {
   numberOfPolicies: '', agentName: '', insuranceCompany: '',
-  startDate: '', endDate: '', policyType: 'Car', type: 'Mandatory', carNumber: '', manufacturer: '',
+  startDate: '', endDate: '', policyType: 'Car', type: 'Mandatory',
   glassAndMoreSelected: false, complementaryVipSelected: false, amountPaid: '',
 };
+
+/** Sentinel value for the Car <select> that switches it into "type a new plate number" mode. */
+const NEW_CAR_VALUE = '__new__';
 
 const POLICY_TYPE_OPTIONS = ['Car', 'Home', 'Travel'];
 const TYPE_OPTIONS = ['Mandatory', 'Comprehensive', '3rd Party'];
@@ -64,6 +65,10 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
   const navigate = useNavigate();
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
   const [policies, setPolicies] = useState<any[]>([]);
+  const [cars, setCars] = useState<any[]>([]);
+  const [carSelection, setCarSelection] = useState('');
+  const [newCarNumber, setNewCarNumber] = useState('');
+  const [isSavingCar, setIsSavingCar] = useState(false);
 
   useEffect(() => {
     axios.get(`${API_BASE}/api/policies`)
@@ -71,31 +76,55 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
       .catch(err => console.error("Failed to load policies", err));
   }, []);
 
+  useEffect(() => {
+    setCarSelection('');
+    setNewCarNumber('');
+    if (!presetCustomer) { setCars([]); return; }
+    axios.get(`${API_BASE}/api/vehicles/customer/${presetCustomer.id}`)
+      .then(res => setCars(res.data))
+      .catch(err => console.error("Failed to load vehicles", err));
+  }, [presetCustomer]);
+
   type StringFilterKey = Exclude<keyof FilterState, 'glassAndMoreSelected' | 'complementaryVipSelected'>;
 
   function handleChange(key: StringFilterKey, value: string) {
     setFilters((prev) => {
       const next = { ...prev, [key]: value };
       if (key === 'policyType' && value !== 'Car') {
-        next.type = ''; next.carNumber = ''; next.manufacturer = '';
+        next.type = '';
         next.glassAndMoreSelected = false; next.complementaryVipSelected = false;
       }
       if (key === 'policyType' && value === 'Car' && !prev.type) next.type = 'Mandatory';
       return next;
     });
+    if (key === 'policyType' && value !== 'Car') { setCarSelection(''); setNewCarNumber(''); }
   }
 
   function handleCheckboxChange(key: 'glassAndMoreSelected' | 'complementaryVipSelected', checked: boolean) {
     setFilters((prev) => ({ ...prev, [key]: checked }));
   }
 
-  function handleReset() { setFilters(EMPTY_FILTERS); }
+  function handleReset() { setFilters(EMPTY_FILTERS); setCarSelection(''); setNewCarNumber(''); }
 
   async function handleAdd() {
     if (!presetCustomer) return;
     if (!filters.agentName.trim() && !filters.insuranceCompany.trim()) return;
 
     try {
+      let carId: string | null = null;
+      if (filters.policyType === 'Car') {
+        if (carSelection === NEW_CAR_VALUE) {
+          if (!newCarNumber.trim()) { alert('Enter a car number'); return; }
+          setIsSavingCar(true);
+          const carRes = await axios.post(`${API_BASE}/api/vehicles/customer/${presetCustomer.id}`, { carNumber: newCarNumber.trim() });
+          setIsSavingCar(false);
+          carId = carRes.data.id;
+          setCars((prev) => [carRes.data, ...prev]);
+        } else if (carSelection) {
+          carId = carSelection;
+        }
+      }
+
       const newPolicy = {
         customerId: presetCustomer.id,
         policyNumber: filters.numberOfPolicies,
@@ -105,8 +134,7 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
         endDate: filters.endDate,
         policyType: filters.policyType,
         type: filters.type,
-        carNumber: filters.carNumber,
-        manufacturer: filters.manufacturer,
+        carId,
         glassAndMoreSelected: filters.glassAndMoreSelected,
         complementaryVipSelected: filters.complementaryVipSelected,
         amountPaid: filters.amountPaid,
@@ -115,8 +143,11 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
       const res = await axios.post(`${API_BASE}/api/policies`, newPolicy);
       setPolicies((prev) => [res.data, ...prev]);
       setFilters(EMPTY_FILTERS);
+      setCarSelection('');
+      setNewCarNumber('');
     } catch (error) {
       console.error("Failed to add policy", error);
+      setIsSavingCar(false);
     }
   }
 
@@ -145,11 +176,11 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
     : [];
 
   return (
-    <div className="flex-1 overflow-y-auto flex flex-col gap-8 px-8 py-8 animate-fade-in-up max-md:px-4 max-md:py-6 max-md:gap-6">
+    <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-8 px-8 py-8 animate-fade-in-up max-md:px-4 max-md:py-6 max-md:gap-6">
 
       {/* Form Card */}
       {presetCustomer ? (
-        <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-card">
+        <div className="shrink-0 bg-surface border border-border rounded-xl overflow-hidden shadow-card">
 
           {/* Header */}
           <div className="flex items-center justify-between px-7 py-5 border-b border-border bg-neutral-50 max-md:px-5 max-md:flex-col max-md:items-stretch max-md:gap-3">
@@ -217,12 +248,29 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
                     </select>
                   </div>
                   <div className="flex flex-col gap-1.5 min-w-0">
-                    <label className="text-xs font-medium text-text-muted">Car Number</label>
-                    <input type="text" className={inputClass} placeholder="Enter car number" value={filters.carNumber} onChange={(e) => handleChange('carNumber', e.target.value)} />
-                  </div>
-                  <div className="flex flex-col gap-1.5 min-w-0">
-                    <label className="text-xs font-medium text-text-muted">Manufacturer</label>
-                    <input type="text" className={inputClass} placeholder="Enter manufacturer" value={filters.manufacturer} onChange={(e) => handleChange('manufacturer', e.target.value)} />
+                    <label className="text-xs font-medium text-text-muted">Car</label>
+                    {carSelection === NEW_CAR_VALUE ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          className={inputClass}
+                          placeholder="Enter new car number"
+                          autoFocus
+                          value={newCarNumber}
+                          onChange={(e) => setNewCarNumber(e.target.value)}
+                          disabled={isSavingCar}
+                        />
+                        <button type="button" className="text-xs text-text-muted underline whitespace-nowrap cursor-pointer bg-transparent border-none" onClick={() => { setCarSelection(''); setNewCarNumber(''); }}>
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <select className={selectClass} style={selectBg} value={carSelection} onChange={(e) => setCarSelection(e.target.value)}>
+                        <option value="">— Select Car —</option>
+                        {cars.map((c) => <option key={c.id} value={c.id}>{c.misparRechev || c.id}</option>)}
+                        <option value={NEW_CAR_VALUE}>+ Add new car</option>
+                      </select>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 min-w-0 pt-6">
                     <input type="checkbox" id="glassAndMoreSelected" className="w-4 h-4 accent-primary-600 cursor-pointer" checked={filters.glassAndMoreSelected} onChange={(e) => handleCheckboxChange('glassAndMoreSelected', e.target.checked)} />
@@ -238,14 +286,14 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
           </div>
         </div>
       ) : filterCustomer ? (
-        <div className="bg-surface border border-border rounded-xl px-7 py-5 flex items-center gap-3 shadow-card">
+        <div className="shrink-0 bg-surface border border-border rounded-xl px-7 py-5 flex items-center gap-3 shadow-card">
           <UserCircle2 size={20} className="text-primary-600 shrink-0" />
           <div className="text-sm text-text">
             Showing policies for <span className="font-semibold">{filterCustomer.customerName}</span>
           </div>
         </div>
       ) : (
-        <div className="bg-surface border border-border rounded-xl px-8 py-10 flex flex-col items-center justify-center gap-3 text-center shadow-card">
+        <div className="shrink-0 bg-surface border border-border rounded-xl px-8 py-10 flex flex-col items-center justify-center gap-3 text-center shadow-card">
           <UserCircle2 size={36} className="text-neutral-300" />
           <div className="text-base font-bold text-text">Select a customer to add a policy</div>
           <div className="text-sm text-text-muted max-w-[360px]">Go to the Customer List tab and click "Add Policy" on a customer's row to add a policy for them.</div>
@@ -254,7 +302,7 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
 
       {/* Policies List */}
       {displayedPolicies.length > 0 ? (
-        <div className="border border-border rounded-xl overflow-x-auto bg-surface shadow-card">
+        <div className="shrink-0 border border-border rounded-xl overflow-x-auto bg-surface shadow-card">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
@@ -297,7 +345,7 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
           </table>
         </div>
       ) : (
-        <div className="bg-surface border border-border rounded-xl px-8 py-16 flex flex-col items-center justify-center gap-4 text-center max-md:px-4 max-md:py-10 shadow-card">
+        <div className="shrink-0 bg-surface border border-border rounded-xl px-8 py-16 flex flex-col items-center justify-center gap-4 text-center max-md:px-4 max-md:py-10 shadow-card">
           <Layers size={42} className="text-neutral-300 animate-pulse-slow" />
           <div className="text-lg font-bold text-text">No policies added yet</div>
           <div className="text-sm text-text-muted max-w-[320px]">
