@@ -9,6 +9,7 @@ import type { LeadFormData } from './CreateLeadModal';
 
 export interface LeadRow {
   id: string;
+  leadNationalId?: number;
   createdAt?: string;
   pdfUrl?: string;
   pricingPdfUrl?: string;
@@ -160,6 +161,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
       setLeads((prev) => [
         {
           id: newLead.id,
+          leadNationalId: newLead.leadNationalId,
           createdAt: newLead.createdAt,
           leadName: newLead.leadName || formData.lead_name,
           phoneNumber: newLead.phoneNumber || formData.phone_number,
@@ -205,6 +207,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
 
           const mappedLeads = dataList.map((lead: any) => ({
             id: lead.id,
+            leadNationalId: lead.leadNationalId,
             createdAt: lead.createdAt,
             pdfUrl: lead.pdfUrl,
             pricingPdfUrl: lead.pricingPdfUrl,
@@ -320,7 +323,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
           <thead className="sticky top-0 z-[2]">
             <tr>
               <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap select-none" style={{ width: 50 }}>#</th>
-              <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap select-none">Lead ID</th>
+              <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap select-none">Lead National ID</th>
               {COLUMNS.map(([h]) => (
                 <th key={h} className="group px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap select-none cursor-pointer hover:text-text transition-colors">
                   <span className="inline-flex items-center gap-1.5">{h} <ChevronDown size={12} className="opacity-0 group-hover:opacity-50 transition-opacity" /></span>
@@ -371,8 +374,8 @@ export default function Lead({ onSelectLead }: LeadProps) {
                 >
                   {/* Row number */}
                   <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{index + 1}</td>
-                  {/* Lead ID */}
-                  <td className="px-4 py-3 text-xs text-text-muted border-b border-border whitespace-nowrap font-mono">{row.id}</td>
+                  {/* Lead National ID */}
+                  <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap font-mono">{row.leadNationalId ?? '—'}</td>
                   {/* Phone Number */}
                   <td className="px-4 py-3 text-sm text-text border-b border-border whitespace-nowrap font-medium">{row.phoneNumber}</td>
                   {/* Lead Name with avatar */}

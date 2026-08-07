@@ -15,6 +15,13 @@ export interface LeadFieldConfig {
 /** The fields for the "Create New Lead" form. */
 export const LEAD_FORM_FIELDS: LeadFieldConfig[] = [
   {
+    key: 'lead_national_id',
+    label: 'Lead National ID',
+    type: 'number',
+    placeholder: 'Enter lead national ID',
+    required: true,
+  },
+  {
     key: 'lead_name',
     label: 'Lead Name',
     type: 'text',

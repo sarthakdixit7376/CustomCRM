@@ -6,6 +6,7 @@ import DeleteCustomerModal from './DeleteCustomerModal';
 /* ───────── Types ───────── */
 export interface CustomerRow {
   id: string;
+  customerNationalId?: number;
   customerName: string;
   email?: string;
   insuranceAgent: string;
@@ -47,6 +48,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
     const q = searchQuery.toLowerCase();
     const matchesSearch = searchQuery === '' ||
       row.id.toLowerCase().includes(q) ||
+      (row.customerNationalId != null && String(row.customerNationalId).includes(q)) ||
       row.customerName.toLowerCase().includes(q) ||
       (row.email ?? '').toLowerCase().includes(q) ||
       row.insuranceAgent.toLowerCase().includes(q) ||
@@ -75,7 +77,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
           <input
             type="text"
             className="w-full py-2.5 pr-4 pl-10 text-sm text-text bg-surface border border-border rounded-lg outline-none transition-all placeholder:text-neutral-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
-            placeholder="Search by customer ID, name, email, agent..."
+            placeholder="Search by customer national ID, name, email, agent..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -159,7 +161,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                   <input type="checkbox" className="w-4 h-4 accent-primary-600 cursor-pointer" />
                 </th>
                 <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none" style={{ width: 50 }}>#</th>
-                <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none whitespace-nowrap">Customer ID</th>
+                <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none whitespace-nowrap">Customer National ID</th>
                 {['Customer', 'Email', 'Insurance Agent', 'Agent Name', 'No. of Policies', 'Status'].map((h) => (
                   <th key={h} className="group px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap select-none cursor-pointer hover:text-text transition-colors">
                     <span className="inline-flex items-center gap-1.5">{h} <ChevronDown size={12} className="opacity-0 group-hover:opacity-50 transition-opacity" /></span>
@@ -182,7 +184,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                       />
                     </td>
                     <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{index + 1}</td>
-                    <td className="px-4 py-3 text-xs text-text-muted border-b border-border whitespace-nowrap font-mono">{row.id}</td>
+                    <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap font-mono">{row.customerNationalId ?? '—'}</td>
                     <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                       <div className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => onSelectCustomer?.(row)}>
                         <div className="w-7 h-7 rounded-md bg-primary-50 border border-primary-100 flex items-center justify-center text-[11px] font-bold text-primary-700 shrink-0">

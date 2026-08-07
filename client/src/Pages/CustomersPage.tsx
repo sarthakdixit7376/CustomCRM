@@ -46,6 +46,7 @@ export default function CustomersPage() {
     const hasActive = policies.some((p: any) => (p.status || 'Active') === 'Active');
     return {
       id: cust.id,
+      customerNationalId: cust.customerNationalId,
       customerName: cust.customerName,
       email: cust.email || '',
       insuranceAgent: cust.insuranceAgent || '-',
@@ -80,6 +81,7 @@ export default function CustomersPage() {
   const handleAddCustomer = async (data: CustomerFormData) => {
     try {
       const newCustomer = {
+        customerNationalId: Number(data.customerNationalId),
         customerName: `${data.firstName} ${data.lastName}`,
         email: data.email || undefined,
         insuranceAgent: data.insuranceCompany,

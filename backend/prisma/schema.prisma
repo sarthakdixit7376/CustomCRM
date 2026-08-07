@@ -93,6 +93,7 @@ model Invitation {
 
 model Lead {
   id                 String              @id @default(uuid())
+  leadNationalId     Int?                @unique // agent-entered lead national ID number, carried over to Customer.customerNationalId on conversion
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @default(now()) @updatedAt
   leadFlowStatus     LeadFlowStatus      @default(NEW)
@@ -176,6 +177,7 @@ model LeadFlowStatusLog {
 
 model Customer {
   id              String   @id @default(uuid())
+  customerNationalId Int?  @unique // agent-entered customer national ID number; carried over from Lead.leadNationalId on conversion
   createdAt       DateTime @default(now())
   customerName    String
   email           String?

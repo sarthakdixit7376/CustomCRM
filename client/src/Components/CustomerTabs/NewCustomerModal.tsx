@@ -3,6 +3,7 @@ import { User, X, IdCard, ClipboardList, Phone, Plus, AlertTriangle } from 'luci
 
 /* ───────── Types ───────── */
 export interface CustomerFormData {
+  customerNationalId: string;
   firstName: string;
   lastName: string;
   dateOfBirth: string;
@@ -32,7 +33,7 @@ interface NewCustomerModalProps {
 }
 
 const INITIAL_FORM: CustomerFormData = {
-  firstName: '', lastName: '', dateOfBirth: '', gender: '',
+  customerNationalId: '', firstName: '', lastName: '', dateOfBirth: '', gender: '',
   policyNumber: '', policyType: 'Car', insuranceType: 'Mandatory', agentName: '', carNumber: '',
   glassAndMoreSelected: false, complementaryVipSelected: false, amountPaid: '', startDate: '', endDate: '', email: '', phone: '',
   mobile: '', insuranceCompany: '', purchaseType: 'Private', notes: '',
@@ -78,6 +79,7 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
 
   const validate = (): boolean => {
     const e: Partial<Record<keyof CustomerFormData, string>> = {};
+    if (!form.customerNationalId.trim()) e.customerNationalId = 'Required';
     if (!form.firstName.trim()) e.firstName = 'Required';
     if (!form.lastName.trim()) e.lastName = 'Required';
     if (!form.policyNumber.trim()) e.policyNumber = 'Required';
@@ -122,6 +124,11 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
               <IdCard size={14} /> Personal Information
             </div>
             <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+              <div className="flex flex-col gap-1.5 col-span-full">
+                <label className="text-xs font-medium text-text-muted">Customer National ID <span className="text-danger-500">*</span></label>
+                <input type="number" className={`${inputBase} ${errors.customerNationalId ? inputErr : inputOk}`} placeholder="Enter customer national ID" value={form.customerNationalId} onChange={(e) => handleChange('customerNationalId', e.target.value)} />
+                {errors.customerNationalId && <span className="text-[11px] text-danger-600 flex items-center gap-1"><AlertTriangle size={12} /> {errors.customerNationalId}</span>}
+              </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-text-muted">First Name <span className="text-danger-500">*</span></label>
                 <input type="text" className={`${inputBase} ${errors.firstName ? inputErr : inputOk}`} placeholder="Enter first name" value={form.firstName} onChange={(e) => handleChange('firstName', e.target.value)} />

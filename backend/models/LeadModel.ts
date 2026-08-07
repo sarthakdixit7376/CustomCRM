@@ -39,8 +39,12 @@ export const LeadModel = {
 
     const quote = await generateInsuranceQuote(Number(d.age));
 
+    const leadNationalIdRaw = d.lead_national_id ?? d.leadNationalId;
+    const leadNationalId = leadNationalIdRaw != null && leadNationalIdRaw !== '' ? Number(leadNationalIdRaw) : undefined;
+
     const created = await prisma.lead.create({
       data: {
+        leadNationalId,
         leadName:             d.lead_name           || d.leadName,
         phoneNumber:          d.phone_number         || d.phoneNumber,
         pdfUrl:               d.pdfUrl,
@@ -152,6 +156,7 @@ export const LeadModel = {
 
       const customer = await tx.customer.create({
         data: {
+          customerNationalId: lead.leadNationalId,
           customerName: lead.leadName,
           idNumber: lead.idNumber,
           dateOfBirth: lead.dateOfBirth,
