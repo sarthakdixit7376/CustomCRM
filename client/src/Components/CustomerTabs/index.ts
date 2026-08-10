@@ -6,6 +6,7 @@ export { default as Quotes } from './Quotes';
 export { default as Claims } from './Claims';
 export { default as Documents } from './Documents';
 export { default as NewCustomerModal } from './NewCustomerModal';
+export { default as PolicyFormModal } from './PolicyFormModal';
 export { default as DeleteCustomerModal } from './DeleteCustomerModal';
 export { default as Lead } from './Lead';
 export { default as CreateLeadModal } from './CreateLeadModal';

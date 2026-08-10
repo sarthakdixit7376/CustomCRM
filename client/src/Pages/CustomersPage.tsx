@@ -12,6 +12,7 @@ import {
 } from '../Components/CustomerTabs';
 import NewCustomerModal from '../Components/CustomerTabs/NewCustomerModal';
 import type { CustomerFormData } from '../Components/CustomerTabs/NewCustomerModal';
+import PolicyFormModal from '../Components/CustomerTabs/PolicyFormModal';
 import type { CustomerRow } from '../Components/CustomerTabs/CustomerList';
 import { API_BASE } from '../config';
 
@@ -36,9 +37,10 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [rawCustomers, setRawCustomers] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerRow | null>(null);
-  const [policyTargetCustomer, setPolicyTargetCustomer] = useState<{ id: string; customerName: string } | null>(null);
   const [viewedPolicyCustomer, setViewedPolicyCustomer] = useState<{ id: string; customerName: string } | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const [policies, setPolicies] = useState<any[]>([]);
+  const [policyModal, setPolicyModal] = useState<{ customer: { id: string; customerName: string }; policy: any | null } | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const mapCustomerRow = (cust: any): CustomerRow => {
@@ -70,6 +72,12 @@ export default function CustomersPage() {
 
   useEffect(() => {
     fetchCustomers();
+  }, []);
+
+  useEffect(() => {
+    axios.get(`${API_BASE}/api/policies`)
+      .then(res => setPolicies(res.data))
+      .catch(err => console.error('Failed to load policies', err));
   }, []);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -137,9 +145,29 @@ export default function CustomersPage() {
     setCustomers((prev) => prev.map((c) => (c.id === updated.id ? mapCustomerRow(updated) : c)));
   };
 
-  const handleAddPolicyForCustomer = (customer: CustomerRow) => {
-    setPolicyTargetCustomer({ id: customer.id, customerName: customer.customerName });
-    setActiveTab('policies');
+  const openAddPolicyModal = (customer: { id: string; customerName: string }) => {
+    setPolicyModal({ customer, policy: null });
+  };
+
+  const handleEditPolicy = (policy: any) => {
+    setPolicyModal({ customer: { id: policy.customerId, customerName: policy.customer?.customerName || '' }, policy });
+  };
+
+  const handlePolicySaved = (policy: any) => {
+    const wasAdd = !policyModal?.policy;
+    setPolicies((prev) => {
+      const exists = prev.some((p) => p.id === policy.id);
+      return exists ? prev.map((p) => (p.id === policy.id ? policy : p)) : [policy, ...prev];
+    });
+    if (wasAdd && policyModal) {
+      setViewedPolicyCustomer(policyModal.customer);
+      setActiveTab('policies');
+    }
+    setPolicyModal(null);
+  };
+
+  const handleDeletePolicy = (policyId: string) => {
+    setPolicies((prev) => prev.filter((p) => p.id !== policyId));
   };
 
   const handleViewPolicies = (customer: CustomerRow | null) => {
@@ -176,7 +204,7 @@ export default function CustomersPage() {
                 ? 'text-primary-700 bg-primary-50 font-semibold'
                 : 'text-text-muted hover:text-text hover:bg-neutral-50'
             }`}
-            onClick={() => { setActiveTab(tab.key); setPolicyTargetCustomer(null); }}
+            onClick={() => setActiveTab(tab.key)}
           >
             {tab.label}
             {tab.badge !== null && (
@@ -196,20 +224,37 @@ export default function CustomersPage() {
           customers={customers}
           onDeleteCustomer={handleDeleteCustomer}
           onSelectCustomer={handleSelectCustomer}
-          onAddPolicy={handleAddPolicyForCustomer}
+          onAddPolicy={openAddPolicyModal}
           onViewPolicies={handleViewPolicies}
           viewedCustomerId={viewedPolicyCustomer?.id ?? null}
         />
       )}
       {activeTab === 'card' && <CustomerCard customer={selectedCustomer} lead={null} onCustomerUpdated={handleCustomerUpdated} />}
       {activeTab === 'service' && <OngoingService />}
-      {activeTab === 'policies' && <PoliciesAndPlans presetCustomer={policyTargetCustomer} filterCustomer={viewedPolicyCustomer} />}
+      {activeTab === 'policies' && (
+        <PoliciesAndPlans
+          policies={policies}
+          filterCustomer={viewedPolicyCustomer}
+          onAddPolicy={openAddPolicyModal}
+          onEditPolicy={handleEditPolicy}
+          onDeletePolicy={handleDeletePolicy}
+        />
+      )}
       {activeTab === 'quotes' && <Quotes />}
       {activeTab === 'claims' && <Claims />}
       {activeTab === 'documents' && <Documents />}
 
       {/* New Customer Modal */}
       <NewCustomerModal isOpen={isNewModalOpen} onClose={() => setIsNewModalOpen(false)} onSubmit={handleAddCustomer} />
+
+      {/* Add / Edit Policy Modal */}
+      <PolicyFormModal
+        isOpen={policyModal !== null}
+        customer={policyModal?.customer ?? null}
+        policy={policyModal?.policy ?? null}
+        onClose={() => setPolicyModal(null)}
+        onSaved={handlePolicySaved}
+      />
 
       {/* Toasts */}
       {toasts.length > 0 && (
