@@ -298,6 +298,8 @@ model Policy {
   endDate          DateTime?
   type             String?
   status           String    @default("Active") // 'Active' or 'Cancelled'
+  fileId           String? // Cloudinary public_id of the attached policy document
+  fileUrl          String? // Cloudinary secure_url for previewing the attached document
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   car      Vehicle? @relation(fields: [carId], references: [id], onDelete: Cascade)

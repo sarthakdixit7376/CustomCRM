@@ -69,6 +69,8 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
   const [carSelection, setCarSelection] = useState('');
   const [newCarNumber, setNewCarNumber] = useState('');
   const [isSavingCar, setIsSavingCar] = useState(false);
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
     axios.get(`${API_BASE}/api/policies`)
@@ -104,17 +106,18 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
     setFilters((prev) => ({ ...prev, [key]: checked }));
   }
 
-  function handleReset() { setFilters(EMPTY_FILTERS); setCarSelection(''); setNewCarNumber(''); }
+  function handleReset() { setFilters(EMPTY_FILTERS); setCarSelection(''); setNewCarNumber(''); setAttachmentFile(null); }
 
   async function handleAdd() {
     if (!presetCustomer) return;
     if (!filters.agentName.trim() && !filters.insuranceCompany.trim()) return;
 
+    setIsAdding(true);
     try {
       let carId: string | null = null;
       if (filters.policyType === 'Car') {
         if (carSelection === NEW_CAR_VALUE) {
-          if (!newCarNumber.trim()) { alert('Enter a car number'); return; }
+          if (!newCarNumber.trim()) { alert('Enter a car number'); setIsAdding(false); return; }
           setIsSavingCar(true);
           const carRes = await axios.post(`${API_BASE}/api/vehicles/customer/${presetCustomer.id}`, { carNumber: newCarNumber.trim() });
           setIsSavingCar(false);
@@ -141,13 +144,27 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
       };
 
       const res = await axios.post(`${API_BASE}/api/policies`, newPolicy);
-      setPolicies((prev) => [res.data, ...prev]);
+      let createdPolicy = res.data;
+
+      if (attachmentFile) {
+        const formData = new FormData();
+        formData.append('file', attachmentFile);
+        const fileRes = await axios.post(`${API_BASE}/api/policies/${createdPolicy.id}/file`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        createdPolicy = fileRes.data;
+      }
+
+      setPolicies((prev) => [createdPolicy, ...prev]);
       setFilters(EMPTY_FILTERS);
       setCarSelection('');
       setNewCarNumber('');
+      setAttachmentFile(null);
     } catch (error) {
       console.error("Failed to add policy", error);
       setIsSavingCar(false);
+    } finally {
+      setIsAdding(false);
     }
   }
 
@@ -197,8 +214,8 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
               <button className="px-5 py-2.5 text-sm font-medium rounded-lg cursor-pointer transition-all border border-border bg-surface text-text-muted hover:bg-neutral-100 hover:text-text" onClick={handleReset}>
                 Reset
               </button>
-              <button className="px-5 py-2.5 text-sm font-semibold rounded-lg cursor-pointer transition-all bg-primary-600 text-white border-none hover:bg-primary-700 inline-flex items-center gap-2" onClick={handleAdd}>
-                <Plus size={16} strokeWidth={2.5} /> Add Policy
+              <button className="px-5 py-2.5 text-sm font-semibold rounded-lg cursor-pointer transition-all bg-primary-600 text-white border-none hover:bg-primary-700 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-wait" onClick={handleAdd} disabled={isAdding}>
+                <Plus size={16} strokeWidth={2.5} /> {isAdding ? 'Adding…' : 'Add Policy'}
               </button>
             </div>
           </div>
@@ -282,6 +299,17 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
                   </div>
                 </>
               )}
+              <div className="flex flex-col gap-1.5 min-w-0 col-span-full">
+                <label className="text-xs font-medium text-text-muted">Attachment</label>
+                <input
+                  type="file"
+                  className={inputClass}
+                  onChange={(e) => setAttachmentFile(e.target.files?.[0] ?? null)}
+                />
+                {attachmentFile && (
+                  <span className="text-xs text-text-muted">Selected: {attachmentFile.name}</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -306,7 +334,7 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                {['#', 'Customer', 'Agent Name', 'Insurance Company', 'Policy Type', 'Type', 'Car Number', 'Start Date', 'End Date', 'Manufacturer', 'Glass and More', 'Complementary + VIP', 'Policy Number', 'Amount Paid', ''].map((h) => (
+                {['#', 'Customer', 'Agent Name', 'Insurance Company', 'Policy Type', 'Type', 'Car Number', 'Start Date', 'End Date', 'Manufacturer', 'Glass and More', 'Complementary + VIP', 'Policy Number', 'Amount Paid', 'File ID', ''].map((h) => (
                   <th key={h} className="text-left px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider bg-neutral-50 border-b border-border whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -328,6 +356,13 @@ export default function PoliciesAndPlans({ presetCustomer, filterCustomer }: Pol
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.complementaryVipSelected ? 'Yes' : '—'}</td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.policyNumber || '—'}</td>
                   <td className="px-4 py-3 text-text font-medium border-b border-border whitespace-nowrap">{formatCurrency(p.amountPaid)}</td>
+                  <td className="px-4 py-3 text-text-muted border-b border-border whitespace-nowrap font-mono">
+                    {p.fileUrl ? (
+                      <a href={p.fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700 underline">
+                        {p.fileId || 'View file'}
+                      </a>
+                    ) : '—'}
+                  </td>
                   <td className="px-4 py-3 border-b border-border whitespace-nowrap text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button

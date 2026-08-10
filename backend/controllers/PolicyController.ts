@@ -1,6 +1,16 @@
 import { Request, Response } from 'express';
+import multer from 'multer';
 import { PolicyModel } from '../models/PolicyModel.js';
 import { CustomerModel } from '../models/CustomerModel.js';
+import { uploadPolicyFile as uploadPolicyFileToCloudinary } from '../services/cloudinaryService.js';
+
+export const policyFileUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+});
+
+/** Cloudinary public_id may not contain '/', so strip anything that isn't alphanumeric/dash/underscore. */
+const sanitizeForPublicId = (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, '');
 
 export const getAllPolicies = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -75,6 +85,38 @@ export const updatePolicy = async (req: Request, res: Response): Promise<void> =
   } catch (error) {
     console.error('Error updating policy:', error);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+export const uploadPolicyFile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const existing = await PolicyModel.getPolicyById(req.params.id);
+    if (!existing) {
+      res.status(404).json({ error: 'Policy not found' });
+      return;
+    }
+    if (req.user!.role !== 'ADMIN' && existing.customer?.agentId !== req.user!.id) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+    if (!req.file) {
+      res.status(400).json({ error: 'file is required' });
+      return;
+    }
+
+    // Folder is named after the customer's internal ID (stable even if the customer has no national ID set).
+    const folder = `policies/${existing.customerId}`;
+    const publicId = [existing.policyNumber, existing.carNumber]
+      .filter(Boolean)
+      .map((part) => sanitizeForPublicId(String(part)))
+      .join('_');
+
+    const { publicId: fileId, url: fileUrl } = await uploadPolicyFileToCloudinary(req.file.buffer, folder, publicId);
+    const updatedPolicy = await PolicyModel.updatePolicyFile(req.params.id, fileId, fileUrl);
+    res.json(updatedPolicy);
+  } catch (error: any) {
+    console.error('Error uploading policy file:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 };
 

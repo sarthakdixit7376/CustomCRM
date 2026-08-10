@@ -105,6 +105,16 @@ export const PolicyModel = {
     });
   },
 
+  updatePolicyFile: async (id: string, fileId: string, fileUrl: string) => {
+    return prisma.policy.update({
+      where: { id },
+      data: { fileId, fileUrl },
+      include: {
+        customer: { select: { id: true, customerName: true, email: true } },
+      },
+    });
+  },
+
   deletePolicy: async (id: string) => {
     try {
       await prisma.policy.delete({
