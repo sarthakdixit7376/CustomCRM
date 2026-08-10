@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronDown, X, Trash2, ChevronLeft, ChevronRight, FilePlus2, Mail } from 'lucide-react';
+import { Search, ChevronDown, X, Trash2, ChevronLeft, ChevronRight, FilePlus2, Mail, Home, Car, Plane } from 'lucide-react';
 import DeleteCustomerModal from './DeleteCustomerModal';
 
 /* ───────── Types ───────── */
@@ -29,6 +29,14 @@ export interface CustomerListProps {
 /* ───────── Filter Options ───────── */
 const POLICY_TYPES = ['All', 'Car', 'Home', 'Travel'];
 const INSURANCE_COMPANIES = ['All', 'Phoenix', 'Clal', 'Migdal', 'Ayalon'];
+
+/** Icons shown in the Policy Type column, one per distinct policy type the customer holds. */
+const POLICY_TYPE_ORDER = ['Car', 'Home', 'Travel'];
+const POLICY_TYPE_ICONS: Record<string, typeof Home> = {
+  Home,
+  Car,
+  Travel: Plane,
+};
 
 /* ───────── Component ───────── */
 export default function CustomerList({ customers, onDeleteCustomer, onSelectCustomer, onAddPolicy, onViewPolicies, viewedCustomerId = null }: CustomerListProps) {
@@ -162,7 +170,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                 </th>
                 <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none" style={{ width: 50 }}>#</th>
                 <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none whitespace-nowrap">Customer National ID</th>
-                {['Customer', 'Email', 'Insurance Agent', 'Agent Name', 'No. of Policies', 'Status'].map((h) => (
+                {['Customer', 'Email', 'Insurance Agent', 'Agent Name', 'No. of Policies', 'Policy Type', 'Status'].map((h) => (
                   <th key={h} className="group px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap select-none cursor-pointer hover:text-text transition-colors">
                     <span className="inline-flex items-center gap-1.5">{h} <ChevronDown size={12} className="opacity-0 group-hover:opacity-50 transition-opacity" /></span>
                   </th>
@@ -198,6 +206,16 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                     <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">{row.agentName}</td>
                     <td className="px-4 py-3 text-sm text-text font-medium border-b border-border whitespace-nowrap">{row.policyCount}</td>
                     <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
+                      {row.policyTypes.length > 0 ? (
+                        <div className="flex items-center gap-1.5">
+                          {POLICY_TYPE_ORDER.filter((t) => row.policyTypes.includes(t)).map((t) => {
+                            const Icon = POLICY_TYPE_ICONS[t];
+                            return <span key={t} title={t}><Icon size={18} className="text-primary-600" /></span>;
+                          })}
+                        </div>
+                      ) : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full ${statusBadgeClass(row.status)}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${statusDotClass(row.status)}`} />
                         {row.status}
@@ -227,7 +245,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                 ))
               ) : (
                 <tr>
-                  <td colSpan={10} className="text-center py-10 text-text-muted">No results found</td>
+                  <td colSpan={11} className="text-center py-10 text-text-muted">No results found</td>
                 </tr>
               )}
             </tbody>

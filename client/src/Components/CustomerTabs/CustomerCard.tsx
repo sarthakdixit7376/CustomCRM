@@ -48,7 +48,7 @@ const DEFAULT_CUSTOMER = {
   name: '',
   avatar: '👤',
   identity: [
-    { label: 'ID', value: '' },
+    { label: 'Customer National ID', value: '' },
     { label: 'Date of Birth', value: '' },
     { label: 'Gender', value: '' },
     { label: 'No. of Policies', value: '' },
@@ -96,7 +96,7 @@ export default function CustomerCard({ customer, lead, onCustomerUpdated }: Cust
       name: displayName,
       avatar: displayName ? displayName.charAt(0) : DEFAULT_CUSTOMER.avatar,
       identity: [
-        { label: 'ID', value: cust?.idNumber || DEFAULT_CUSTOMER.identity[0].value },
+        { label: 'Customer National ID', value: cust?.customerNationalId != null ? String(cust.customerNationalId) : DEFAULT_CUSTOMER.identity[0].value },
         { label: 'Date of Birth', value: cust?.dateOfBirth || '' },
         { label: 'Gender', value: cust?.gender || '' },
         { label: 'No. of Policies', value: cust?.policies?.length?.toString() || '' },
@@ -196,7 +196,7 @@ export default function CustomerCard({ customer, lead, onCustomerUpdated }: Cust
 
       const updatePayload = {
         customerName: localData.name,
-        idNumber: localData.identity[0].value,
+        customerNationalId: localData.identity[0].value ? Number(localData.identity[0].value) : null,
         dateOfBirth: localData.identity[1].value,
         gender: localData.identity[2].value,
         insuranceAgent: localData.identity[4].value,

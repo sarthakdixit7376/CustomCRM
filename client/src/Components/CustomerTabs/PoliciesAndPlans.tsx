@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Layers, Plus, Pencil, X, UserCircle2, Mail } from 'lucide-react';
+import { Layers, Plus, Pencil, X, UserCircle2, Mail, Home, Car, Plane } from 'lucide-react';
 import { API_BASE } from '../../config';
 
 interface PoliciesAndPlansProps {
@@ -23,6 +23,13 @@ const formatCurrency = (value: any): string => {
   if (value === null || value === undefined || value === '') return '—';
   const n = Number(value);
   return Number.isNaN(n) ? String(value) : `₪${n.toLocaleString('en-US')}`;
+};
+
+/** Icon shown beside the Policy Type text. */
+const POLICY_TYPE_ICONS: Record<string, typeof Home> = {
+  Home,
+  Car,
+  Travel: Plane,
 };
 
 /** Colors Start/End Date cells by whether the policy's end date has passed. */
@@ -94,13 +101,22 @@ export default function PoliciesAndPlans({ policies, filterCustomer, onAddPolicy
               </tr>
             </thead>
             <tbody>
-              {displayedPolicies.map((p, i) => (
+              {displayedPolicies.map((p, i) => {
+                const PolicyTypeIcon = p.policyType ? POLICY_TYPE_ICONS[p.policyType] : null;
+                return (
                 <tr key={p.id ?? i} className="transition-colors hover:bg-neutral-50">
                   <td className="px-4 py-3 text-text-muted border-b border-border whitespace-nowrap">{i + 1}</td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.customer?.customerName || '—'}</td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.agentName || '—'}</td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.insuranceCompany || '—'}</td>
-                  <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.policyType || '—'}</td>
+                  <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">
+                    {p.policyType ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        {PolicyTypeIcon && <PolicyTypeIcon size={20} className="text-primary-600" />}
+                        {p.policyType}
+                      </span>
+                    ) : '—'}
+                  </td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.type || '—'}</td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.carNumber || '—'}</td>
                   <td className={`px-4 py-3 font-medium border-b border-border whitespace-nowrap ${expiryColorClass(p.endDate)}`}>{formatDate(p.startDate)}</td>
@@ -134,7 +150,8 @@ export default function PoliciesAndPlans({ policies, filterCustomer, onAddPolicy
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
