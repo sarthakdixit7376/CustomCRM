@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronDown, X, Trash2, ChevronLeft, ChevronRight, FilePlus2, Mail, Home, Car, Plane } from 'lucide-react';
+import { Search, ChevronDown, X, Trash2, ChevronLeft, ChevronRight, FilePlus2, Mail, Home, Car, Plane, Pencil } from 'lucide-react';
 import DeleteCustomerModal from './DeleteCustomerModal';
 
 /* ───────── Types ───────── */
@@ -21,6 +21,7 @@ export interface CustomerListProps {
   customers: CustomerRow[];
   onDeleteCustomer: (id: string) => void;
   onSelectCustomer?: (customer: CustomerRow) => void;
+  onEditCustomer?: (customer: CustomerRow) => void;
   onAddPolicy?: (customer: CustomerRow) => void;
   onViewPolicies?: (customer: CustomerRow | null) => void;
   viewedCustomerId?: string | null;
@@ -39,7 +40,7 @@ const POLICY_TYPE_ICONS: Record<string, typeof Home> = {
 };
 
 /* ───────── Component ───────── */
-export default function CustomerList({ customers, onDeleteCustomer, onSelectCustomer, onAddPolicy, onViewPolicies, viewedCustomerId = null }: CustomerListProps) {
+export default function CustomerList({ customers, onDeleteCustomer, onSelectCustomer, onEditCustomer, onAddPolicy, onViewPolicies, viewedCustomerId = null }: CustomerListProps) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('All');
@@ -168,7 +169,7 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                 <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none" style={{ width: 40 }}>
                   <input type="checkbox" className="w-4 h-4 accent-primary-600 cursor-pointer" />
                 </th>
-                <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none" style={{ width: 50 }}>#</th>
+                <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none whitespace-nowrap" style={{ width: 50 }}>Customer ID</th>
                 <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none whitespace-nowrap">Customer National ID</th>
                 {['Customer', 'Email', 'Insurance Agent', 'Agent Name', 'No. of Policies', 'Policy Type', 'Status'].map((h) => (
                   <th key={h} className="group px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap select-none cursor-pointer hover:text-text transition-colors">
@@ -223,6 +224,11 @@ export default function CustomerList({ customers, onDeleteCustomer, onSelectCust
                     </td>
                     <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                       <div className="flex items-center gap-1">
+                        <button
+                          className="text-text-muted hover:text-primary-600 bg-transparent border-none cursor-pointer transition-colors p-1.5 rounded hover:bg-primary-50"
+                          title="Edit customer"
+                          onClick={() => onEditCustomer?.(row)}
+                        ><Pencil size={16} /></button>
                         <button
                           className="text-text-muted hover:text-primary-600 bg-transparent border-none cursor-pointer transition-colors p-1.5 rounded hover:bg-primary-50 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                           title={row.email ? `Email ${row.customerName}` : 'No email on file'}

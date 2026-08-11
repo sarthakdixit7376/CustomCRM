@@ -68,10 +68,12 @@ export interface CustomerCardProps {
   customer?: any | null; // using any to accept full db object
   lead?: LeadRow | null;
   onCustomerUpdated?: (customer: any) => void;
+  /** When true, the card opens already in edit mode (e.g. jumping here from the Edit action in Customer List). */
+  startInEditMode?: boolean;
 }
 
-export default function CustomerCard({ customer, lead, onCustomerUpdated }: CustomerCardProps) {
-  const [isEditing, setIsEditing] = useState(false);
+export default function CustomerCard({ customer, lead, onCustomerUpdated, startInEditMode }: CustomerCardProps) {
+  const [isEditing, setIsEditing] = useState(Boolean(startInEditMode));
   const [vehicles, setVehicles] = useState<any[]>(customer?.vehicles ?? []);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(customer?.vehicles?.[0]?.id ?? null);
   const [isAddingCar, setIsAddingCar] = useState(false);
@@ -115,7 +117,7 @@ export default function CustomerCard({ customer, lead, onCustomerUpdated }: Cust
     setLocalData(getInitialData(customer, lead));
     setVehicles(customer?.vehicles ?? []);
     setSelectedVehicleId(customer?.vehicles?.[0]?.id ?? null);
-    setIsEditing(false);
+    setIsEditing(Boolean(startInEditMode));
     setIsAddingCar(false);
     setNewCarNumber('');
   }, [customer, lead]);

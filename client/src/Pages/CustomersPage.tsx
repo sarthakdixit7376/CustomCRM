@@ -37,6 +37,7 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [rawCustomers, setRawCustomers] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerRow | null>(null);
+  const [startCardInEditMode, setStartCardInEditMode] = useState(false);
   const [viewedPolicyCustomer, setViewedPolicyCustomer] = useState<{ id: string; customerName: string } | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [policies, setPolicies] = useState<any[]>([]);
@@ -136,6 +137,14 @@ export default function CustomersPage() {
     // Pass the full customer object based on ID
     const fullCustomer = rawCustomers.find(c => c.id === customer.id) || customer;
     setSelectedCustomer(fullCustomer);
+    setStartCardInEditMode(false);
+    setActiveTab('card');
+  };
+
+  const handleEditCustomer = (customer: CustomerRow) => {
+    const fullCustomer = rawCustomers.find(c => c.id === customer.id) || customer;
+    setSelectedCustomer(fullCustomer);
+    setStartCardInEditMode(true);
     setActiveTab('card');
   };
 
@@ -224,12 +233,13 @@ export default function CustomersPage() {
           customers={customers}
           onDeleteCustomer={handleDeleteCustomer}
           onSelectCustomer={handleSelectCustomer}
+          onEditCustomer={handleEditCustomer}
           onAddPolicy={openAddPolicyModal}
           onViewPolicies={handleViewPolicies}
           viewedCustomerId={viewedPolicyCustomer?.id ?? null}
         />
       )}
-      {activeTab === 'card' && <CustomerCard customer={selectedCustomer} lead={null} onCustomerUpdated={handleCustomerUpdated} />}
+      {activeTab === 'card' && <CustomerCard customer={selectedCustomer} lead={null} onCustomerUpdated={handleCustomerUpdated} startInEditMode={startCardInEditMode} />}
       {activeTab === 'service' && <OngoingService />}
       {activeTab === 'policies' && (
         <PoliciesAndPlans
