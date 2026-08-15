@@ -32,5 +32,16 @@ jobs:
               -p 127.0.0.1:8080:4000 \
               --env-file .env \
               crmbackend:latest
-            sleep 3
-            curl -f http://127.0.0.1:8080/api/health
+
+            for i in $(seq 1 20); do
+              if curl -sf http://127.0.0.1:8080/api/health > /dev/null; then
+                echo "Backend is healthy"
+                exit 0
+              fi
+              echo "Waiting for backend to become healthy... ($i/20)"
+              sleep 3
+            done
+
+            echo "Backend failed health check after 60s, recent logs:"
+            docker logs --tail 50 crmbackend
+            exit 1
