@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { CustomerModel } from '../models/CustomerModel.js';
+import prisma from '../config/prisma.js';
 
 export const getCustomers = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -32,7 +33,10 @@ export const getCustomerById = async (req: Request, res: Response): Promise<void
 
 export const createCustomer = async (req: Request, res: Response): Promise<void> => {
   try {
-    const newCustomer = await CustomerModel.createCustomer(req.body, req.user!.id);
+    // Only admins may assign a customer to someone other than themselves on creation.
+    const requestedAgentId = req.body.agentId;
+    const agentId = req.user!.role === 'ADMIN' && requestedAgentId ? requestedAgentId : req.user!.id;
+    const newCustomer = await CustomerModel.createCustomer(req.body, agentId);
     res.status(201).json(newCustomer);
   } catch (error: any) {
     console.error('Error creating customer:', error);
@@ -56,6 +60,34 @@ export const updateCustomer = async (req: Request, res: Response): Promise<void>
     res.json(updatedCustomer);
   } catch (error) {
     console.error('Error updating customer:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+export const updateCustomerAgent = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const existing = await CustomerModel.getCustomerById(req.params.id);
+    if (!existing) {
+      res.status(404).json({ error: 'Customer not found' });
+      return;
+    }
+
+    const { agentId } = req.body;
+    if (!agentId) {
+      res.status(400).json({ error: 'agentId is required' });
+      return;
+    }
+
+    const agent = await prisma.user.findUnique({ where: { id: agentId } });
+    if (!agent) {
+      res.status(400).json({ error: 'Agent not found' });
+      return;
+    }
+
+    const updated = await CustomerModel.updateCustomerAgent(req.params.id, agentId);
+    res.json(updated);
+  } catch (error) {
+    console.error('Error updating customer agent:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };

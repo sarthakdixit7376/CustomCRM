@@ -24,6 +24,7 @@ export const CustomerModel = {
         contacts: true,
         policies: true,
         vehicles: true,
+        agent: { select: { id: true, name: true, email: true } },
       },
       orderBy: {
         createdAt: 'desc',
@@ -38,6 +39,7 @@ export const CustomerModel = {
         contacts: true,
         policies: true,
         vehicles: true,
+        agent: { select: { id: true, name: true, email: true } },
       },
     });
   },
@@ -128,6 +130,19 @@ export const CustomerModel = {
       });
 
       return updatedCustomer;
+    });
+  },
+
+  updateCustomerAgent: async (id: string, agentId: string) => {
+    return prisma.customer.update({
+      where: { id },
+      data: { agentId },
+      include: {
+        contacts: true,
+        policies: true,
+        vehicles: true,
+        agent: { select: { id: true, name: true, email: true } },
+      },
     });
   },
 

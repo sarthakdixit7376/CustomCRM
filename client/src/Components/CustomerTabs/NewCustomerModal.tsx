@@ -24,25 +24,32 @@ export interface CustomerFormData {
   insuranceCompany: string;
   purchaseType: string;
   notes: string;
+  assignedAgentId: string;
+}
+
+interface AgentOption {
+  id: string;
+  name: string;
 }
 
 interface NewCustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: CustomerFormData) => void;
+  agents?: AgentOption[];
 }
 
 const INITIAL_FORM: CustomerFormData = {
   customerNationalId: '', firstName: '', lastName: '', dateOfBirth: '', gender: '',
   policyNumber: '', policyType: 'Car', insuranceType: 'Mandatory', agentName: '', carNumber: '',
   glassAndMoreSelected: false, complementaryVipSelected: false, amountPaid: '', startDate: '', endDate: '', email: '', phone: '',
-  mobile: '', insuranceCompany: '', purchaseType: 'Private', notes: '',
+  mobile: '', insuranceCompany: '', purchaseType: 'Private', notes: '', assignedAgentId: '',
 };
 
 const INSURANCE_COMPANIES = ['Phoenix', 'Clal', 'Migdal'];
 
 /* ───────── Component ───────── */
-export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCustomerModalProps) {
+export default function NewCustomerModal({ isOpen, onClose, onSubmit, agents = [] }: NewCustomerModalProps) {
   const [form, setForm] = useState<CustomerFormData>(INITIAL_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof CustomerFormData, string>>>({});
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -160,6 +167,15 @@ export default function NewCustomerModal({ isOpen, onClose, onSubmit }: NewCusto
                   <option value="Corporate">Corporate</option>
                 </select>
               </div>
+              {agents.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-text-muted">Assign to Agent</label>
+                  <select className={selectClass} style={selectBg} value={form.assignedAgentId} onChange={(e) => handleChange('assignedAgentId', e.target.value)}>
+                    <option value="">— Assign to myself —</option>
+                    {agents.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                  </select>
+                </div>
+              )}
             </div>
           </div>
 

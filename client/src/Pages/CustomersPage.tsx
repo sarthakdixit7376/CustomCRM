@@ -13,7 +13,8 @@ import {
 import NewCustomerModal from '../Components/CustomerTabs/NewCustomerModal';
 import type { CustomerFormData } from '../Components/CustomerTabs/NewCustomerModal';
 import PolicyFormModal from '../Components/CustomerTabs/PolicyFormModal';
-import type { CustomerRow } from '../Components/CustomerTabs/CustomerList';
+import type { CustomerRow, SearchField } from '../Components/CustomerTabs/CustomerList';
+import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../config';
 
 /* ───────── Tab Definitions ───────── */
@@ -33,9 +34,16 @@ interface Toast { id: number; message: string; type: 'success' | 'error'; }
 
 /* ───────── Customer Page ───────── */
 export default function CustomersPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   const [activeTab, setActiveTab] = useState<TabKey>('list');
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [rawCustomers, setRawCustomers] = useState<any[]>([]);
+  const [agents, setAgents] = useState<{ id: string; name: string }[]>([]);
+  const [customerSearchQuery, setCustomerSearchQuery] = useState('');
+  const [customerSearchField, setCustomerSearchField] = useState<SearchField>('all');
+  const [customerPolicyTypeFilter, setCustomerPolicyTypeFilter] = useState('All');
+  const [customerCompanyFilter, setCustomerCompanyFilter] = useState('All');
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerRow | null>(null);
   const [startCardInEditMode, setStartCardInEditMode] = useState(false);
   const [viewedPolicyCustomer, setViewedPolicyCustomer] = useState<{ id: string; customerName: string } | null>(null);
@@ -58,6 +66,9 @@ export default function CustomersPage() {
       status: policies.length === 0 ? 'No Policies' : hasActive ? 'Active' : 'Inactive',
       policyTypes: [...new Set(policies.map((p: any) => p.policyType).filter(Boolean))] as string[],
       insuranceCompanies: [...new Set(policies.map((p: any) => p.insuranceCompany).filter(Boolean))] as string[],
+      carNumbers: [...new Set(policies.map((p: any) => p.carNumber).filter(Boolean))] as string[],
+      assignedAgentId: cust.agentId || undefined,
+      assignedAgentName: cust.agent?.name,
     };
   };
 
@@ -81,6 +92,13 @@ export default function CustomersPage() {
       .catch(err => console.error('Failed to load policies', err));
   }, []);
 
+  useEffect(() => {
+    if (!isAdmin) return;
+    axios.get(`${API_BASE}/api/users`)
+      .then(res => setAgents(res.data.filter((u: any) => u.isActive).map((u: any) => ({ id: u.id, name: u.name }))))
+      .catch(err => console.error('Failed to load agents', err));
+  }, [isAdmin]);
+
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message, type }]);
@@ -95,6 +113,7 @@ export default function CustomersPage() {
         email: data.email || undefined,
         insuranceAgent: data.insuranceCompany,
         agentName: data.agentName,
+        agentId: data.assignedAgentId || undefined,
         dateOfBirth: data.dateOfBirth,
         gender: data.gender,
         policies: [
@@ -183,6 +202,16 @@ export default function CustomersPage() {
     setViewedPolicyCustomer(customer ? { id: customer.id, customerName: customer.customerName } : null);
   };
 
+  const handleAssignAgent = async (customerId: string, agentId: string) => {
+    try {
+      const res = await axios.patch(`${API_BASE}/api/customers/${customerId}/agent`, { agentId });
+      handleCustomerUpdated(res.data);
+    } catch (error) {
+      console.error('Failed to reassign customer:', error);
+      showToast('Error reassigning customer', 'error');
+    }
+  };
+
   const tabsWithBadge = TABS.map((tab) => ({
     ...tab,
     badge: tab.key === 'list' ? rawCustomers.length : tab.badge,
@@ -236,7 +265,18 @@ export default function CustomersPage() {
           onEditCustomer={handleEditCustomer}
           onAddPolicy={openAddPolicyModal}
           onViewPolicies={handleViewPolicies}
+          onAssignAgent={handleAssignAgent}
           viewedCustomerId={viewedPolicyCustomer?.id ?? null}
+          isAdmin={isAdmin}
+          agents={agents}
+          searchQuery={customerSearchQuery}
+          onSearchQueryChange={setCustomerSearchQuery}
+          searchField={customerSearchField}
+          onSearchFieldChange={setCustomerSearchField}
+          selectedPolicyType={customerPolicyTypeFilter}
+          onSelectedPolicyTypeChange={setCustomerPolicyTypeFilter}
+          selectedCompany={customerCompanyFilter}
+          onSelectedCompanyChange={setCustomerCompanyFilter}
         />
       )}
       {activeTab === 'card' && <CustomerCard customer={selectedCustomer} lead={null} onCustomerUpdated={handleCustomerUpdated} startInEditMode={startCardInEditMode} />}
@@ -255,7 +295,7 @@ export default function CustomersPage() {
       {activeTab === 'documents' && <Documents />}
 
       {/* New Customer Modal */}
-      <NewCustomerModal isOpen={isNewModalOpen} onClose={() => setIsNewModalOpen(false)} onSubmit={handleAddCustomer} />
+      <NewCustomerModal isOpen={isNewModalOpen} onClose={() => setIsNewModalOpen(false)} onSubmit={handleAddCustomer} agents={agents} />
 
       {/* Add / Edit Policy Modal */}
       <PolicyFormModal

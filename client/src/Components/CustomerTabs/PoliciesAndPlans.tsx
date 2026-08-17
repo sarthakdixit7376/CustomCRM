@@ -1,6 +1,7 @@
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Layers, Plus, Pencil, X, UserCircle2, Mail, Home, Car, Plane } from 'lucide-react';
+import { Layers, Plus, Pencil, X, UserCircle2, Mail, Home, Car, Plane, Search } from 'lucide-react';
 import { API_BASE } from '../../config';
 
 interface PoliciesAndPlansProps {
@@ -45,6 +46,10 @@ const expiryColorClass = (endDate: string): string => {
 /* ───────── Component ───────── */
 export default function PoliciesAndPlans({ policies, filterCustomer, onAddPolicy, onEditPolicy, onDeletePolicy }: PoliciesAndPlansProps) {
   const navigate = useNavigate();
+  const [carNumberFilter, setCarNumberFilter] = useState('');
+
+  // Reset the car number filter whenever the selected customer changes.
+  useEffect(() => { setCarNumberFilter(''); }, [filterCustomer?.id]);
 
   async function handleRemovePolicy(policyId?: string) {
     if (!policyId) return;
@@ -58,9 +63,13 @@ export default function PoliciesAndPlans({ policies, filterCustomer, onAddPolicy
     }
   }
 
-  const displayedPolicies = filterCustomer
+  const customerPolicies = filterCustomer
     ? policies.filter((p) => p.customerId === filterCustomer.id)
     : [];
+
+  const displayedPolicies = carNumberFilter.trim() === ''
+    ? customerPolicies
+    : customerPolicies.filter((p) => (p.carNumber ?? '').toLowerCase().includes(carNumberFilter.trim().toLowerCase()));
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-8 px-8 py-8 animate-fade-in-up max-md:px-4 max-md:py-6 max-md:gap-6">
@@ -86,6 +95,34 @@ export default function PoliciesAndPlans({ policies, filterCustomer, onAddPolicy
           <UserCircle2 size={36} className="text-neutral-300" />
           <div className="text-base font-bold text-text">Select a customer to view or add a policy</div>
           <div className="text-sm text-text-muted max-w-[360px]">Go to the Customer List tab and check a customer's row to view their policies here.</div>
+        </div>
+      )}
+
+      {/* Car Number Filter */}
+      {customerPolicies.length > 0 && (
+        <div className="shrink-0 flex items-center gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-[200px] max-w-[280px]">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+            <input
+              type="text"
+              className="w-full py-2.5 pr-4 pl-10 text-sm text-text bg-surface border border-border rounded-lg outline-none transition-all placeholder:text-neutral-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+              placeholder="Filter by car number..."
+              value={carNumberFilter}
+              onChange={(e) => setCarNumberFilter(e.target.value)}
+            />
+          </div>
+          {carNumberFilter && (
+            <button
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium text-text-muted bg-surface border border-border rounded-lg cursor-pointer transition-all hover:bg-neutral-50 hover:text-text"
+              onClick={() => setCarNumberFilter('')}
+            >
+              <X size={14} /> Clear
+            </button>
+          )}
+          <div className="text-xs text-text-muted whitespace-nowrap ml-auto">
+            Showing <span className="text-text font-semibold">{displayedPolicies.length}</span> of{' '}
+            <span className="text-text font-semibold">{customerPolicies.length}</span> policies
+          </div>
         </div>
       )}
 
@@ -154,6 +191,12 @@ export default function PoliciesAndPlans({ policies, filterCustomer, onAddPolicy
               })}
             </tbody>
           </table>
+        </div>
+      ) : filterCustomer && customerPolicies.length > 0 ? (
+        <div className="shrink-0 bg-surface border border-border rounded-xl px-8 py-16 flex flex-col items-center justify-center gap-4 text-center max-md:px-4 max-md:py-10 shadow-card">
+          <Search size={42} className="text-neutral-300" />
+          <div className="text-lg font-bold text-text">No policies match "{carNumberFilter}"</div>
+          <div className="text-sm text-text-muted max-w-[320px]">Try a different car number, or clear the filter.</div>
         </div>
       ) : filterCustomer ? (
         <div className="shrink-0 bg-surface border border-border rounded-xl px-8 py-16 flex flex-col items-center justify-center gap-4 text-center max-md:px-4 max-md:py-10 shadow-card">
