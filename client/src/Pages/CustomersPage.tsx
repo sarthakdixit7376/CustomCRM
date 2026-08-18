@@ -69,6 +69,7 @@ export default function CustomersPage() {
       carNumbers: [...new Set(policies.map((p: any) => p.carNumber).filter(Boolean))] as string[],
       assignedAgentId: cust.agentId || undefined,
       assignedAgentName: cust.agent?.name,
+      cloudinaryFolderUrl: `https://console.cloudinary.com/console/media_library/search?q=folder%3Apolicies%2F${cust.id}`,
     };
   };
 

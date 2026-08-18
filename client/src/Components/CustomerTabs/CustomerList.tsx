@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronDown, X, Trash2, ChevronLeft, ChevronRight, FilePlus2, Mail, Home, Car, Plane, Pencil } from 'lucide-react';
+import { Search, ChevronDown, X, Trash2, ChevronLeft, ChevronRight, FilePlus2, Mail, Home, Car, Plane, Pencil, ExternalLink } from 'lucide-react';
 import DeleteCustomerModal from './DeleteCustomerModal';
 
 /* ───────── Types ───────── */
@@ -18,6 +18,7 @@ export interface CustomerRow {
   carNumbers: string[];
   assignedAgentId?: string;
   assignedAgentName?: string;
+  cloudinaryFolderUrl?: string;
 }
 
 interface AgentOption {
@@ -250,7 +251,7 @@ export default function CustomerList({
                 </th>
                 <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none whitespace-nowrap" style={{ width: 50 }}>Customer ID</th>
                 <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none whitespace-nowrap">Customer National ID</th>
-                {['Customer', 'Email', 'Insurance Agent', 'Agent Name', 'Assigned Agent', 'No. of Policies', 'Policy Type', 'Status'].map((h) => (
+                {['Customer', 'Email', 'Insurance Agent', 'Agent Name', 'Assigned Agent', 'No. of Policies', 'Policy Type', 'Status', 'File ID'].map((h) => (
                   <th key={h} className="group px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap select-none cursor-pointer hover:text-text transition-colors">
                     <span className="inline-flex items-center gap-1.5">{h} <ChevronDown size={12} className="opacity-0 group-hover:opacity-50 transition-opacity" /></span>
                   </th>
@@ -321,6 +322,18 @@ export default function CustomerList({
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
+                      <a
+                        href={row.cloudinaryFolderUrl ?? '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-primary-600 hover:text-primary-700 font-medium transition-colors font-mono text-xs"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {`policies/${row.id}`}
+                        <ExternalLink size={12} />
+                      </a>
+                    </td>
+                    <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                       <div className="flex items-center gap-1">
                         <button
                           className="text-text-muted hover:text-primary-600 bg-transparent border-none cursor-pointer transition-colors p-1.5 rounded hover:bg-primary-50"
@@ -349,7 +362,7 @@ export default function CustomerList({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={12} className="text-center py-10 text-text-muted">No results found</td>
+                  <td colSpan={13} className="text-center py-10 text-text-muted">No results found</td>
                 </tr>
               )}
             </tbody>
