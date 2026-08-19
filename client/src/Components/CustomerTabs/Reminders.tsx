@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Bell, Calendar, Clock, Edit2, Trash2, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import { API_BASE } from '../../config';
-import { useAuth } from '../../context/AuthContext';
-import TabPlaceholder from './TabPlaceholder';
 
 interface Reminder {
   id: string;
@@ -20,7 +18,6 @@ interface RemindersProps {
 }
 
 export default function Reminders({ customerId }: RemindersProps) {
-  const { user } = useAuth();
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
