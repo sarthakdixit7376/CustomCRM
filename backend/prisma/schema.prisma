@@ -55,6 +55,7 @@ model User {
   customers Customer[]
   invitationsSent Invitation[]
   emailAccounts EmailAccount[]
+  reminders     Reminder[]
 
   @@map("users")
 }
@@ -214,9 +215,10 @@ model Customer {
   glassAndMoreSelected     Boolean @default(false)
   complementaryVipSelected Boolean @default(false)
 
-  contacts Contact[]
-  policies Policy[]
-  vehicles Vehicle[]
+  contacts  Contact[]
+  policies  Policy[]
+  vehicles  Vehicle[]
+  reminders Reminder[]
 
   @@map("customers")
 }
@@ -301,8 +303,28 @@ model Policy {
   fileId           String? // Cloudinary public_id of the attached policy document
   fileUrl          String? // Cloudinary secure_url for previewing the attached document
 
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  car      Vehicle? @relation(fields: [carId], references: [id], onDelete: Cascade)
+  customer  Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  car       Vehicle?   @relation(fields: [carId], references: [id], onDelete: Cascade)
+  reminders Reminder[]
 
   @@map("policies")
+}
+
+model Reminder {
+  id          String    @id @default(uuid())
+  customerId  String
+  policyId    String?
+  createdById String
+  text        String
+  remindAt    DateTime
+  isRead      Boolean   @default(false)
+  isAuto      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  policy      Policy?   @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  createdBy   User      @relation(fields: [createdById], references: [id])
+
+  @@map("reminders")
 }

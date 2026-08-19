@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { ClipboardList, Users, Settings, LogOut, Menu, X, Mail } from 'lucide-react';
 import logo from '../assets/Logo.png';
 import { useAuth } from '../context/AuthContext';
+import NotificationBell from '../Components/NotificationBell';
 
 export default function AppLayout() {
   const { user, logout } = useAuth();
@@ -103,13 +104,16 @@ export default function AppLayout() {
               <span className="text-sm font-medium text-text">{user?.name}</span>
               <span className="text-xs text-text-muted">{user?.role === 'ADMIN' ? 'Administrator' : 'Agent'}</span>
             </div>
-            <button
-              onClick={handleLogout}
-              className="text-text-muted hover:text-text bg-neutral-50 hover:bg-neutral-100 border border-border p-2 rounded-md transition-colors"
-              title="Log out"
-            >
-              <LogOut size={16} />
-            </button>
+            <div className="flex items-center gap-1">
+              <NotificationBell />
+              <button
+                onClick={handleLogout}
+                className="text-text-muted hover:text-text bg-neutral-50 hover:bg-neutral-100 border border-border p-2 rounded-md transition-colors"
+                title="Log out"
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
           </div>
         </div>
       </aside>

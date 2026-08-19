@@ -7,6 +7,7 @@ import vehicleRoutes from './vehicleRoutes.js';
 import userRoutes from './userRoutes.js';
 import invitationRoutes from './invitationRoutes.js';
 import emailRoutes from './emailRoutes.js';
+import reminderRoutes from './reminderRoutes.js';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/vehicles', vehicleRoutes);
 router.use('/users', userRoutes);
 router.use('/invitations', invitationRoutes);
 router.use('/email', emailRoutes);
+router.use('/reminders', reminderRoutes);
 
 export default router;

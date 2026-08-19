@@ -9,6 +9,7 @@ import {
   Quotes,
   Claims,
   Documents,
+  Reminders,
 } from '../Components/CustomerTabs';
 import NewCustomerModal from '../Components/CustomerTabs/NewCustomerModal';
 import type { CustomerFormData } from '../Components/CustomerTabs/NewCustomerModal';
@@ -26,6 +27,7 @@ const TABS = [
   { key: 'quotes', label: 'Quotes', badge: null },
   { key: 'claims', label: 'Claims', badge: null },
   { key: 'documents', label: 'Documents', badge: null },
+  { key: 'reminders', label: 'Reminders', badge: null },
 ] as const;
 
 type TabKey = (typeof TABS)[number]['key'];
@@ -294,6 +296,7 @@ export default function CustomersPage() {
       {activeTab === 'quotes' && <Quotes />}
       {activeTab === 'claims' && <Claims />}
       {activeTab === 'documents' && <Documents />}
+      {activeTab === 'reminders' && <Reminders customerId={selectedCustomer?.id || viewedPolicyCustomer?.id} />}
 
       {/* New Customer Modal */}
       <NewCustomerModal isOpen={isNewModalOpen} onClose={() => setIsNewModalOpen(false)} onSubmit={handleAddCustomer} agents={agents} />

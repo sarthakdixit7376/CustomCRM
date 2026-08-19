@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import multer from 'multer';
 import { PolicyModel } from '../models/PolicyModel.js';
 import { CustomerModel } from '../models/CustomerModel.js';
+import { ReminderModel } from '../models/ReminderModel.js';
 import { uploadPolicyFile as uploadPolicyFileToCloudinary } from '../services/cloudinaryService.js';
 
 export const policyFileUpload = multer({
@@ -61,6 +62,18 @@ export const createPolicy = async (req: Request, res: Response): Promise<void> =
     }
 
     const newPolicy = await PolicyModel.createPolicy(req.body, req.body.customerId);
+
+    if (newPolicy.endDate && newPolicy.customer) {
+      await ReminderModel.upsertPolicyReminder(
+        newPolicy.id,
+        newPolicy.customerId,
+        newPolicy.endDate,
+        req.user!.id,
+        newPolicy.policyNumber,
+        newPolicy.customer.customerName
+      ).catch((err) => console.error('Failed to auto-create policy reminder:', err));
+    }
+
     res.status(201).json(newPolicy);
   } catch (error: any) {
     console.error('Error creating policy:', error);
@@ -81,6 +94,18 @@ export const updatePolicy = async (req: Request, res: Response): Promise<void> =
     }
 
     const updatedPolicy = await PolicyModel.updatePolicy(req.params.id, req.body);
+
+    if (updatedPolicy.endDate && updatedPolicy.customer) {
+      await ReminderModel.upsertPolicyReminder(
+        updatedPolicy.id,
+        updatedPolicy.customerId,
+        updatedPolicy.endDate,
+        req.user!.id,
+        updatedPolicy.policyNumber,
+        updatedPolicy.customer.customerName
+      ).catch((err) => console.error('Failed to auto-update policy reminder:', err));
+    }
+
     res.json(updatedPolicy);
   } catch (error) {
     console.error('Error updating policy:', error);
