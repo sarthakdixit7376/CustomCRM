@@ -56,6 +56,7 @@ model User {
   invitationsSent Invitation[]
   emailAccounts EmailAccount[]
   reminders     Reminder[]
+  customerMessages CustomerMessage[]
 
   @@map("users")
 }
@@ -219,6 +220,7 @@ model Customer {
   policies  Policy[]
   vehicles  Vehicle[]
   reminders Reminder[]
+  messages  CustomerMessage[]
 
   @@map("customers")
 }
@@ -308,6 +310,19 @@ model Policy {
   reminders Reminder[]
 
   @@map("policies")
+}
+
+model CustomerMessage {
+  id          String   @id @default(uuid())
+  customerId  String
+  createdById String
+  text        String
+  createdAt   DateTime @default(now())
+
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdBy   User     @relation(fields: [createdById], references: [id])
+
+  @@map("customer_messages")
 }
 
 model Reminder {

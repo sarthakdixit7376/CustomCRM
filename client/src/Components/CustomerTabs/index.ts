@@ -12,3 +12,5 @@ export { default as Lead } from './Lead';
 export { default as CreateLeadModal } from './CreateLeadModal';
 export { default as LeadQuotes } from './LeadQuotes';
 export { default as Reminders } from './Reminders';
+export { default as Messages } from './Messages';
+export { default as Contacts } from './Contacts';

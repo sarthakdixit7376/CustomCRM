@@ -10,6 +10,8 @@ import {
   Claims,
   Documents,
   Reminders,
+  Messages,
+  Contacts,
 } from '../Components/CustomerTabs';
 import NewCustomerModal from '../Components/CustomerTabs/NewCustomerModal';
 import type { CustomerFormData } from '../Components/CustomerTabs/NewCustomerModal';
@@ -21,6 +23,7 @@ import { API_BASE } from '../config';
 /* ───────── Tab Definitions ───────── */
 const TABS = [
   { key: 'list', label: 'Customer List', badge: null as number | null },
+  { key: 'contacts', label: 'Contacts', badge: null },
   { key: 'card', label: 'Customer Card', badge: null },
   { key: 'service', label: 'Ongoing Service', badge: null },
   { key: 'policies', label: 'Policies & Plans', badge: null },
@@ -28,6 +31,7 @@ const TABS = [
   { key: 'claims', label: 'Claims', badge: null },
   { key: 'documents', label: 'Documents', badge: null },
   { key: 'reminders', label: 'Reminders', badge: null },
+  { key: 'messages', label: 'Messages', badge: null },
 ] as const;
 
 type TabKey = (typeof TABS)[number]['key'];
@@ -205,6 +209,11 @@ export default function CustomersPage() {
     setViewedPolicyCustomer(customer ? { id: customer.id, customerName: customer.customerName } : null);
   };
 
+  const handleOpenMessages = (customer: CustomerRow) => {
+    setViewedPolicyCustomer({ id: customer.id, customerName: customer.customerName });
+    setActiveTab('messages');
+  };
+
   const handleAssignAgent = async (customerId: string, agentId: string) => {
     try {
       const res = await axios.patch(`${API_BASE}/api/customers/${customerId}/agent`, { agentId });
@@ -267,6 +276,7 @@ export default function CustomersPage() {
           onSelectCustomer={handleSelectCustomer}
           onEditCustomer={handleEditCustomer}
           onAddPolicy={openAddPolicyModal}
+          onOpenMessages={handleOpenMessages}
           onViewPolicies={handleViewPolicies}
           onAssignAgent={handleAssignAgent}
           viewedCustomerId={viewedPolicyCustomer?.id ?? null}
@@ -282,6 +292,7 @@ export default function CustomersPage() {
           onSelectedCompanyChange={setCustomerCompanyFilter}
         />
       )}
+      {activeTab === 'contacts' && <Contacts customers={rawCustomers} onCustomerUpdated={handleCustomerUpdated} />}
       {activeTab === 'card' && <CustomerCard customer={selectedCustomer} lead={null} onCustomerUpdated={handleCustomerUpdated} startInEditMode={startCardInEditMode} />}
       {activeTab === 'service' && <OngoingService />}
       {activeTab === 'policies' && (
@@ -297,6 +308,12 @@ export default function CustomersPage() {
       {activeTab === 'claims' && <Claims />}
       {activeTab === 'documents' && <Documents />}
       {activeTab === 'reminders' && <Reminders customerId={selectedCustomer?.id || viewedPolicyCustomer?.id} />}
+      {activeTab === 'messages' && (
+        <Messages
+          customerId={selectedCustomer?.id || viewedPolicyCustomer?.id}
+          customerName={selectedCustomer?.customerName || viewedPolicyCustomer?.customerName}
+        />
+      )}
 
       {/* New Customer Modal */}
       <NewCustomerModal isOpen={isNewModalOpen} onClose={() => setIsNewModalOpen(false)} onSubmit={handleAddCustomer} agents={agents} />

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronDown, X, Trash2, ChevronLeft, ChevronRight, FilePlus2, Mail, Home, Car, Plane, Pencil, ExternalLink } from 'lucide-react';
+import { Search, ChevronDown, X, Trash2, ChevronLeft, ChevronRight, FilePlus2, Mail, Home, Car, Plane, Pencil, ExternalLink, MessageSquare } from 'lucide-react';
 import DeleteCustomerModal from './DeleteCustomerModal';
 
 /* ───────── Types ───────── */
@@ -32,6 +32,7 @@ export interface CustomerListProps {
   onSelectCustomer?: (customer: CustomerRow) => void;
   onEditCustomer?: (customer: CustomerRow) => void;
   onAddPolicy?: (customer: CustomerRow) => void;
+  onOpenMessages?: (customer: CustomerRow) => void;
   onViewPolicies?: (customer: CustomerRow | null) => void;
   onAssignAgent?: (customerId: string, agentId: string) => Promise<void> | void;
   viewedCustomerId?: string | null;
@@ -90,7 +91,7 @@ const POLICY_TYPE_ICONS: Record<string, typeof Home> = {
 
 /* ───────── Component ───────── */
 export default function CustomerList({
-  customers, onDeleteCustomer, onSelectCustomer, onEditCustomer, onAddPolicy, onViewPolicies, onAssignAgent,
+  customers, onDeleteCustomer, onSelectCustomer, onEditCustomer, onAddPolicy, onOpenMessages, onViewPolicies, onAssignAgent,
   viewedCustomerId = null, isAdmin = false, agents = [],
   searchQuery, onSearchQueryChange, searchField, onSearchFieldChange,
   selectedPolicyType: selectedType, onSelectedPolicyTypeChange: setSelectedType,
@@ -246,9 +247,7 @@ export default function CustomerList({
           <table className="w-full border-collapse table-auto">
             <thead className="sticky top-0 z-[2]">
               <tr>
-                <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none" style={{ width: 40 }}>
-                  <input type="checkbox" className="w-4 h-4 accent-primary-600 cursor-pointer" />
-                </th>
+                <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none" style={{ width: 40 }} />
                 <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none whitespace-nowrap" style={{ width: 50 }}>Customer ID</th>
                 <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border select-none whitespace-nowrap">Customer National ID</th>
                 {['Customer', 'Email', 'Insurance Agent', 'Agent Name', 'Assigned Agent', 'No. of Policies', 'Policy Type', 'Status', 'File ID'].map((h) => (
@@ -351,6 +350,11 @@ export default function CustomerList({
                           title="Add policy for this customer"
                           onClick={() => onAddPolicy?.(row)}
                         ><FilePlus2 size={16} /></button>
+                        <button
+                          className="text-text-muted hover:text-primary-600 bg-transparent border-none cursor-pointer transition-colors p-1.5 rounded hover:bg-primary-50"
+                          title="View / add messages for this customer"
+                          onClick={() => onOpenMessages?.(row)}
+                        ><MessageSquare size={16} /></button>
                         <button
                           className="text-text-muted hover:text-danger-600 bg-transparent border-none cursor-pointer transition-colors p-1.5 rounded hover:bg-danger-50"
                           title="Delete customer"

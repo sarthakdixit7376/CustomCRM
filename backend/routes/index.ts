@@ -8,6 +8,7 @@ import userRoutes from './userRoutes.js';
 import invitationRoutes from './invitationRoutes.js';
 import emailRoutes from './emailRoutes.js';
 import reminderRoutes from './reminderRoutes.js';
+import customerMessageRoutes from './customerMessageRoutes.js';
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use('/users', userRoutes);
 router.use('/invitations', invitationRoutes);
 router.use('/email', emailRoutes);
 router.use('/reminders', reminderRoutes);
+router.use('/messages', customerMessageRoutes);
 
 export default router;
