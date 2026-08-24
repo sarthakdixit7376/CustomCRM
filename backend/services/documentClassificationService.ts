@@ -38,14 +38,19 @@ export async function classifyDocument(buffer: Buffer, mimeType: string): Promis
             { inlineData: { data: buffer.toString('base64'), mimeType } },
             {
               text:
-                'This document is from an Israeli insurance CRM and is written in Hebrew. ' +
-                'Read it and classify what kind of document it is. ' +
-                'For car insurance policy documents specifically, use these rules based on the coverage terminology found in the document, ' +
+                'This is a document from an Israeli insurance CRM. It is commonly in Hebrew, but may be in English or Arabic, ' +
+                'or a mix of these (some insurers issue trilingual certificates). ' +
+                'Read the whole document, including short field labels/values inside tables or stamped boxes (not just prose paragraphs), ' +
+                'and classify what kind of document it is. ' +
+                'For car insurance policy documents specifically, use these rules based on the coverage terminology found ANYWHERE in the document, ' +
                 'and return the category name exactly as given here — do not paraphrase or translate it:\n' +
-                '- Mentions "ביטוח חובה", "Bituach Chova", "compulsory", or "mandatory" insurance -> "Mandatory Policy Insurance"\n' +
-                '- Mentions "TP", "צד ג׳", or third-party coverage alone, with no comprehensive/complementary add-on -> "Third Party Policy Insurance"\n' +
-                '- Mentions "TP+Comp", "TP + Comp", "צד ג׳ + מקיף", or third-party coverage plus comprehensive/complementary add-on -> "Third Party + Complimentary Policy Insurance"\n' +
-                'Return the extracted text exactly as written in the document — do not translate it out of Hebrew.',
+                '- Mentions "ביטוח חובה", "Bituach Chova", "compulsory insurance", or "mandatory insurance" -> "Mandatory Policy Insurance"\n' +
+                '- Mentions "TP", "Third Party", or "צד ג׳" coverage ALONE, with no comprehensive/complementary/supplementary add-on -> "Third Party Policy Insurance"\n' +
+                '- Mentions "TP+Comp", "Comp+TP", "TP + Comp", "Comp + TP" (in either word order, with or without spaces), ' +
+                '"צד ג + מקיף", "Third Party Liability & Comprehensive", "Third Party (...) and Comprehensive", ' +
+                'or any other combination of third-party coverage plus comprehensive/complementary/supplementary add-on, ' +
+                'in any word order or language -> "Third Party + Complimentary Policy Insurance"\n' +
+                'Return the extracted text exactly as written in the document, in its original language(s) — do not translate it.',
             },
           ],
         },
