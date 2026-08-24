@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
 import multer from 'multer';
 import { PolicyModel } from '../models/PolicyModel.js';
+import { PolicyDocumentModel } from '../models/PolicyDocumentModel.js';
 import { CustomerModel } from '../models/CustomerModel.js';
 import { ReminderModel } from '../models/ReminderModel.js';
 import { uploadPolicyFile as uploadPolicyFileToCloudinary } from '../services/cloudinaryService.js';
+import { classifyDocument } from '../services/documentClassificationService.js';
 
 export const policyFileUpload = multer({
   storage: multer.memoryStorage(),
@@ -12,6 +14,45 @@ export const policyFileUpload = multer({
 
 /** Cloudinary public_id may not contain '/', so strip anything that isn't alphanumeric/dash/underscore. */
 const sanitizeForPublicId = (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, '');
+
+/**
+ * OCRs + classifies an uploaded file, files it into Cloudinary under
+ * policies/{customerId}/{documentType}/, and records a PolicyDocument row.
+ * Shared by the policy-scoped and customer-scoped upload endpoints.
+ */
+const classifyAndUploadDocument = async (
+  file: Express.Multer.File,
+  customerId: string,
+  policyId: string | null,
+  uploadedById: string
+) => {
+  const { documentType, extractedText } = await classifyDocument(file.buffer, file.mimetype);
+  const sanitizedType = sanitizeForPublicId(documentType.replace(/\s+/g, '-'));
+
+  // Folder is named after the customer's internal ID (stable even if the customer has no national ID set)
+  // and the classified document type, so each document type lands in its own subfolder.
+  const folder = `policies/${customerId}/${sanitizedType}`;
+  // A customer can hold several documents of the same type, so the public_id must be unique per upload.
+  const uniqueSuffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const publicId = `${sanitizedType}_${uniqueSuffix}`;
+
+  // Rename the file to its classified document type (keeping the original extension) so it reads
+  // clearly in both Cloudinary and the customer's document list, instead of the original upload name.
+  const extensionMatch = file.originalname.match(/\.[^.]+$/);
+  const renamedFilename = `${documentType}${extensionMatch ? extensionMatch[0] : ''}`;
+
+  const { publicId: fileId, url: fileUrl } = await uploadPolicyFileToCloudinary(file.buffer, folder, publicId);
+  return PolicyDocumentModel.createDocument({
+    policyId,
+    customerId,
+    documentType,
+    fileId,
+    fileUrl,
+    originalFilename: renamedFilename,
+    ocrText: extractedText,
+    uploadedById,
+  });
+};
 
 export const getAllPolicies = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -129,18 +170,99 @@ export const uploadPolicyFile = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    // Folder is named after the customer's internal ID (stable even if the customer has no national ID set).
-    const folder = `policies/${existing.customerId}`;
-    const publicId = [existing.policyNumber, existing.carNumber]
-      .filter(Boolean)
-      .map((part) => sanitizeForPublicId(String(part)))
-      .join('_');
-
-    const { publicId: fileId, url: fileUrl } = await uploadPolicyFileToCloudinary(req.file.buffer, folder, publicId);
-    const updatedPolicy = await PolicyModel.updatePolicyFile(req.params.id, fileId, fileUrl);
-    res.json(updatedPolicy);
+    const document = await classifyAndUploadDocument(req.file, existing.customerId, existing.id, req.user!.id);
+    res.status(201).json(document);
   } catch (error: any) {
     console.error('Error uploading policy file:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+};
+
+export const getPolicyDocuments = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const existing = await PolicyModel.getPolicyById(req.params.id);
+    if (!existing) {
+      res.status(404).json({ error: 'Policy not found' });
+      return;
+    }
+    if (req.user!.role !== 'ADMIN' && existing.customer?.agentId !== req.user!.id) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const documents = await PolicyDocumentModel.getDocumentsByPolicy(req.params.id);
+    res.json(documents);
+  } catch (error) {
+    console.error('Error getting policy documents:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+export const deletePolicyDocument = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const existing = await PolicyDocumentModel.getDocumentById(req.params.id);
+    if (!existing) {
+      res.status(404).json({ error: 'Document not found' });
+      return;
+    }
+    const customer = await CustomerModel.getCustomerById(existing.customerId);
+    if (req.user!.role !== 'ADMIN' && customer?.agentId !== req.user!.id) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const result = await PolicyDocumentModel.deleteDocument(req.params.id);
+    if (!result) {
+      res.status(404).json({ error: 'Document not found' });
+      return;
+    }
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting policy document:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+export const getCustomerDocuments = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const customer = await CustomerModel.getCustomerById(req.params.id);
+    if (!customer) {
+      res.status(404).json({ error: 'Customer not found' });
+      return;
+    }
+    if (req.user!.role !== 'ADMIN' && customer.agentId !== req.user!.id) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const documents = await PolicyDocumentModel.getDocumentsByCustomer(req.params.id);
+    res.json(documents);
+  } catch (error) {
+    console.error('Error getting customer documents:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+export const uploadCustomerDocument = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const customer = await CustomerModel.getCustomerById(req.params.id);
+    if (!customer) {
+      res.status(404).json({ error: 'Customer not found' });
+      return;
+    }
+    if (req.user!.role !== 'ADMIN' && customer.agentId !== req.user!.id) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+    if (!req.file) {
+      res.status(400).json({ error: 'file is required' });
+      return;
+    }
+
+    const document = await classifyAndUploadDocument(req.file, customer.id, null, req.user!.id);
+    res.status(201).json(document);
+  } catch (error: any) {
+    console.error('Error uploading customer document:', error);
     res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 };

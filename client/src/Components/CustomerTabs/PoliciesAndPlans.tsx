@@ -132,7 +132,7 @@ export default function PoliciesAndPlans({ policies, filterCustomer, onAddPolicy
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                {['#', 'Customer', 'Agent Name', 'Insurance Company', 'Policy Type', 'Type', 'Car Number', 'Start Date', 'End Date', 'Manufacturer', 'Glass and More', 'Complementary + VIP', 'Policy Number', 'Amount Paid', 'File ID', ''].map((h) => (
+                {['#', 'Customer', 'Agent Name', 'Insurance Company', 'Policy Type', 'Type', 'Car Number', 'Start Date', 'End Date', 'Manufacturer', 'Glass and More', 'Complementary + VIP', 'Policy Number', 'Amount Paid', 'Documents', ''].map((h) => (
                   <th key={h} className="text-left px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider bg-neutral-50 border-b border-border whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -163,11 +163,14 @@ export default function PoliciesAndPlans({ policies, filterCustomer, onAddPolicy
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.complementaryVipSelected ? 'Yes' : '—'}</td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.policyNumber || '—'}</td>
                   <td className="px-4 py-3 text-text font-medium border-b border-border whitespace-nowrap">{formatCurrency(p.amountPaid)}</td>
-                  <td className="px-4 py-3 text-text-muted border-b border-border whitespace-nowrap font-mono">
-                    {p.fileUrl ? (
-                      <a href={p.fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700 underline">
-                        {p.fileId || 'View file'}
-                      </a>
+                  <td className="px-4 py-3 text-text-muted border-b border-border whitespace-nowrap">
+                    {p.documents?.length > 0 ? (
+                      <span
+                        className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 text-xs font-medium"
+                        title={p.documents.map((d: any) => d.documentType).join(', ')}
+                      >
+                        {p.documents.length} document{p.documents.length === 1 ? '' : 's'}
+                      </span>
                     ) : '—'}
                   </td>
                   <td className="px-4 py-3 border-b border-border whitespace-nowrap text-right">

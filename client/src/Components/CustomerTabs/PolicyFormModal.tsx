@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Layers, X, Plus, Save } from 'lucide-react';
+import { Layers, X, Plus, Save, Trash2 } from 'lucide-react';
 import { API_BASE } from '../../config';
 
 /* ───────── Types ───────── */
@@ -68,7 +68,9 @@ export default function PolicyFormModal({ isOpen, customer, policy, onClose, onS
   const [carSelection, setCarSelection] = useState('');
   const [newCarNumber, setNewCarNumber] = useState('');
   const [isSavingCar, setIsSavingCar] = useState(false);
-  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const backdropRef = useRef<HTMLDivElement>(null);
 
@@ -77,7 +79,8 @@ export default function PolicyFormModal({ isOpen, customer, policy, onClose, onS
     setForm(policy ? formFromPolicy(policy) : EMPTY_FORM);
     setCarSelection(policy?.carId || '');
     setNewCarNumber('');
-    setAttachmentFile(null);
+    setPendingFiles([]);
+    setDocuments([]);
   }, [isOpen, policy]);
 
   useEffect(() => {
@@ -86,6 +89,13 @@ export default function PolicyFormModal({ isOpen, customer, policy, onClose, onS
       .then(res => setCars(res.data))
       .catch(err => console.error('Failed to load vehicles', err));
   }, [isOpen, customer]);
+
+  useEffect(() => {
+    if (!isOpen || !policy?.id) return;
+    axios.get(`${API_BASE}/api/policies/${policy.id}/documents`)
+      .then(res => setDocuments(res.data))
+      .catch(err => console.error('Failed to load policy documents', err));
+  }, [isOpen, policy?.id]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && isOpen) onClose(); };
@@ -119,6 +129,19 @@ export default function PolicyFormModal({ isOpen, customer, policy, onClose, onS
   }
 
   const handleBackdropClick = (e: React.MouseEvent) => { if (e.target === backdropRef.current) onClose(); };
+
+  async function handleDeleteDocument(docId: string) {
+    if (!window.confirm('Delete this document?')) return;
+    setDeletingDocId(docId);
+    try {
+      await axios.delete(`${API_BASE}/api/policies/documents/${docId}`);
+      setDocuments((prev) => prev.filter((d) => d.id !== docId));
+    } catch (error) {
+      console.error('Failed to delete document', error);
+    } finally {
+      setDeletingDocId(null);
+    }
+  }
 
   async function handleSave() {
     if (!customer) return;
@@ -161,13 +184,17 @@ export default function PolicyFormModal({ isOpen, customer, policy, onClose, onS
         ? (await axios.put(`${API_BASE}/api/policies/${policy.id}`, payload)).data
         : (await axios.post(`${API_BASE}/api/policies`, payload)).data;
 
-      if (attachmentFile) {
+      const uploadedDocs: any[] = [];
+      for (const file of pendingFiles) {
         const formData = new FormData();
-        formData.append('file', attachmentFile);
-        const fileRes = await axios.post(`${API_BASE}/api/policies/${savedPolicy.id}/file`, formData, {
+        formData.append('file', file);
+        const docRes = await axios.post(`${API_BASE}/api/policies/${savedPolicy.id}/file`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
-        savedPolicy = fileRes.data;
+        uploadedDocs.push(docRes.data);
+      }
+      if (uploadedDocs.length > 0) {
+        savedPolicy = { ...savedPolicy, documents: [...documents, ...uploadedDocs] };
       }
 
       onSaved(savedPolicy);
@@ -280,19 +307,47 @@ export default function PolicyFormModal({ isOpen, customer, policy, onClose, onS
               </>
             )}
             <div className="flex flex-col gap-1.5 min-w-0 col-span-full">
-              <label className="text-xs font-medium text-text-muted">Attachment</label>
+              <label className="text-xs font-medium text-text-muted">Documents</label>
               <input
                 type="file"
                 className={inputClass}
-                onChange={(e) => setAttachmentFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) setPendingFiles((prev) => [...prev, f]);
+                  e.target.value = '';
+                }}
               />
-              {attachmentFile ? (
-                <span className="text-xs text-text-muted">Selected: {attachmentFile.name}</span>
-              ) : policy?.fileUrl ? (
-                <span className="text-xs text-text-muted">
-                  Current file: <a href={policy.fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700 underline">{policy.fileId || 'View file'}</a> (choose a new file to replace it)
-                </span>
-              ) : null}
+              <span className="text-[11px] text-text-muted">Each document is OCR'd and automatically sorted by type — add as many as needed.</span>
+              {(documents.length > 0 || pendingFiles.length > 0) && (
+                <div className="flex flex-col gap-1.5 mt-1">
+                  {documents.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between gap-2 px-3 py-2 text-xs bg-neutral-50 border border-border rounded-lg">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 font-medium whitespace-nowrap">{doc.documentType}</span>
+                        <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700 underline truncate">{doc.originalFilename || 'View file'}</a>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={deletingDocId === doc.id}
+                        className="shrink-0 text-text-muted hover:text-danger-600 bg-transparent border-none cursor-pointer p-1 rounded transition-colors hover:bg-danger-50 disabled:opacity-50 disabled:cursor-wait"
+                        title="Delete document"
+                        onClick={() => handleDeleteDocument(doc.id)}
+                      ><Trash2 size={14} /></button>
+                    </div>
+                  ))}
+                  {pendingFiles.map((f, i) => (
+                    <div key={i} className="flex items-center justify-between gap-2 px-3 py-2 text-xs bg-neutral-50 border border-border rounded-lg">
+                      <span className="truncate text-text-muted">{f.name} <span className="italic">(will be classified on save)</span></span>
+                      <button
+                        type="button"
+                        className="shrink-0 text-text-muted hover:text-danger-600 bg-transparent border-none cursor-pointer p-1 rounded transition-colors hover:bg-danger-50"
+                        title="Remove"
+                        onClick={() => setPendingFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                      ><X size={14} /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

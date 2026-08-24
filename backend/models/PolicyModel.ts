@@ -32,6 +32,7 @@ export const PolicyModel = {
       orderBy: { id: 'desc' },
       include: {
         customer: { select: { id: true, customerName: true, email: true } },
+        documents: true,
       },
     });
   },

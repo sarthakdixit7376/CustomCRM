@@ -57,6 +57,7 @@ model User {
   emailAccounts EmailAccount[]
   reminders     Reminder[]
   customerMessages CustomerMessage[]
+  uploadedDocuments PolicyDocument[]
 
   @@map("users")
 }
@@ -221,6 +222,7 @@ model Customer {
   vehicles  Vehicle[]
   reminders Reminder[]
   messages  CustomerMessage[]
+  policyDocuments PolicyDocument[]
 
   @@map("customers")
 }
@@ -302,14 +304,34 @@ model Policy {
   endDate          DateTime?
   type             String?
   status           String    @default("Active") // 'Active' or 'Cancelled'
-  fileId           String? // Cloudinary public_id of the attached policy document
-  fileUrl          String? // Cloudinary secure_url for previewing the attached document
+  fileId           String? // deprecated: legacy single-attachment Cloudinary public_id, superseded by PolicyDocument
+  fileUrl          String? // deprecated: legacy single-attachment Cloudinary secure_url, superseded by PolicyDocument
 
-  customer  Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  car       Vehicle?   @relation(fields: [carId], references: [id], onDelete: Cascade)
+  customer  Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  car       Vehicle?         @relation(fields: [carId], references: [id], onDelete: Cascade)
   reminders Reminder[]
+  documents PolicyDocument[]
 
   @@map("policies")
+}
+
+model PolicyDocument {
+  id               String   @id @default(uuid())
+  policyId         String? // optional: some document types (ID Card, Bank Details, ...) belong to the customer, not a specific policy
+  customerId       String
+  documentType     String // classified by Gemini, e.g. "ID Card", "Vehicle Test Certificate"
+  fileId           String // Cloudinary public_id
+  fileUrl          String // Cloudinary secure_url
+  originalFilename String?
+  ocrText          String? // full extracted text (future search/reference)
+  uploadedById     String
+  createdAt        DateTime @default(now())
+
+  policy     Policy?  @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  uploadedBy User     @relation(fields: [uploadedById], references: [id])
+
+  @@map("policy_documents")
 }
 
 model CustomerMessage {

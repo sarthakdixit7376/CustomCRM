@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronDown, X, Trash2, ChevronLeft, ChevronRight, FilePlus2, Mail, Home, Car, Plane, Pencil, ExternalLink, MessageSquare } from 'lucide-react';
+import { Search, ChevronDown, X, Trash2, ChevronLeft, ChevronRight, FilePlus2, Mail, Home, Car, Plane, Pencil, ExternalLink, MessageSquare, FolderOpen } from 'lucide-react';
 import DeleteCustomerModal from './DeleteCustomerModal';
 
 /* ───────── Types ───────── */
@@ -33,6 +33,7 @@ export interface CustomerListProps {
   onEditCustomer?: (customer: CustomerRow) => void;
   onAddPolicy?: (customer: CustomerRow) => void;
   onOpenMessages?: (customer: CustomerRow) => void;
+  onOpenDocuments?: (customer: CustomerRow) => void;
   onViewPolicies?: (customer: CustomerRow | null) => void;
   onAssignAgent?: (customerId: string, agentId: string) => Promise<void> | void;
   viewedCustomerId?: string | null;
@@ -91,7 +92,7 @@ const POLICY_TYPE_ICONS: Record<string, typeof Home> = {
 
 /* ───────── Component ───────── */
 export default function CustomerList({
-  customers, onDeleteCustomer, onSelectCustomer, onEditCustomer, onAddPolicy, onOpenMessages, onViewPolicies, onAssignAgent,
+  customers, onDeleteCustomer, onSelectCustomer, onEditCustomer, onAddPolicy, onOpenMessages, onOpenDocuments, onViewPolicies, onAssignAgent,
   viewedCustomerId = null, isAdmin = false, agents = [],
   searchQuery, onSearchQueryChange, searchField, onSearchFieldChange,
   selectedPolicyType: selectedType, onSelectedPolicyTypeChange: setSelectedType,
@@ -355,6 +356,11 @@ export default function CustomerList({
                           title="View / add messages for this customer"
                           onClick={() => onOpenMessages?.(row)}
                         ><MessageSquare size={16} /></button>
+                        <button
+                          className="text-text-muted hover:text-primary-600 bg-transparent border-none cursor-pointer transition-colors p-1.5 rounded hover:bg-primary-50"
+                          title="View / upload documents for this customer"
+                          onClick={() => onOpenDocuments?.(row)}
+                        ><FolderOpen size={16} /></button>
                         <button
                           className="text-text-muted hover:text-danger-600 bg-transparent border-none cursor-pointer transition-colors p-1.5 rounded hover:bg-danger-50"
                           title="Delete customer"

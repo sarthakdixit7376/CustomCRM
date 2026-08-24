@@ -102,12 +102,12 @@ export default function Reminders({ customerId }: RemindersProps) {
     }
   };
 
-  const handleMarkAsRead = async (id: string) => {
+  const handleToggleCompleted = async (id: string, isRead: boolean) => {
     try {
-      await axios.patch(`${API_BASE}/api/reminders/${id}/read`);
-      setReminders(prev => prev.map(r => r.id === id ? { ...r, isRead: true } : r));
+      await axios.patch(`${API_BASE}/api/reminders/${id}/read`, { isRead });
+      setReminders(prev => prev.map(r => r.id === id ? { ...r, isRead } : r));
     } catch (error) {
-      console.error('Error marking as read:', error);
+      console.error('Error updating completed status:', error);
     }
   };
 
@@ -234,7 +234,7 @@ export default function Reminders({ customerId }: RemindersProps) {
                       )}
                       {reminder.isRead && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-700">
-                          <CheckCircle2 size={12} /> Read
+                          <CheckCircle2 size={12} /> Completed
                         </span>
                       )}
                     </div>
@@ -254,16 +254,19 @@ export default function Reminders({ customerId }: RemindersProps) {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    {!reminder.isRead && (
-                      <button 
-                        onClick={() => handleMarkAsRead(reminder.id)}
-                        className="p-1.5 text-success-600 hover:bg-success-50 rounded-md transition-colors"
-                        title="Mark as read"
-                      >
-                        <CheckCircle2 size={16} />
-                      </button>
-                    )}
-                    <button 
+                    <label
+                      className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-text-muted select-none"
+                      title={reminder.isRead ? 'Mark as incomplete' : 'Mark as Completed'}
+                    >
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 accent-success-600 cursor-pointer"
+                        checked={reminder.isRead}
+                        onChange={(e) => handleToggleCompleted(reminder.id, e.target.checked)}
+                      />
+                      Mark as Completed
+                    </label>
+                    <button
                       onClick={() => handleEdit(reminder)}
                       className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-md transition-colors"
                       title="Edit"

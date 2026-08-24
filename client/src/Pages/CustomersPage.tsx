@@ -214,6 +214,11 @@ export default function CustomersPage() {
     setActiveTab('messages');
   };
 
+  const handleOpenDocuments = (customer: CustomerRow) => {
+    setViewedPolicyCustomer({ id: customer.id, customerName: customer.customerName });
+    setActiveTab('documents');
+  };
+
   const handleAssignAgent = async (customerId: string, agentId: string) => {
     try {
       const res = await axios.patch(`${API_BASE}/api/customers/${customerId}/agent`, { agentId });
@@ -236,12 +241,14 @@ export default function CustomersPage() {
           <h1 className="text-2xl font-bold text-text max-md:text-xl">Customers</h1>
           <p className="text-sm text-text-muted mt-1 max-md:text-xs">Manage your clients and their policies</p>
         </div>
-        <button
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary-600 text-white border-none cursor-pointer transition-all duration-150 hover:bg-primary-700 hover:-translate-y-px hover:shadow-card max-md:px-4 max-md:py-2"
-          onClick={() => setIsNewModalOpen(true)}
-        >
-          <Plus size={16} strokeWidth={2.5} /> New Customer
-        </button>
+        {activeTab === 'list' && (
+          <button
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary-600 text-white border-none cursor-pointer transition-all duration-150 hover:bg-primary-700 hover:-translate-y-px hover:shadow-card max-md:px-4 max-md:py-2"
+            onClick={() => setIsNewModalOpen(true)}
+          >
+            <Plus size={16} strokeWidth={2.5} /> New Customer
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -277,6 +284,7 @@ export default function CustomersPage() {
           onEditCustomer={handleEditCustomer}
           onAddPolicy={openAddPolicyModal}
           onOpenMessages={handleOpenMessages}
+          onOpenDocuments={handleOpenDocuments}
           onViewPolicies={handleViewPolicies}
           onAssignAgent={handleAssignAgent}
           viewedCustomerId={viewedPolicyCustomer?.id ?? null}
@@ -306,7 +314,12 @@ export default function CustomersPage() {
       )}
       {activeTab === 'quotes' && <Quotes />}
       {activeTab === 'claims' && <Claims />}
-      {activeTab === 'documents' && <Documents />}
+      {activeTab === 'documents' && (
+        <Documents
+          customerId={selectedCustomer?.id || viewedPolicyCustomer?.id}
+          customerName={selectedCustomer?.customerName || viewedPolicyCustomer?.customerName}
+        />
+      )}
       {activeTab === 'reminders' && <Reminders customerId={selectedCustomer?.id || viewedPolicyCustomer?.id} />}
       {activeTab === 'messages' && (
         <Messages

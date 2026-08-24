@@ -171,12 +171,12 @@ export const ReminderModel = {
   },
 
   /**
-   * Mark a single reminder as read.
+   * Mark a single reminder as completed (isRead: true) or incomplete (isRead: false).
    */
-  markAsRead: async (id: string) => {
+  markAsRead: async (id: string, isRead: boolean = true) => {
     return prisma.reminder.update({
       where: { id },
-      data: { isRead: true },
+      data: { isRead },
     });
   },
 

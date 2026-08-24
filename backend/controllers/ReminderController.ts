@@ -119,7 +119,7 @@ export const updateReminder = async (req: Request, res: Response): Promise<void>
 
 /**
  * PATCH /api/reminders/:id/read
- * Mark a single reminder as read.
+ * Mark a single reminder as completed, or back to incomplete (body: { isRead?: boolean }).
  */
 export const markReminderAsRead = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -133,7 +133,8 @@ export const markReminderAsRead = async (req: Request, res: Response): Promise<v
       return;
     }
 
-    const updated = await ReminderModel.markAsRead(req.params.id);
+    const isRead = req.body.isRead === undefined ? true : Boolean(req.body.isRead);
+    const updated = await ReminderModel.markAsRead(req.params.id, isRead);
     res.json(updated);
   } catch (error) {
     console.error('Error marking reminder as read:', error);
