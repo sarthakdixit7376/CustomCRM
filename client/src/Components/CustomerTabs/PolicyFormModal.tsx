@@ -310,10 +310,11 @@ export default function PolicyFormModal({ isOpen, customer, policy, onClose, onS
               <label className="text-xs font-medium text-text-muted">Documents</label>
               <input
                 type="file"
+                multiple
                 className={inputClass}
                 onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) setPendingFiles((prev) => [...prev, f]);
+                  const files = Array.from(e.target.files ?? []);
+                  if (files.length) setPendingFiles((prev) => [...prev, ...files]);
                   e.target.value = '';
                 }}
               />

@@ -8,7 +8,9 @@ export const DOCUMENT_TYPES = [
   "Driver's License",
   'Vehicle Registration',
   'Vehicle Test Certificate',
-  'Insurance Policy Document',
+  'Mandatory Policy Insurance',
+  'Third Party Policy Insurance',
+  'Third Party + Complimentary Policy Insurance',
   'Good Faith Form',
   'Health Fund Form',
   'Bank Details',
@@ -38,6 +40,11 @@ export async function classifyDocument(buffer: Buffer, mimeType: string): Promis
               text:
                 'This document is from an Israeli insurance CRM and is written in Hebrew. ' +
                 'Read it and classify what kind of document it is. ' +
+                'For car insurance policy documents specifically, use these rules based on the coverage terminology found in the document, ' +
+                'and return the category name exactly as given here — do not paraphrase or translate it:\n' +
+                '- Mentions "ביטוח חובה", "Bituach Chova", "compulsory", or "mandatory" insurance -> "Mandatory Policy Insurance"\n' +
+                '- Mentions "TP", "צד ג׳", or third-party coverage alone, with no comprehensive/complementary add-on -> "Third Party Policy Insurance"\n' +
+                '- Mentions "TP+Comp", "TP + Comp", "צד ג׳ + מקיף", or third-party coverage plus comprehensive/complementary add-on -> "Third Party + Complimentary Policy Insurance"\n' +
                 'Return the extracted text exactly as written in the document — do not translate it out of Hebrew.',
             },
           ],

@@ -22,9 +22,10 @@ interface DocumentsProps {
 export default function Documents({ customerId, customerName }: DocumentsProps) {
   const [documents, setDocuments] = useState<PolicyDocument[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploading = uploadProgress !== null;
 
   const fetchDocuments = async () => {
     if (!customerId) {
@@ -45,24 +46,25 @@ export default function Documents({ customerId, customerName }: DocumentsProps) 
 
   useEffect(() => { fetchDocuments(); }, [customerId]);
 
-  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
     e.target.value = '';
-    if (!file || !customerId) return;
+    if (files.length === 0 || !customerId) return;
 
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await axios.post(`${API_BASE}/api/customers/${customerId}/documents`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      setDocuments((prev) => [res.data, ...prev]);
-    } catch (error) {
-      console.error('Error uploading document:', error);
-    } finally {
-      setUploading(false);
+    for (let i = 0; i < files.length; i++) {
+      setUploadProgress({ current: i + 1, total: files.length });
+      try {
+        const formData = new FormData();
+        formData.append('file', files[i]);
+        const res = await axios.post(`${API_BASE}/api/customers/${customerId}/documents`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        setDocuments((prev) => [res.data, ...prev]);
+      } catch (error) {
+        console.error('Error uploading document:', error);
+      }
     }
+    setUploadProgress(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -102,7 +104,7 @@ export default function Documents({ customerId, customerName }: DocumentsProps) 
           </div>
         </div>
         <div>
-          <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelected} disabled={uploading} />
+          <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFilesSelected} disabled={uploading} />
           <button
             type="button"
             disabled={uploading}
@@ -110,7 +112,7 @@ export default function Documents({ customerId, customerName }: DocumentsProps) 
             className="px-5 py-2.5 text-sm font-semibold rounded-lg cursor-pointer transition-all bg-primary-600 text-white border-none hover:bg-primary-700 disabled:opacity-50 disabled:cursor-wait inline-flex items-center gap-2"
           >
             {uploading ? <RefreshCw size={16} className="animate-spin" /> : <Upload size={16} strokeWidth={2.5} />}
-            {uploading ? 'Classifying…' : 'Upload Document'}
+            {uploading ? `Classifying ${uploadProgress!.current}/${uploadProgress!.total}…` : 'Upload Documents'}
           </button>
         </div>
       </div>
