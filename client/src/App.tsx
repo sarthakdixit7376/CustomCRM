@@ -7,6 +7,7 @@ import AcceptInvite from './Pages/AcceptInvite';
 import CustomersPage from './Pages/CustomersPage';
 import LeadsPage from './Pages/LeadsPage';
 import UserManagement from './Pages/UserManagement';
+import AgentReportsPage from './Pages/AgentReportsPage';
 import EmailPage from './Pages/EmailPage';
 import PrivacyPolicy from './Pages/PrivacyPolicy';
 import Home from './Pages/Home';
@@ -30,6 +31,7 @@ function App() {
               <Route path="email" element={<EmailPage />} />
               <Route element={<ProtectedRoute allow={['ADMIN']} />}>
                 <Route path="admin/users" element={<UserManagement />} />
+                <Route path="admin/reports" element={<AgentReportsPage />} />
               </Route>
               <Route path="*" element={<Navigate to="/leads" replace />} />
             </Route>

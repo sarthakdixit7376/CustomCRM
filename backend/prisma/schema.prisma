@@ -200,6 +200,7 @@ model Customer {
   carBrand        String?
   agentId         String?
   agent           User?    @relation(fields: [agentId], references: [id])
+  convertedFromLead Boolean @default(false) // set true when created via Lead conversion (the source Lead row is deleted on conversion, so this is the only trail)
 
   // Carried over from the source Lead on conversion
   phoneNumber         String?

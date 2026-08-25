@@ -15,6 +15,15 @@ export const policyFileUpload = multer({
 /** Cloudinary public_id may not contain '/', so strip anything that isn't alphanumeric/dash/underscore. */
 const sanitizeForPublicId = (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, '');
 
+/** Extra context used to build a more descriptive filename for policy-scoped uploads. */
+interface PolicyNamingContext {
+  carNumber?: string | null;
+  startDate?: Date | null;
+  endDate?: Date | null;
+}
+
+const formatDateForFilename = (d: Date | null | undefined): string | null => (d ? d.toISOString().slice(0, 10) : null);
+
 /**
  * OCRs + classifies an uploaded file, files it into Cloudinary under
  * policies/{customerId}/{documentType}/, and records a PolicyDocument row.
@@ -24,7 +33,8 @@ const classifyAndUploadDocument = async (
   file: Express.Multer.File,
   customerId: string,
   policyId: string | null,
-  uploadedById: string
+  uploadedById: string,
+  policyContext?: PolicyNamingContext | null
 ) => {
   const { documentType, extractedText } = await classifyDocument(file.buffer, file.mimetype);
   const sanitizedType = sanitizeForPublicId(documentType.replace(/\s+/g, '-'));
@@ -36,10 +46,16 @@ const classifyAndUploadDocument = async (
   const uniqueSuffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   const publicId = `${sanitizedType}_${uniqueSuffix}`;
 
-  // Rename the file to its classified document type (keeping the original extension) so it reads
-  // clearly in both Cloudinary and the customer's document list, instead of the original upload name.
+  // Rename the file (keeping the original extension) so it reads clearly in both Cloudinary and the
+  // document list, instead of the original upload name. Uploads made from the Policy section are named
+  // "{insurance type} {car number} {start date} {end date}"; uploads made from the customer-level
+  // Documents tab (no policy context) just use the classified type.
   const extensionMatch = file.originalname.match(/\.[^.]+$/);
-  const renamedFilename = `${documentType}${extensionMatch ? extensionMatch[0] : ''}`;
+  const extension = extensionMatch ? extensionMatch[0] : '';
+  const nameParts = policyContext
+    ? [documentType, policyContext.carNumber, formatDateForFilename(policyContext.startDate), formatDateForFilename(policyContext.endDate)].filter(Boolean)
+    : [documentType];
+  const renamedFilename = `${nameParts.join(' ')}${extension}`;
 
   const { publicId: fileId, url: fileUrl } = await uploadPolicyFileToCloudinary(file.buffer, folder, publicId);
   return PolicyDocumentModel.createDocument({
@@ -170,7 +186,11 @@ export const uploadPolicyFile = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    const document = await classifyAndUploadDocument(req.file, existing.customerId, existing.id, req.user!.id);
+    const document = await classifyAndUploadDocument(req.file, existing.customerId, existing.id, req.user!.id, {
+      carNumber: existing.carNumber,
+      startDate: existing.startDate,
+      endDate: existing.endDate,
+    });
     res.status(201).json(document);
   } catch (error: any) {
     console.error('Error uploading policy file:', error);
