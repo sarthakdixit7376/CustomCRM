@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BarChart3, RefreshCw } from 'lucide-react';
 import { API_BASE } from '../config';
+import BarChart from '../Components/Charts/BarChart';
+import PieChart from '../Components/Charts/PieChart';
 
 interface ConversionReportRow {
   id: string;
@@ -26,6 +28,25 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]['key'];
 
+/** Validated categorical palette (see dataviz skill's palette.md) — fixed order, never cycled. */
+const CATEGORICAL = {
+  blue: '#2a78d6',
+  orange: '#eb6834',
+  aqua: '#1baf7a',
+  yellow: '#eda100',
+  magenta: '#e87ba4',
+  green: '#008300',
+  violet: '#4a3aa7',
+  red: '#e34948',
+};
+
+/** Reserved status palette — only for series that literally mean good/warning/neutral, never reused for plain identity. */
+const STATUS = {
+  good: '#0ca30c',
+  warning: '#fab219',
+  neutral: '#898781',
+};
+
 function rateBadgeClass(rate: number) {
   return rate >= 50 ? 'bg-success-50 text-success-600' : rate > 0 ? 'bg-amber-50 text-amber-600' : 'bg-neutral-100 text-text-muted';
 }
@@ -41,6 +62,15 @@ function AgentNameCell({ name }: { name: string }) {
   );
 }
 
+function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="border border-border rounded-lg bg-surface shadow-card p-5 animate-fade-in-up">
+      <h3 className="text-sm font-semibold text-text mb-4">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
 function ConversionRateTable() {
   const [rows, setRows] = useState<ConversionReportRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,8 +82,33 @@ function ConversionRateTable() {
       .finally(() => setLoading(false));
   }, []);
 
+  const agentColorOrder = [CATEGORICAL.blue, CATEGORICAL.orange, CATEGORICAL.aqua, CATEGORICAL.yellow, CATEGORICAL.magenta, CATEGORICAL.green, CATEGORICAL.violet, CATEGORICAL.red];
+  const totalConverted = rows.reduce((sum, r) => sum + r.convertedCount, 0);
+
   return (
     <>
+      {!loading && rows.length > 0 && (
+        <div className="grid grid-cols-2 gap-5 mb-6 max-lg:grid-cols-1">
+          <ChartCard title="Assigned Leads vs. Converted, per Agent">
+            <BarChart
+              categories={rows.map((r) => r.name)}
+              series={[
+                { key: 'leadCount', label: 'Assigned Leads', color: CATEGORICAL.blue },
+                { key: 'convertedCount', label: 'Converted', color: CATEGORICAL.orange },
+              ]}
+              data={rows}
+            />
+          </ChartCard>
+          <ChartCard title="Share of Conversions by Agent">
+            <PieChart
+              data={rows.map((r, i) => ({ key: r.id, label: r.name, value: r.convertedCount, color: agentColorOrder[i % agentColorOrder.length] }))}
+              centerLabel="Total Converted"
+              centerValue={totalConverted}
+            />
+          </ChartCard>
+        </div>
+      )}
+
       <div className="border border-border rounded-lg overflow-x-auto bg-surface shadow-card animate-fade-in-up">
         <table className="w-full border-collapse table-auto">
           <thead className="sticky top-0 z-[2]">
@@ -103,8 +158,42 @@ function RenewalTable() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Aggregate pipeline stage totals across all agents, as mutually-exclusive buckets.
+  const totalNeedsRenewal = rows.reduce((sum, r) => sum + r.needsRenewalCount, 0);
+  const totalContacted = rows.reduce((sum, r) => sum + r.contactedCount, 0);
+  const totalRenewed = rows.reduce((sum, r) => sum + r.renewedCount, 0);
+  const notContacted = Math.max(0, totalNeedsRenewal - totalContacted);
+  const inProgress = Math.max(0, totalContacted - totalRenewed);
+
   return (
     <>
+      {!loading && rows.length > 0 && (
+        <div className="grid grid-cols-2 gap-5 mb-6 max-lg:grid-cols-1">
+          <ChartCard title="Renewal Pipeline, per Agent">
+            <BarChart
+              categories={rows.map((r) => r.name)}
+              series={[
+                { key: 'needsRenewalCount', label: 'Needs Renewal', color: CATEGORICAL.blue },
+                { key: 'contactedCount', label: 'Contacted', color: CATEGORICAL.orange },
+                { key: 'renewedCount', label: 'Renewed', color: CATEGORICAL.aqua },
+              ]}
+              data={rows}
+            />
+          </ChartCard>
+          <ChartCard title="Renewal Pipeline Breakdown (all agents)">
+            <PieChart
+              data={[
+                { key: 'not_contacted', label: 'Not Contacted', value: notContacted, color: STATUS.neutral },
+                { key: 'in_progress', label: 'Contacted (in progress)', value: inProgress, color: STATUS.warning },
+                { key: 'renewed', label: 'Renewed & Closed', value: totalRenewed, color: STATUS.good },
+              ]}
+              centerLabel="Needs Renewal"
+              centerValue={totalNeedsRenewal}
+            />
+          </ChartCard>
+        </div>
+      )}
+
       <div className="border border-border rounded-lg overflow-x-auto bg-surface shadow-card animate-fade-in-up">
         <table className="w-full border-collapse table-auto">
           <thead className="sticky top-0 z-[2]">
