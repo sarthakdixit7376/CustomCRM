@@ -10,8 +10,8 @@ interface BarChartProps {
   /** One label per category (e.g. agent names) — the x-axis. */
   categories: string[];
   series: BarSeries[];
-  /** One entry per category, keyed by series.key. */
-  data: Record<string, number>[];
+  /** One entry per category, keyed by series.key (extra non-numeric fields, e.g. an id/name, are fine). */
+  data: any[];
   height?: number;
 }
 
@@ -35,7 +35,7 @@ export default function BarChart({ categories, series, data, height = 260 }: Bar
   const plotWidth = width - marginLeft - marginRight;
   const plotHeight = height - marginTop - marginBottom;
 
-  const rawMax = Math.max(1, ...data.flatMap((row) => series.map((s) => row[s.key] ?? 0)));
+  const rawMax = Math.max(1, ...data.flatMap((row) => series.map((s) => Number(row[s.key]) || 0)));
   const maxValue = niceMax(rawMax);
   const tickCount = 4;
   const ticks = Array.from({ length: tickCount + 1 }, (_, i) => Math.round((maxValue / tickCount) * i));
@@ -87,7 +87,7 @@ export default function BarChart({ categories, series, data, height = 260 }: Bar
               return (
                 <g key={cat}>
                   {series.map((s, sIndex) => {
-                    const value = data[catIndex]?.[s.key] ?? 0;
+                    const value = Number(data[catIndex]?.[s.key]) || 0;
                     const barHeight = Math.max(0, plotHeight - yScale(value));
                     const x = groupX + sIndex * (barWidth + barGap);
                     const isHovered = hovered?.catIndex === catIndex && hovered?.seriesKey === s.key;
