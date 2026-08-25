@@ -15,6 +15,7 @@ interface FormState {
   glassAndMoreSelected: boolean;
   complementaryVipSelected: boolean;
   amountPaid: string;
+  renewalStatus: string;
 }
 
 export interface PolicyFormModalProps {
@@ -30,6 +31,7 @@ const EMPTY_FORM: FormState = {
   numberOfPolicies: '', agentName: '', insuranceCompany: '',
   startDate: '', endDate: '', policyType: 'Car', type: 'Mandatory',
   glassAndMoreSelected: false, complementaryVipSelected: false, amountPaid: '',
+  renewalStatus: 'NOT_CONTACTED',
 };
 
 /** Sentinel value for the Car <select> that switches it into "type a new plate number" mode. */
@@ -38,6 +40,12 @@ const NEW_CAR_VALUE = '__new__';
 const POLICY_TYPE_OPTIONS = ['Car', 'Home', 'Travel'];
 const TYPE_OPTIONS = ['Mandatory', 'Comprehensive', '3rd Party'];
 const INSURANCE_COMPANIES = ['Phoenix', 'Clal', 'Migdal'];
+export const RENEWAL_STATUS_OPTIONS = [
+  { value: 'NOT_CONTACTED', label: 'Not Contacted' },
+  { value: 'CONTACTED', label: 'Contacted' },
+  { value: 'RENEWED', label: 'Renewed & Closed' },
+  { value: 'DECLINED', label: 'Declined' },
+];
 
 /** Converts an ISO date(time) string to the yyyy-MM-dd shape <input type="date"> expects. */
 const toDateInputValue = (value: any): string => {
@@ -58,6 +66,7 @@ const formFromPolicy = (policy: any): FormState => ({
   glassAndMoreSelected: Boolean(policy.glassAndMoreSelected),
   complementaryVipSelected: Boolean(policy.complementaryVipSelected),
   amountPaid: policy.amountPaid != null ? String(policy.amountPaid) : '',
+  renewalStatus: policy.renewalStatus || 'NOT_CONTACTED',
 });
 
 /* ───────── Component ───────── */
@@ -178,6 +187,7 @@ export default function PolicyFormModal({ isOpen, customer, policy, onClose, onS
         glassAndMoreSelected: form.glassAndMoreSelected,
         complementaryVipSelected: form.complementaryVipSelected,
         amountPaid: form.amountPaid,
+        renewalStatus: form.renewalStatus,
       };
 
       let savedPolicy = isEditMode
@@ -256,6 +266,12 @@ export default function PolicyFormModal({ isOpen, customer, policy, onClose, onS
             <div className="flex flex-col gap-1.5 min-w-0">
               <label className="text-xs font-medium text-text-muted">End Date</label>
               <input type="date" className={inputClass} value={form.endDate} onChange={(e) => handleChange('endDate', e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1.5 min-w-0">
+              <label className="text-xs font-medium text-text-muted">Renewal Status</label>
+              <select className={selectClass} style={selectBg} value={form.renewalStatus} onChange={(e) => handleChange('renewalStatus', e.target.value)}>
+                {RENEWAL_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
             </div>
             <div className="flex flex-col gap-1.5 min-w-0">
               <label className="text-xs font-medium text-text-muted">Policy Type</label>

@@ -99,6 +99,7 @@ export const PolicyModel = {
         endDate: toDate(policyData.endDate),
         type: policyData.type,
         status: policyData.status,
+        renewalStatus: policyData.renewalStatus,
       },
       include: {
         customer: { select: { id: true, customerName: true, email: true } },

@@ -42,6 +42,13 @@ enum InterestedIn {
   OTHER
 }
 
+enum RenewalStatus {
+  NOT_CONTACTED
+  CONTACTED
+  RENEWED
+  DECLINED
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -305,6 +312,7 @@ model Policy {
   endDate          DateTime?
   type             String?
   status           String    @default("Active") // 'Active' or 'Cancelled'
+  renewalStatus    RenewalStatus @default(NOT_CONTACTED)
   fileId           String? // deprecated: legacy single-attachment Cloudinary public_id, superseded by PolicyDocument
   fileUrl          String? // deprecated: legacy single-attachment Cloudinary secure_url, superseded by PolicyDocument
 

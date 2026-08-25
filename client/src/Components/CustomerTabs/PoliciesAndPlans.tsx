@@ -33,6 +33,20 @@ const POLICY_TYPE_ICONS: Record<string, typeof Home> = {
   Travel: Plane,
 };
 
+const RENEWAL_STATUS_LABELS: Record<string, string> = {
+  NOT_CONTACTED: 'Not Contacted',
+  CONTACTED: 'Contacted',
+  RENEWED: 'Renewed & Closed',
+  DECLINED: 'Declined',
+};
+
+const RENEWAL_STATUS_BADGE_CLASS: Record<string, string> = {
+  NOT_CONTACTED: 'bg-neutral-100 text-text-muted',
+  CONTACTED: 'bg-amber-50 text-amber-600',
+  RENEWED: 'bg-success-50 text-success-600',
+  DECLINED: 'bg-danger-50 text-danger-600',
+};
+
 /** Colors Start/End Date cells by whether the policy's end date has passed. */
 const expiryColorClass = (endDate: string): string => {
   if (!endDate || endDate === '-') return 'text-text';
@@ -132,7 +146,7 @@ export default function PoliciesAndPlans({ policies, filterCustomer, onAddPolicy
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                {['#', 'Customer', 'Agent Name', 'Insurance Company', 'Policy Type', 'Type', 'Car Number', 'Start Date', 'End Date', 'Manufacturer', 'Glass and More', 'Complementary + VIP', 'Policy Number', 'Amount Paid', 'Documents', ''].map((h) => (
+                {['#', 'Customer', 'Agent Name', 'Insurance Company', 'Policy Type', 'Type', 'Car Number', 'Start Date', 'End Date', 'Renewal Status', 'Manufacturer', 'Glass and More', 'Complementary + VIP', 'Policy Number', 'Amount Paid', 'Documents', ''].map((h) => (
                   <th key={h} className="text-left px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider bg-neutral-50 border-b border-border whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -158,6 +172,11 @@ export default function PoliciesAndPlans({ policies, filterCustomer, onAddPolicy
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.carNumber || '—'}</td>
                   <td className={`px-4 py-3 font-medium border-b border-border whitespace-nowrap ${expiryColorClass(p.endDate)}`}>{formatDate(p.startDate)}</td>
                   <td className={`px-4 py-3 font-medium border-b border-border whitespace-nowrap ${expiryColorClass(p.endDate)}`}>{formatDate(p.endDate)}</td>
+                  <td className="px-4 py-3 border-b border-border whitespace-nowrap">
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${RENEWAL_STATUS_BADGE_CLASS[p.renewalStatus] || RENEWAL_STATUS_BADGE_CLASS.NOT_CONTACTED}`}>
+                      {RENEWAL_STATUS_LABELS[p.renewalStatus] || 'Not Contacted'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.manufacturer || '—'}</td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.glassAndMoreSelected ? 'Yes' : '—'}</td>
                   <td className="px-4 py-3 text-text border-b border-border whitespace-nowrap">{p.complementaryVipSelected ? 'Yes' : '—'}</td>
