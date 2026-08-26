@@ -193,7 +193,7 @@ export const convertLeadToCustomer = async (req: Request, res: Response): Promis
       return;
     }
 
-    const { policyNumber, policyType, type, insuranceCompany, startDate, endDate } = req.body;
+    const { policyNumber, policyType, type, insuranceCompany, startDate, endDate, gender, agentName, purchaseType, email } = req.body;
     if (!policyNumber || !policyType || !insuranceCompany || !startDate || !endDate) {
       res.status(400).json({ error: 'policyNumber, policyType, insuranceCompany, startDate and endDate are required' });
       return;
@@ -210,6 +210,10 @@ export const convertLeadToCustomer = async (req: Request, res: Response): Promis
       insuranceCompany,
       startDate,
       endDate,
+      gender,
+      agentName,
+      purchaseType,
+      email,
     });
 
     res.status(201).json(customer);
