@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { FolderOpen, Upload, Trash2, RefreshCw, UserCircle2 } from 'lucide-react';
+import { FolderOpen, Upload, Trash2, RefreshCw, UserCircle2, AlertTriangle } from 'lucide-react';
 import { API_BASE } from '../../config';
 
 interface PolicyDocument {
@@ -12,11 +12,90 @@ interface PolicyDocument {
   createdBy?: { id: string; name: string };
   uploadedBy?: { id: string; name: string };
   policy?: { id: string; policyNumber: string; policyType: string } | null;
+  extractedInsuranceCompany?: string | null;
+  extractedPolicyNumber?: string | null;
+  extractedPremiumAmount?: number | null;
+  extractedPremiumBasis?: 'ANNUAL' | 'MONTHLY' | null;
+  extractedStartDate?: string | null;
+  extractedEndDate?: string | null;
+  extractedClaimFreeYears?: number | null;
+  extractionSnippets?: Record<string, string> | null;
+  extractionFlagged?: boolean;
 }
 
 interface DocumentsProps {
   customerId?: string | null;
   customerName?: string | null;
+}
+
+const formatDate = (value?: string | null): string | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+/** Whether a document carries any field worth showing in the extraction panel. */
+const hasExtraction = (doc: PolicyDocument): boolean =>
+  Boolean(
+    doc.extractedInsuranceCompany ||
+    doc.extractedPolicyNumber ||
+    doc.extractedPremiumAmount != null ||
+    doc.extractedStartDate ||
+    doc.extractedEndDate ||
+    doc.extractedClaimFreeYears != null
+  );
+
+/** One extracted field, shown with its verbatim source snippet as a hover title for quick verification. */
+function ExtractedField({ label, value, snippet }: { label: string; value: string; snippet?: string }) {
+  return (
+    <span
+      className="px-2 py-1 rounded bg-surface-muted border border-border text-xs text-text whitespace-nowrap"
+      title={snippet ? `From document: "${snippet}"` : undefined}
+    >
+      <span className="text-text-muted">{label}:</span> <span className="font-medium">{value}</span>
+    </span>
+  );
+}
+
+/**
+ * Shows what Gemini pulled off a policy document. Read-only — these are proposals for
+ * the agent to copy into the policy record by hand, never applied automatically, since
+ * a misread field could otherwise silently corrupt a saved price.
+ */
+function ExtractionPanel({ doc }: { doc: PolicyDocument }) {
+  const snippets = doc.extractionSnippets ?? {};
+  const startDate = formatDate(doc.extractedStartDate);
+  const endDate = formatDate(doc.extractedEndDate);
+
+  return (
+    <div className="mt-2 pt-2 border-t border-border flex flex-wrap items-center gap-1.5">
+      {doc.extractionFlagged && (
+        <span className="px-2 py-1 rounded bg-danger-50 border border-danger-200 text-danger-700 text-xs font-medium inline-flex items-center gap-1">
+          <AlertTriangle size={12} /> Needs review — premium looked out of range
+        </span>
+      )}
+      {doc.extractedInsuranceCompany && (
+        <ExtractedField label="Insurer" value={doc.extractedInsuranceCompany} snippet={snippets.insuranceCompany} />
+      )}
+      {doc.extractedPolicyNumber && (
+        <ExtractedField label="Policy #" value={doc.extractedPolicyNumber} snippet={snippets.policyNumber} />
+      )}
+      {doc.extractedPremiumAmount != null && (
+        <ExtractedField
+          label="Premium"
+          value={`₪${doc.extractedPremiumAmount.toLocaleString()}/yr${doc.extractedPremiumBasis === 'MONTHLY' ? ' (stated monthly)' : ''}`}
+          snippet={snippets.premiumAmount}
+        />
+      )}
+      {(startDate || endDate) && (
+        <ExtractedField label="Term" value={`${startDate ?? '?'} → ${endDate ?? '?'}`} snippet={snippets.startDate || snippets.endDate} />
+      )}
+      {doc.extractedClaimFreeYears != null && (
+        <ExtractedField label="Claim-free" value={`${doc.extractedClaimFreeYears} yrs`} snippet={snippets.claimFreeYears} />
+      )}
+    </div>
+  );
 }
 
 export default function Documents({ customerId, customerName }: DocumentsProps) {
@@ -123,28 +202,31 @@ export default function Documents({ customerId, customerName }: DocumentsProps) 
       ) : documents.length > 0 ? (
         <div className="flex flex-col gap-3">
           {documents.map((doc) => (
-            <div key={doc.id} className="bg-surface border border-border rounded-xl p-4 shadow-card flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="shrink-0 px-2.5 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-medium whitespace-nowrap">{doc.documentType}</span>
-                <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700 underline truncate text-sm">
-                  {doc.originalFilename || 'View file'}
-                </a>
-                {doc.policy && (
-                  <span className="shrink-0 text-xs text-text-muted whitespace-nowrap">Policy {doc.policy.policyNumber}</span>
-                )}
+            <div key={doc.id} className="bg-surface border border-border rounded-xl p-4 shadow-card">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="shrink-0 px-2.5 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-medium whitespace-nowrap">{doc.documentType}</span>
+                  <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700 underline truncate text-sm">
+                    {doc.originalFilename || 'View file'}
+                  </a>
+                  {doc.policy && (
+                    <span className="shrink-0 text-xs text-text-muted whitespace-nowrap">Policy {doc.policy.policyNumber}</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-xs text-text-muted whitespace-nowrap">
+                    {(doc.uploadedBy?.name || doc.createdBy?.name) ? `${doc.uploadedBy?.name || doc.createdBy?.name} · ` : ''}
+                    {new Date(doc.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                  <button
+                    disabled={deletingId === doc.id}
+                    className="bg-transparent border-none p-1.5 cursor-pointer text-text-muted rounded transition-all hover:text-danger-600 hover:bg-danger-50 disabled:opacity-50 disabled:cursor-wait"
+                    title="Delete document"
+                    onClick={() => handleDelete(doc.id)}
+                  ><Trash2 size={14} /></button>
+                </div>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <span className="text-xs text-text-muted whitespace-nowrap">
-                  {(doc.uploadedBy?.name || doc.createdBy?.name) ? `${doc.uploadedBy?.name || doc.createdBy?.name} · ` : ''}
-                  {new Date(doc.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                </span>
-                <button
-                  disabled={deletingId === doc.id}
-                  className="bg-transparent border-none p-1.5 cursor-pointer text-text-muted rounded transition-all hover:text-danger-600 hover:bg-danger-50 disabled:opacity-50 disabled:cursor-wait"
-                  title="Delete document"
-                  onClick={() => handleDelete(doc.id)}
-                ><Trash2 size={14} /></button>
-              </div>
+              {hasExtraction(doc) && <ExtractionPanel doc={doc} />}
             </div>
           ))}
         </div>

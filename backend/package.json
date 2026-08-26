@@ -7,7 +7,8 @@
     "build": "npx prisma generate && npx prisma db push",
     "start": "tsx server.ts",
     "dev": "tsx watch server.ts",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "backfill:extraction": "tsx scripts/backfillPolicyExtraction.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

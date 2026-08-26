@@ -36,7 +36,7 @@ const classifyAndUploadDocument = async (
   uploadedById: string,
   policyContext?: PolicyNamingContext | null
 ) => {
-  const { documentType, extractedText } = await classifyDocument(file.buffer, file.mimetype);
+  const { documentType, extractedText, extraction } = await classifyDocument(file.buffer, file.mimetype);
   const sanitizedType = sanitizeForPublicId(documentType.replace(/\s+/g, '-'));
 
   // Folder is named after the customer's internal ID (stable even if the customer has no national ID set)
@@ -67,6 +67,7 @@ const classifyAndUploadDocument = async (
     originalFilename: renamedFilename,
     ocrText: extractedText,
     uploadedById,
+    extraction,
   });
 };
 
