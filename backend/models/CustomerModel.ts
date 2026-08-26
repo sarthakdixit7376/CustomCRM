@@ -69,6 +69,7 @@ export const CustomerModel = {
         data: {
           ...customerData,
           agentId,
+          creditedAgentId: agentId,
           contacts: contacts ? { create: contacts } : undefined,
         },
       });

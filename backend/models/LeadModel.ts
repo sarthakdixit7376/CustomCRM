@@ -166,6 +166,7 @@ export const LeadModel = {
           idNumber: lead.idNumber,
           dateOfBirth: lead.dateOfBirth,
           agentId: lead.agentId,
+          creditedAgentId: lead.agentId,
           convertedFromLead: true,
 
           phoneNumber:          lead.phoneNumber,

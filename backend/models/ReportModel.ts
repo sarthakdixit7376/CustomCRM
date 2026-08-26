@@ -21,6 +21,9 @@ export const ReportModel = {
    * and the resulting conversion rate. When a date range is given, "leads" and
    * "converted" are scoped to that range (by Lead.createdAt / Customer.createdAt);
    * otherwise every currently-open lead and every past conversion counts.
+   * "Converted" is credited to whichever agent actually converted the lead
+   * (Customer.creditedAgentId, set once at conversion time) — reassigning the
+   * customer to a different agent afterward never moves this credit.
    */
   getAgentPerformance: async (range?: DateRange) => {
     const users = await prisma.user.findMany({
@@ -35,7 +38,7 @@ export const ReportModel = {
         const [customerCount, leadCount, convertedCount] = await Promise.all([
           prisma.customer.count({ where: { agentId: user.id } }),
           prisma.lead.count({ where: { agentId: user.id, ...(createdAt ? { createdAt } : {}) } }),
-          prisma.customer.count({ where: { agentId: user.id, convertedFromLead: true, ...(createdAt ? { createdAt } : {}) } }),
+          prisma.customer.count({ where: { creditedAgentId: user.id, convertedFromLead: true, ...(createdAt ? { createdAt } : {}) } }),
         ]);
 
         const conversionRate = leadCount > 0 ? (convertedCount / leadCount) * 100 : 0;
@@ -60,9 +63,11 @@ export const ReportModel = {
    * flow status has moved past NEW. "Quotes Sent" counts a lead once it has ever passed through
    * the Quote Sent stage (via the flow-status history log), even if it has since moved further
    * along — but like Converted, this undercounts leads that already converted before this report
-   * existed, since a lead's history log is deleted along with it on conversion. A date range scopes
-   * Assigned/Contacted/Not Contacted/Quotes Sent/Converted to that range; the follow-up backlog
-   * (Due/Overdue) is always the agent's live, current backlog, unaffected by the date range.
+   * existed, since a lead's history log is deleted along with it on conversion. "Converted" is
+   * credited to whichever agent actually converted the lead (Customer.creditedAgentId), so
+   * reassigning the resulting customer to a different agent afterward never moves this credit.
+   * A date range scopes Assigned/Contacted/Not Contacted/Quotes Sent/Converted to that range; the
+   * follow-up backlog (Due/Overdue) is always the agent's live, current backlog, unaffected by it.
    */
   getLeadPerformance: async (range?: DateRange) => {
     const users = await prisma.user.findMany({
@@ -92,7 +97,7 @@ export const ReportModel = {
             select: { leadId: true },
             distinct: ['leadId'],
           }),
-          prisma.customer.count({ where: { agentId: user.id, convertedFromLead: true, ...(createdAt ? { createdAt } : {}) } }),
+          prisma.customer.count({ where: { creditedAgentId: user.id, convertedFromLead: true, ...(createdAt ? { createdAt } : {}) } }),
           prisma.reminder.count({ where: { customer: { agentId: user.id }, isRead: false, remindAt: { gte: now } } }),
           prisma.reminder.count({ where: { customer: { agentId: user.id }, isRead: false, remindAt: { lt: now } } }),
         ]);
@@ -171,7 +176,10 @@ export const ReportModel = {
    * sale, not a loss). Cost price is the value captured on the customer at conversion time
    * (see LeadModel.convertToCustomer), not the current Cost Price setting — so editing the
    * setting later only affects future conversions, never past ones. A date range scopes this
-   * to customers converted within that range (by Customer.createdAt).
+   * to customers converted within that range (by Customer.createdAt). Profit is credited to
+   * whichever agent originally brought in the customer (Customer.creditedAgentId, set once at
+   * creation/conversion time) — reassigning the customer to a different agent afterward never
+   * moves this credit.
    */
   getProfitPerformance: async (range?: DateRange) => {
     const createdAt = dateFilter(range);
@@ -180,7 +188,7 @@ export const ReportModel = {
       prisma.customer.findMany({
         where: createdAt ? { createdAt } : undefined,
         select: {
-          agentId: true,
+          creditedAgentId: true,
           mandatoryPrice: true,
           thirdPartyPrice: true,
           complimentaryPrice: true,
@@ -192,7 +200,7 @@ export const ReportModel = {
     ]);
 
     return users.map((user) => {
-      const myCustomers = customers.filter((c) => c.agentId === user.id);
+      const myCustomers = customers.filter((c) => c.creditedAgentId === user.id);
 
       const sumProfit = (rows: { selling: number | null; cost: number | null }[]): number =>
         rows.reduce((sum: number, { selling, cost }) => (selling == null ? sum : sum + (selling - (cost ?? 0))), 0);

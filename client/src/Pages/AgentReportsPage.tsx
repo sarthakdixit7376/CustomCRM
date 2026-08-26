@@ -155,6 +155,7 @@ function LeadPerformanceTable({ startDate, endDate }: DateRangeProps) {
         "Contacted" means the lead's status has moved past New. "Quotes Sent" counts a lead once it has ever reached the Quote Sent stage, even if it has since progressed further —
         like Converted, this only counts leads still open or converted after this report was introduced, since a lead's history is removed along with it on conversion.
         "Follow-ups Due" and "Overdue Follow-ups" reflect each agent's current customer reminder backlog and are not affected by the date filter below.
+        "Converted" is credited to whichever agent actually converted the lead — reassigning the resulting customer to a different agent afterward doesn't move this credit.
       </p>
     </>
   );
@@ -268,6 +269,7 @@ function ConversionRateTable({ startDate, endDate }: DateRangeProps) {
       </div>
       <p className="text-xs text-text-muted mt-3">
         "Leads" counts each agent's currently open leads. "Converted to Customers" only counts conversions made after this report was introduced — leads are removed once converted, so earlier conversions aren't retroactively counted.
+        This credit stays with whichever agent actually converted the lead, even if the resulting customer is later reassigned to a different agent.
       </p>
     </>
   );
@@ -417,6 +419,7 @@ function ProfitTable({ startDate, endDate }: DateRangeProps) {
         Profit is calculated as selling price minus cost price, per insurance category, summed across each agent's customers
         {(startDate || endDate) ? ' converted within the selected date range' : ''}.
         Each customer's cost price is locked in at the time they were converted from a lead, so editing Cost Price only affects future conversions — past profit figures never change.
+        Profit is credited to whichever agent originally brought in the customer — reassigning them to a different agent afterward doesn't move this credit.
       </p>
     </>
   );
