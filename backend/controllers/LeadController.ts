@@ -105,6 +105,48 @@ export const updateLeadAgent = async (req: Request, res: Response): Promise<void
   }
 };
 
+/**
+ * Auto-prices a lead's hova / tzad-gimel / makif columns from its driver and vehicle
+ * data. Returns the saved lead plus the rating breakdown so the Quotes tab can show
+ * the agent which factors drove each number.
+ */
+export const autoQuoteLead = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const existing = await LeadModel.getLeadById(req.params.id);
+    if (!existing) {
+      res.status(404).json({ error: 'Lead not found' });
+      return;
+    }
+    if (req.user!.role !== 'ADMIN' && existing.agentId !== req.user!.id) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const claimFreeYearsRaw = req.body?.claimFreeYears;
+    const claimFreeYears = claimFreeYearsRaw != null && claimFreeYearsRaw !== ''
+      ? Number(claimFreeYearsRaw)
+      : undefined;
+    if (claimFreeYears != null && Number.isNaN(claimFreeYears)) {
+      res.status(400).json({ error: 'claimFreeYears must be a number' });
+      return;
+    }
+
+    const result = await LeadModel.autoQuoteLead(req.params.id, {
+      onlyMissing: Boolean(req.body?.onlyMissing),
+      claimFreeYears,
+    });
+    if (!result) {
+      res.status(404).json({ error: 'Lead not found' });
+      return;
+    }
+
+    res.json({ lead: result.lead, quote: result.quote });
+  } catch (error) {
+    console.error('Error auto-quoting lead:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 export const updateLeadQuote = async (req: Request, res: Response): Promise<void> => {
   try {
     const existing = await LeadModel.getLeadById(req.params.id);

@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer';
+import { ADDONS } from './israeliInsuranceRates.js';
 
 interface PricingLead {
   age?: string | null;
@@ -10,8 +11,9 @@ interface PricingLead {
   complementaryVipSelected?: boolean | null;
 }
 
-const GLASS_AND_MORE_PRICE = 320;
-const COMPLEMENTARY_VIP_PRICE = 550;
+// Single source of truth for add-on pricing, shared with the quote engine.
+const GLASS_AND_MORE_PRICE = ADDONS.glassAndMore;
+const COMPLEMENTARY_VIP_PRICE = ADDONS.complementaryVip;
 
 const formatCurrency = (amount: number): string => `₪${amount.toLocaleString('en-US')}`;
 

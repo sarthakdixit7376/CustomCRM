@@ -1,5 +1,5 @@
 import prisma from '../config/prisma.js';
-import { generateInsuranceQuote } from '../services/pricingEngine.js';
+import { generateInsuranceQuote, buildQuoteProfile, type QuoteFloors } from '../services/pricingEngine.js';
 import { fetchVehicleGovData, mapVehicleGovFields } from '../services/vehicleGovService.js';
 
 /** Helper: coerce a value to string or undefined */
@@ -7,6 +7,47 @@ const str = (v: any): string | undefined =>
   v != null && v !== '' ? String(v) : undefined;
 
 export const LeadModel = {
+  /**
+   * Cost prices act as a floor on generated quotes so the engine can never price a
+   * lead below what the policy costs the agency. Missing categories mean no floor.
+   */
+  getQuoteFloors: async (): Promise<QuoteFloors> => {
+    const rows = await prisma.insuranceCostPrice.findMany();
+    const byCategory = Object.fromEntries(rows.map((r) => [r.category, r.costPrice]));
+    return {
+      mandatory: byCategory.MANDATORY,
+      thirdParty: byCategory.THIRD_PARTY,
+      complimentary: byCategory.COMPLIMENTARY,
+    };
+  },
+
+  /**
+   * Re-prices an existing lead from its current driver + vehicle data and saves the
+   * result. `onlyMissing` fills blank price columns without touching prices an agent
+   * has already negotiated by hand.
+   */
+  autoQuoteLead: async (id: string, options: { onlyMissing?: boolean; claimFreeYears?: number } = {}) => {
+    const lead = await prisma.lead.findUnique({ where: { id } });
+    if (!lead) return null;
+
+    const profile = buildQuoteProfile({
+      ...lead,
+      claimFreeYears: options.claimFreeYears ?? undefined,
+    });
+    const quote = generateInsuranceQuote(profile, await LeadModel.getQuoteFloors());
+
+    const data: Record<string, number> = {};
+    if (!options.onlyMissing || lead.mandatoryPrice == null) data.mandatoryPrice = quote.mandatoryPrice;
+    if (!options.onlyMissing || lead.thirdPartyPrice == null) data.thirdPartyPrice = quote.thirdPartyPrice;
+    if (!options.onlyMissing || lead.complimentaryPrice == null) data.complimentaryPrice = quote.complimentaryPrice;
+
+    const updated = Object.keys(data).length > 0
+      ? await prisma.lead.update({ where: { id }, data })
+      : lead;
+
+    return { lead: updated, quote };
+  },
+
   getLeads: async (agentId?: string) => {
     return prisma.lead.findMany({
       where: agentId ? { agentId } : undefined,
@@ -37,7 +78,7 @@ export const LeadModel = {
     const v = vehicleNumber ? await fetchVehicleGovData(vehicleNumber) : {};
     const d = { ...raw, ...v };
 
-    const quote = await generateInsuranceQuote(Number(d.age));
+    const quote = generateInsuranceQuote(buildQuoteProfile(d), await LeadModel.getQuoteFloors());
 
     const leadNationalIdRaw = d.lead_national_id ?? d.leadNationalId;
     const leadNationalId = leadNationalIdRaw != null && leadNationalIdRaw !== '' ? Number(leadNationalIdRaw) : undefined;
