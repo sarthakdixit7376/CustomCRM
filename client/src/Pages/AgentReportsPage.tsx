@@ -21,9 +21,19 @@ interface RenewalReportRow {
   renewedCount: number;
 }
 
+interface ProfitReportRow {
+  id: string;
+  name: string;
+  mandatoryProfit: number;
+  thirdPartyProfit: number;
+  complimentaryProfit: number;
+  totalProfit: number;
+}
+
 const TABS = [
   { key: 'conversion', label: 'Conversion Rate' },
   { key: 'renewal', label: 'Renewal' },
+  { key: 'profit', label: 'Profit' },
 ] as const;
 
 type TabKey = (typeof TABS)[number]['key'];
@@ -229,6 +239,68 @@ function RenewalTable() {
   );
 }
 
+function formatCurrency(amount: number) {
+  const sign = amount < 0 ? '-' : '';
+  return `${sign}₪${Math.abs(amount).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+}
+
+function ProfitAmountCell({ amount }: { amount: number }) {
+  return (
+    <span className={amount < 0 ? 'text-danger-600' : amount > 0 ? 'text-success-600' : 'text-text-muted'}>
+      {formatCurrency(amount)}
+    </span>
+  );
+}
+
+function ProfitTable() {
+  const [rows, setRows] = useState<ProfitReportRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios.get(`${API_BASE}/api/reports/profit`)
+      .then((res) => setRows(res.data))
+      .catch((err) => console.error('Failed to load profit report', err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <>
+      <div className="border border-border rounded-lg overflow-x-auto bg-surface shadow-card animate-fade-in-up">
+        <table className="w-full border-collapse table-auto">
+          <thead className="sticky top-0 z-[2]">
+            <tr>
+              {['Agent Name', 'Mandatory Profit', 'Third Party Profit', 'Complimentary Profit', 'Total Profit'].map((h) => (
+                <th key={h} className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={5} className="text-center py-10 text-text-muted"><RefreshCw size={18} className="animate-spin inline-block" /></td></tr>
+            ) : rows.length > 0 ? (
+              rows.map((row) => (
+                <tr key={row.id} className="transition-colors hover:bg-neutral-50">
+                  <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap"><AgentNameCell name={row.name} /></td>
+                  <td className="px-4 py-3 text-sm font-medium border-b border-border whitespace-nowrap"><ProfitAmountCell amount={row.mandatoryProfit} /></td>
+                  <td className="px-4 py-3 text-sm font-medium border-b border-border whitespace-nowrap"><ProfitAmountCell amount={row.thirdPartyProfit} /></td>
+                  <td className="px-4 py-3 text-sm font-medium border-b border-border whitespace-nowrap"><ProfitAmountCell amount={row.complimentaryProfit} /></td>
+                  <td className="px-4 py-3 text-sm font-semibold border-b border-border whitespace-nowrap"><ProfitAmountCell amount={row.totalProfit} /></td>
+                </tr>
+              ))
+            ) : (
+              <tr><td colSpan={5} className="text-center py-10 text-text-muted">No agents found</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-text-muted mt-3">
+        Profit is calculated as selling price minus cost price, per insurance category, summed across each agent's customers.
+        Each customer's cost price is locked in at the time they were converted from a lead, so editing Cost Price only affects future conversions — past profit figures never change.
+      </p>
+    </>
+  );
+}
+
 export default function AgentReportsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('conversion');
 
@@ -261,6 +333,7 @@ export default function AgentReportsPage() {
       <div className="flex-1 overflow-auto px-8 pb-8 max-md:px-4 max-md:pb-4 mt-4">
         {activeTab === 'conversion' && <ConversionRateTable />}
         {activeTab === 'renewal' && <RenewalTable />}
+        {activeTab === 'profit' && <ProfitTable />}
       </div>
     </div>
   );

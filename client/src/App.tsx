@@ -8,6 +8,7 @@ import CustomersPage from './Pages/CustomersPage';
 import LeadsPage from './Pages/LeadsPage';
 import UserManagement from './Pages/UserManagement';
 import AgentReportsPage from './Pages/AgentReportsPage';
+import CostPricePage from './Pages/CostPricePage';
 import EmailPage from './Pages/EmailPage';
 import PrivacyPolicy from './Pages/PrivacyPolicy';
 import Home from './Pages/Home';
@@ -32,6 +33,7 @@ function App() {
               <Route element={<ProtectedRoute allow={['ADMIN']} />}>
                 <Route path="admin/users" element={<UserManagement />} />
                 <Route path="admin/reports" element={<AgentReportsPage />} />
+                <Route path="admin/cost-price" element={<CostPricePage />} />
               </Route>
               <Route path="*" element={<Navigate to="/leads" replace />} />
             </Route>

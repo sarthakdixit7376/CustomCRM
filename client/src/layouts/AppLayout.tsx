@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { ClipboardList, Users, Settings, LogOut, Menu, X, Mail, BarChart3 } from 'lucide-react';
+import { ClipboardList, Users, Settings, LogOut, Menu, X, Mail, BarChart3, DollarSign } from 'lucide-react';
 import logo from '../assets/Logo.png';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from '../Components/NotificationBell';
@@ -25,6 +25,7 @@ export default function AppLayout() {
   if (user?.role === 'ADMIN') {
     navItems.push({ label: 'Users', path: '/admin/users', icon: Settings });
     navItems.push({ label: 'Reports', path: '/admin/reports', icon: BarChart3 });
+    navItems.push({ label: 'Cost Price', path: '/admin/cost-price', icon: DollarSign });
   }
 
   return (

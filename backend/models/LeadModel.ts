@@ -154,6 +154,11 @@ export const LeadModel = {
       const lead = await tx.lead.findUnique({ where: { id: leadId } });
       if (!lead) throw new Error('Lead not found');
 
+      const costPrices = await tx.insuranceCostPrice.findMany();
+      const costByCategory: Record<string, number> = Object.fromEntries(
+        costPrices.map((c) => [c.category, c.costPrice])
+      );
+
       const customer = await tx.customer.create({
         data: {
           customerNationalId: lead.leadNationalId,
@@ -172,6 +177,12 @@ export const LeadModel = {
           mandatoryPrice:       lead.mandatoryPrice,
           thirdPartyPrice:      lead.thirdPartyPrice,
           complimentaryPrice:   lead.complimentaryPrice,
+
+          // Snapshot today's cost price per category so later edits to the global cost
+          // price setting never retroactively change this customer's recorded profit.
+          mandatoryCostPrice:     lead.mandatoryPrice != null ? costByCategory.MANDATORY ?? 0 : null,
+          thirdPartyCostPrice:    lead.thirdPartyPrice != null ? costByCategory.THIRD_PARTY ?? 0 : null,
+          complimentaryCostPrice: lead.complimentaryPrice != null ? costByCategory.COMPLIMENTARY ?? 0 : null,
 
           glassAndMoreSelected:     lead.glassAndMoreSelected,
           complementaryVipSelected: lead.complementaryVipSelected,

@@ -221,6 +221,12 @@ model Customer {
   thirdPartyPrice     Float?
   complimentaryPrice  Float?
 
+  // Cost price snapshot, captured from InsuranceCostPrice at conversion time so that later
+  // edits to the global cost price never change this customer's already-recorded profit.
+  mandatoryCostPrice     Float?
+  thirdPartyCostPrice    Float?
+  complimentaryCostPrice Float?
+
   // Optional fixed-price add-on services
   glassAndMoreSelected     Boolean @default(false)
   complementaryVipSelected Boolean @default(false)
@@ -373,4 +379,13 @@ model Reminder {
   createdBy   User      @relation(fields: [createdById], references: [id])
 
   @@map("reminders")
+}
+
+model InsuranceCostPrice {
+  id        String   @id @default(uuid())
+  category  String   @unique // 'MANDATORY' | 'THIRD_PARTY' | 'COMPLIMENTARY'
+  costPrice Float    @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@map("insurance_cost_prices")
 }

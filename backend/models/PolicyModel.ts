@@ -31,7 +31,14 @@ export const PolicyModel = {
       where: agentId ? { customer: { agentId } } : undefined,
       orderBy: { id: 'desc' },
       include: {
-        customer: { select: { id: true, customerName: true, email: true } },
+        customer: {
+          select: {
+            id: true,
+            customerName: true,
+            email: true,
+            agent: { select: { id: true, name: true } },
+          },
+        },
         documents: true,
       },
     });
@@ -102,7 +109,14 @@ export const PolicyModel = {
         renewalStatus: policyData.renewalStatus,
       },
       include: {
-        customer: { select: { id: true, customerName: true, email: true } },
+        customer: {
+          select: {
+            id: true,
+            customerName: true,
+            email: true,
+            agent: { select: { id: true, name: true } },
+          },
+        },
       },
     });
   },

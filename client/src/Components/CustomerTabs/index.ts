@@ -14,3 +14,4 @@ export { default as LeadQuotes } from './LeadQuotes';
 export { default as Reminders } from './Reminders';
 export { default as Messages } from './Messages';
 export { default as Contacts } from './Contacts';
+export { default as Renewals } from './Renewals';

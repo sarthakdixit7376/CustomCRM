@@ -79,4 +79,49 @@ export const ReportModel = {
       })
     );
   },
+
+  /**
+   * Per-agent profit: (customer's selling price − that customer's snapshotted cost price)
+   * summed per agent, per insurance category (Mandatory / Third Party / Complimentary).
+   * A customer with no price set for a category contributes nothing to that category (no
+   * sale, not a loss). Cost price is the value captured on the customer at conversion time
+   * (see LeadModel.convertToCustomer), not the current Cost Price setting — so editing the
+   * setting later only affects future conversions, never past ones.
+   */
+  getProfitPerformance: async () => {
+    const [users, customers] = await Promise.all([
+      prisma.user.findMany({ where: { isActive: true }, orderBy: { name: 'asc' } }),
+      prisma.customer.findMany({
+        select: {
+          agentId: true,
+          mandatoryPrice: true,
+          thirdPartyPrice: true,
+          complimentaryPrice: true,
+          mandatoryCostPrice: true,
+          thirdPartyCostPrice: true,
+          complimentaryCostPrice: true,
+        },
+      }),
+    ]);
+
+    return users.map((user) => {
+      const myCustomers = customers.filter((c) => c.agentId === user.id);
+
+      const sumProfit = (rows: { selling: number | null; cost: number | null }[]): number =>
+        rows.reduce((sum: number, { selling, cost }) => (selling == null ? sum : sum + (selling - (cost ?? 0))), 0);
+
+      const mandatoryProfit = sumProfit(myCustomers.map((c) => ({ selling: c.mandatoryPrice, cost: c.mandatoryCostPrice })));
+      const thirdPartyProfit = sumProfit(myCustomers.map((c) => ({ selling: c.thirdPartyPrice, cost: c.thirdPartyCostPrice })));
+      const complimentaryProfit = sumProfit(myCustomers.map((c) => ({ selling: c.complimentaryPrice, cost: c.complimentaryCostPrice })));
+
+      return {
+        id: user.id,
+        name: user.name,
+        mandatoryProfit,
+        thirdPartyProfit,
+        complimentaryProfit,
+        totalProfit: mandatoryProfit + thirdPartyProfit + complimentaryProfit,
+      };
+    });
+  },
 };

@@ -10,6 +10,7 @@ import emailRoutes from './emailRoutes.js';
 import reminderRoutes from './reminderRoutes.js';
 import customerMessageRoutes from './customerMessageRoutes.js';
 import reportRoutes from './reportRoutes.js';
+import costPriceRoutes from './costPriceRoutes.js';
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use('/email', emailRoutes);
 router.use('/reminders', reminderRoutes);
 router.use('/messages', customerMessageRoutes);
 router.use('/reports', reportRoutes);
+router.use('/cost-prices', costPriceRoutes);
 
 export default router;

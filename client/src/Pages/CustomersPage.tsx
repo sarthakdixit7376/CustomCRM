@@ -12,6 +12,7 @@ import {
   Reminders,
   Messages,
   Contacts,
+  Renewals,
 } from '../Components/CustomerTabs';
 import NewCustomerModal from '../Components/CustomerTabs/NewCustomerModal';
 import type { CustomerFormData } from '../Components/CustomerTabs/NewCustomerModal';
@@ -27,6 +28,7 @@ const TABS = [
   { key: 'card', label: 'Customer Card', badge: null },
   { key: 'service', label: 'Ongoing Service', badge: null },
   { key: 'policies', label: 'Policies & Plans', badge: null },
+  { key: 'renewals', label: 'Renewal', badge: null },
   { key: 'quotes', label: 'Quotes', badge: null },
   { key: 'claims', label: 'Claims', badge: null },
   { key: 'documents', label: 'Documents', badge: null },
@@ -310,6 +312,13 @@ export default function CustomersPage() {
           onAddPolicy={openAddPolicyModal}
           onEditPolicy={handleEditPolicy}
           onDeletePolicy={handleDeletePolicy}
+        />
+      )}
+      {activeTab === 'renewals' && (
+        <Renewals
+          policies={policies}
+          onSelectCustomer={(customer) => handleSelectCustomer(customer as CustomerRow)}
+          onPolicyUpdated={handlePolicySaved}
         />
       )}
       {activeTab === 'quotes' && <Quotes />}
