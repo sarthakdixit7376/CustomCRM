@@ -4,6 +4,12 @@ import { BarChart3, RefreshCw } from 'lucide-react';
 import { API_BASE } from '../config';
 import BarChart from '../Components/Charts/BarChart';
 import PieChart from '../Components/Charts/PieChart';
+import DateRangeFilter, { toDateInputValue } from '../Components/DateRangeFilter';
+
+interface DateRangeProps {
+  startDate?: string;
+  endDate?: string;
+}
 
 interface ConversionReportRow {
   id: string;
@@ -81,16 +87,53 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
-function ConversionRateTable() {
+type DatePreset = 'all' | 'day' | 'month' | 'year' | 'custom';
+
+const DATE_PRESETS: { key: DatePreset; label: string }[] = [
+  { key: 'all', label: 'All Time' },
+  { key: 'day', label: 'Today' },
+  { key: 'month', label: 'This Month' },
+  { key: 'year', label: 'This Year' },
+  { key: 'custom', label: 'Custom Range' },
+];
+
+/** Computes the effective {startDate, endDate} for a preset, given custom from/to when applicable. */
+function computeDateRange(preset: DatePreset, customFrom: string, customTo: string): DateRangeProps {
+  const now = new Date();
+  switch (preset) {
+    case 'day': {
+      const today = toDateInputValue(now);
+      return { startDate: today, endDate: today };
+    }
+    case 'month': {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return { startDate: toDateInputValue(start), endDate: toDateInputValue(end) };
+    }
+    case 'year': {
+      const start = new Date(now.getFullYear(), 0, 1);
+      const end = new Date(now.getFullYear(), 11, 31);
+      return { startDate: toDateInputValue(start), endDate: toDateInputValue(end) };
+    }
+    case 'custom':
+      return { startDate: customFrom || undefined, endDate: customTo || undefined };
+    case 'all':
+    default:
+      return {};
+  }
+}
+
+function ConversionRateTable({ startDate, endDate }: DateRangeProps) {
   const [rows, setRows] = useState<ConversionReportRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get(`${API_BASE}/api/reports/agents`)
+    setLoading(true);
+    axios.get(`${API_BASE}/api/reports/agents`, { params: { startDate, endDate } })
       .then((res) => setRows(res.data))
       .catch((err) => console.error('Failed to load conversion report', err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [startDate, endDate]);
 
   const agentColorOrder = [CATEGORICAL.blue, CATEGORICAL.orange, CATEGORICAL.aqua, CATEGORICAL.yellow, CATEGORICAL.magenta, CATEGORICAL.green, CATEGORICAL.violet, CATEGORICAL.red];
   const totalConverted = rows.reduce((sum, r) => sum + r.convertedCount, 0);
@@ -157,16 +200,17 @@ function ConversionRateTable() {
   );
 }
 
-function RenewalTable() {
+function RenewalTable({ startDate, endDate }: DateRangeProps) {
   const [rows, setRows] = useState<RenewalReportRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get(`${API_BASE}/api/reports/renewals`)
+    setLoading(true);
+    axios.get(`${API_BASE}/api/reports/renewals`, { params: { startDate, endDate } })
       .then((res) => setRows(res.data))
       .catch((err) => console.error('Failed to load renewal report', err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [startDate, endDate]);
 
   // Aggregate pipeline stage totals across all agents, as mutually-exclusive buckets.
   const totalNeedsRenewal = rows.reduce((sum, r) => sum + r.needsRenewalCount, 0);
@@ -232,8 +276,10 @@ function RenewalTable() {
         </table>
       </div>
       <p className="text-xs text-text-muted mt-3">
-        A customer counts as "needing renewal" if any of their policies expires within 30 days or has already expired.
-        "Customers Contacted" and "Renewed &amp; Closed" are set per-policy from the Renewal Status field in the Policy edit form.
+        {startDate || endDate
+          ? 'A customer counts as "needing renewal" if any of their policies has an end date within the selected range.'
+          : 'A customer counts as "needing renewal" if any of their policies expires within 30 days or has already expired.'}
+        {' '}"Customers Contacted" and "Renewed &amp; Closed" are set per-policy from the Renewal Status field in the Policy edit form.
       </p>
     </>
   );
@@ -252,16 +298,17 @@ function ProfitAmountCell({ amount }: { amount: number }) {
   );
 }
 
-function ProfitTable() {
+function ProfitTable({ startDate, endDate }: DateRangeProps) {
   const [rows, setRows] = useState<ProfitReportRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get(`${API_BASE}/api/reports/profit`)
+    setLoading(true);
+    axios.get(`${API_BASE}/api/reports/profit`, { params: { startDate, endDate } })
       .then((res) => setRows(res.data))
       .catch((err) => console.error('Failed to load profit report', err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [startDate, endDate]);
 
   return (
     <>
@@ -294,7 +341,8 @@ function ProfitTable() {
         </table>
       </div>
       <p className="text-xs text-text-muted mt-3">
-        Profit is calculated as selling price minus cost price, per insurance category, summed across each agent's customers.
+        Profit is calculated as selling price minus cost price, per insurance category, summed across each agent's customers
+        {(startDate || endDate) ? ' converted within the selected date range' : ''}.
         Each customer's cost price is locked in at the time they were converted from a lead, so editing Cost Price only affects future conversions — past profit figures never change.
       </p>
     </>
@@ -303,6 +351,11 @@ function ProfitTable() {
 
 export default function AgentReportsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('conversion');
+  const [datePreset, setDatePreset] = useState<DatePreset>('all');
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+
+  const { startDate, endDate } = computeDateRange(datePreset, customFrom, customTo);
 
   return (
     <div className="font-sans bg-surface-muted text-text h-full flex flex-col">
@@ -330,10 +383,20 @@ export default function AgentReportsPage() {
         ))}
       </nav>
 
+      <DateRangeFilter
+        presets={DATE_PRESETS}
+        activePreset={datePreset}
+        onPresetChange={(preset) => setDatePreset(preset as DatePreset)}
+        customFrom={customFrom}
+        customTo={customTo}
+        onCustomFromChange={setCustomFrom}
+        onCustomToChange={setCustomTo}
+      />
+
       <div className="flex-1 overflow-auto px-8 pb-8 max-md:px-4 max-md:pb-4 mt-4">
-        {activeTab === 'conversion' && <ConversionRateTable />}
-        {activeTab === 'renewal' && <RenewalTable />}
-        {activeTab === 'profit' && <ProfitTable />}
+        {activeTab === 'conversion' && <ConversionRateTable startDate={startDate} endDate={endDate} />}
+        {activeTab === 'renewal' && <RenewalTable startDate={startDate} endDate={endDate} />}
+        {activeTab === 'profit' && <ProfitTable startDate={startDate} endDate={endDate} />}
       </div>
     </div>
   );
