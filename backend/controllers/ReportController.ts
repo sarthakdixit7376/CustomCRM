@@ -12,6 +12,21 @@ const parseDateRange = (req: Request): DateRange | undefined => {
 };
 
 /**
+ * GET /api/reports/lead-performance
+ * Admin-only. Per-agent lead pipeline: assigned/contacted/not-contacted/quoted/converted leads,
+ * plus the agent's current customer follow-up backlog (due/overdue).
+ */
+export const getLeadPerformanceReport = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const report = await ReportModel.getLeadPerformance(parseDateRange(req));
+    res.json(report);
+  } catch (error) {
+    console.error('Error getting lead performance report:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+/**
  * GET /api/reports/agents
  * Admin-only. Per-agent customer/lead counts and lead-to-customer conversion rate.
  */

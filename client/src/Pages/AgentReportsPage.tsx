@@ -11,6 +11,18 @@ interface DateRangeProps {
   endDate?: string;
 }
 
+interface LeadPerformanceRow {
+  id: string;
+  name: string;
+  leadsAssigned: number;
+  leadsContacted: number;
+  leadsNotContacted: number;
+  quotesSent: number;
+  dueFollowUps: number;
+  overdueFollowUps: number;
+  convertedCount: number;
+}
+
 interface ConversionReportRow {
   id: string;
   name: string;
@@ -37,6 +49,7 @@ interface ProfitReportRow {
 }
 
 const TABS = [
+  { key: 'performance', label: 'Agent Performance' },
   { key: 'conversion', label: 'Conversion Rate' },
   { key: 'renewal', label: 'Renewal' },
   { key: 'profit', label: 'Profit' },
@@ -84,6 +97,66 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
       <h3 className="text-sm font-semibold text-text mb-4">{title}</h3>
       {children}
     </div>
+  );
+}
+
+function LeadPerformanceTable({ startDate, endDate }: DateRangeProps) {
+  const [rows, setRows] = useState<LeadPerformanceRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    axios.get(`${API_BASE}/api/reports/lead-performance`, { params: { startDate, endDate } })
+      .then((res) => setRows(res.data))
+      .catch((err) => console.error('Failed to load lead performance report', err))
+      .finally(() => setLoading(false));
+  }, [startDate, endDate]);
+
+  const headers = ['Agent Name', 'Leads Assigned', 'Leads Contacted', 'Leads Not Contacted', 'Quotes Sent', 'Follow-ups Due', 'Overdue Follow-ups', 'Converted'];
+
+  return (
+    <>
+      <div className="border border-border rounded-lg overflow-x-auto bg-surface shadow-card animate-fade-in-up">
+        <table className="w-full border-collapse table-auto">
+          <thead className="sticky top-0 z-[2]">
+            <tr>
+              {headers.map((h) => (
+                <th key={h} className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={headers.length} className="text-center py-10 text-text-muted"><RefreshCw size={18} className="animate-spin inline-block" /></td></tr>
+            ) : rows.length > 0 ? (
+              rows.map((row) => (
+                <tr key={row.id} className="transition-colors hover:bg-neutral-50">
+                  <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap"><AgentNameCell name={row.name} /></td>
+                  <td className="px-4 py-3 text-sm text-text font-medium border-b border-border whitespace-nowrap">{row.leadsAssigned}</td>
+                  <td className="px-4 py-3 text-sm text-text font-medium border-b border-border whitespace-nowrap">{row.leadsContacted}</td>
+                  <td className="px-4 py-3 text-sm text-text font-medium border-b border-border whitespace-nowrap">{row.leadsNotContacted}</td>
+                  <td className="px-4 py-3 text-sm text-text font-medium border-b border-border whitespace-nowrap">{row.quotesSent}</td>
+                  <td className="px-4 py-3 text-sm font-medium border-b border-border whitespace-nowrap">
+                    <span className={row.dueFollowUps > 0 ? 'text-amber-600' : 'text-text-muted'}>{row.dueFollowUps}</span>
+                  </td>
+                  <td className="px-4 py-3 text-sm font-medium border-b border-border whitespace-nowrap">
+                    <span className={row.overdueFollowUps > 0 ? 'text-danger-600' : 'text-text-muted'}>{row.overdueFollowUps}</span>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-success-600 font-semibold border-b border-border whitespace-nowrap">{row.convertedCount}</td>
+                </tr>
+              ))
+            ) : (
+              <tr><td colSpan={headers.length} className="text-center py-10 text-text-muted">No agents found</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-text-muted mt-3">
+        "Contacted" means the lead's status has moved past New. "Quotes Sent" counts a lead once it has ever reached the Quote Sent stage, even if it has since progressed further —
+        like Converted, this only counts leads still open or converted after this report was introduced, since a lead's history is removed along with it on conversion.
+        "Follow-ups Due" and "Overdue Follow-ups" reflect each agent's current customer reminder backlog and are not affected by the date filter below.
+      </p>
+    </>
   );
 }
 
@@ -350,7 +423,7 @@ function ProfitTable({ startDate, endDate }: DateRangeProps) {
 }
 
 export default function AgentReportsPage() {
-  const [activeTab, setActiveTab] = useState<TabKey>('conversion');
+  const [activeTab, setActiveTab] = useState<TabKey>('performance');
   const [datePreset, setDatePreset] = useState<DatePreset>('all');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
@@ -394,6 +467,7 @@ export default function AgentReportsPage() {
       />
 
       <div className="flex-1 overflow-auto px-8 pb-8 max-md:px-4 max-md:pb-4 mt-4">
+        {activeTab === 'performance' && <LeadPerformanceTable startDate={startDate} endDate={endDate} />}
         {activeTab === 'conversion' && <ConversionRateTable startDate={startDate} endDate={endDate} />}
         {activeTab === 'renewal' && <RenewalTable startDate={startDate} endDate={endDate} />}
         {activeTab === 'profit' && <ProfitTable startDate={startDate} endDate={endDate} />}

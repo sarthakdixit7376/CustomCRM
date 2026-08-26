@@ -55,6 +55,64 @@ export const ReportModel = {
   },
 
   /**
+   * Per-agent lead-pipeline performance: assigned/contacted/not-contacted/quoted/converted lead
+   * counts, plus the agent's current customer follow-up backlog. "Contacted" means the lead's
+   * flow status has moved past NEW. "Quotes Sent" counts a lead once it has ever passed through
+   * the Quote Sent stage (via the flow-status history log), even if it has since moved further
+   * along — but like Converted, this undercounts leads that already converted before this report
+   * existed, since a lead's history log is deleted along with it on conversion. A date range scopes
+   * Assigned/Contacted/Not Contacted/Quotes Sent/Converted to that range; the follow-up backlog
+   * (Due/Overdue) is always the agent's live, current backlog, unaffected by the date range.
+   */
+  getLeadPerformance: async (range?: DateRange) => {
+    const users = await prisma.user.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' },
+    });
+
+    const createdAt = dateFilter(range);
+    const now = new Date();
+
+    return Promise.all(
+      users.map(async (user) => {
+        const [
+          leadsAssigned,
+          leadsContacted,
+          leadsNotContacted,
+          quotesSentLeads,
+          convertedCount,
+          dueFollowUps,
+          overdueFollowUps,
+        ] = await Promise.all([
+          prisma.lead.count({ where: { agentId: user.id, ...(createdAt ? { createdAt } : {}) } }),
+          prisma.lead.count({ where: { agentId: user.id, leadFlowStatus: { not: 'NEW' }, ...(createdAt ? { createdAt } : {}) } }),
+          prisma.lead.count({ where: { agentId: user.id, leadFlowStatus: 'NEW', ...(createdAt ? { createdAt } : {}) } }),
+          prisma.leadFlowStatusLog.findMany({
+            where: { toStatus: 'QUOTE_SENT', lead: { agentId: user.id }, ...(createdAt ? { createdAt } : {}) },
+            select: { leadId: true },
+            distinct: ['leadId'],
+          }),
+          prisma.customer.count({ where: { agentId: user.id, convertedFromLead: true, ...(createdAt ? { createdAt } : {}) } }),
+          prisma.reminder.count({ where: { customer: { agentId: user.id }, isRead: false, remindAt: { gte: now } } }),
+          prisma.reminder.count({ where: { customer: { agentId: user.id }, isRead: false, remindAt: { lt: now } } }),
+        ]);
+
+        return {
+          id: user.id,
+          name: user.name,
+          leadsAssigned,
+          leadsContacted,
+          leadsNotContacted,
+          quotesSent: quotesSentLeads.length,
+          dueFollowUps,
+          overdueFollowUps,
+          convertedCount,
+        };
+      })
+    );
+  },
+
+  /**
    * Per-agent renewal outreach: how many of an agent's customers hold a policy due for renewal,
    * how many of those have been contacted at least once, and how many have been closed out as
    * renewed. Counts distinct customers, since one customer can hold several policies that are

@@ -109,6 +109,7 @@ export default function Lead({ onSelectLead }: LeadProps) {
   const [selectedLead, setSelectedLead] = useState<LeadRow | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [assigningId, setAssigningId] = useState<string | null>(null);
+  const [markingContactedId, setMarkingContactedId] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -148,6 +149,26 @@ export default function Lead({ onSelectLead }: LeadProps) {
       }
     } finally {
       setAssigningId(null);
+    }
+  };
+
+  const handleMarkContacted = async (leadId: string, e: React.SyntheticEvent) => {
+    e.stopPropagation();
+    const previous = leads.find(l => l.id === leadId);
+
+    setMarkingContactedId(leadId);
+    setLeads(prevLeads => prevLeads.map(l => (l.id === leadId ? { ...l, leadFlowStatus: 'CONTACTED' } : l)));
+
+    try {
+      await axios.patch(`${API_BASE}/api/leads/${leadId}/lead-flow-status`, { leadFlowStatus: 'CONTACTED' });
+    } catch (error) {
+      console.error('Failed to mark lead as contacted:', error);
+      alert('Failed to mark lead as contacted');
+      if (previous) {
+        setLeads(prevLeads => prevLeads.map(l => (l.id === leadId ? previous : l)));
+      }
+    } finally {
+      setMarkingContactedId(null);
     }
   };
 
@@ -397,11 +418,22 @@ export default function Lead({ onSelectLead }: LeadProps) {
                   </td>
                   {/* Flow Status */}
                   <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
-                    {flowVal ? (
-                      <span className={`px-2 py-1 rounded-md text-xs font-medium border ${flowColorClass}`}>
-                        {flowVal.replace(/_/g, ' ')}
-                      </span>
-                    ) : '—'}
+                    <div className="flex items-center gap-2">
+                      {flowVal ? (
+                        <span className={`px-2 py-1 rounded-md text-xs font-medium border ${flowColorClass}`}>
+                          {flowVal.replace(/_/g, ' ')}
+                        </span>
+                      ) : '—'}
+                      {flowVal === 'NEW' && (
+                        <button
+                          onClick={(e) => handleMarkContacted(row.id, e)}
+                          disabled={markingContactedId === row.id}
+                          className="text-xs font-medium text-primary-600 hover:text-primary-700 hover:underline disabled:opacity-50 disabled:cursor-wait bg-transparent border-none cursor-pointer p-0"
+                        >
+                          Mark as Contacted
+                        </button>
+                      )}
+                    </div>
                   </td>
                   {/* Interested In */}
                   <td className="px-4 py-3 text-sm text-text-muted border-b border-border whitespace-nowrap">
