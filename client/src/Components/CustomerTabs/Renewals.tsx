@@ -23,6 +23,23 @@ const RENEWAL_STATUS_BADGE_CLASS: Record<string, string> = {
   DECLINED: 'bg-danger-50 text-danger-600',
 };
 
+const formatDate = (value: string): string => {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString();
+};
+
+/** Colors the End Date cell by whether it has already passed. */
+const expiryColorClass = (endDate: string): string => {
+  if (!endDate) return 'text-text';
+  const end = new Date(endDate);
+  if (Number.isNaN(end.getTime())) return 'text-text';
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return end < today ? 'text-danger-600' : 'text-success-600';
+};
+
 export default function Renewals({ policies, onSelectCustomer, onPolicyUpdated }: RenewalsProps) {
   const [savingId, setSavingId] = useState<string | null>(null);
 
@@ -44,7 +61,7 @@ export default function Renewals({ policies, onSelectCustomer, onPolicyUpdated }
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr>
-              {['Customer Name', 'Policy', 'Status', 'Assigned Agent'].map((h) => (
+              {['Customer Name', 'Policy', 'End Date', 'Status', 'Assigned Agent'].map((h) => (
                 <th key={h} className="text-left px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider bg-neutral-50 border-b border-border whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -70,6 +87,9 @@ export default function Renewals({ policies, onSelectCustomer, onPolicyUpdated }
                     <span className="text-xs text-text-muted">{p.policyNumber ? `Policy #${p.policyNumber}` : ''}</span>
                   </div>
                 </td>
+                <td className={`px-4 py-3 font-medium border-b border-border whitespace-nowrap ${expiryColorClass(p.endDate)}`}>
+                  {formatDate(p.endDate)}
+                </td>
                 <td className="px-4 py-3 border-b border-border whitespace-nowrap">
                   <div className="inline-flex items-center gap-2">
                     <select
@@ -89,7 +109,7 @@ export default function Renewals({ policies, onSelectCustomer, onPolicyUpdated }
               </tr>
             ))
           ) : (
-            <tr><td colSpan={4} className="text-center py-10 text-text-muted">No policies found</td></tr>
+            <tr><td colSpan={5} className="text-center py-10 text-text-muted">No policies found</td></tr>
           )}
           </tbody>
         </table>
