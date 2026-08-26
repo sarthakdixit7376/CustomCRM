@@ -10,6 +10,7 @@ import UserManagement from './Pages/UserManagement';
 import AgentReportsPage from './Pages/AgentReportsPage';
 import CostPricePage from './Pages/CostPricePage';
 import EmailPage from './Pages/EmailPage';
+import RenewalsPage from './Pages/RenewalsPage';
 import PrivacyPolicy from './Pages/PrivacyPolicy';
 import Home from './Pages/Home';
 
@@ -30,6 +31,7 @@ function App() {
               <Route path="leads" element={<LeadsPage />} />
               <Route path="customers" element={<CustomersPage />} />
               <Route path="email" element={<EmailPage />} />
+              <Route path="renewals" element={<RenewalsPage />} />
               <Route element={<ProtectedRoute allow={['ADMIN']} />}>
                 <Route path="admin/users" element={<UserManagement />} />
                 <Route path="admin/reports" element={<AgentReportsPage />} />

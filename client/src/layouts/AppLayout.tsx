@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { ClipboardList, Users, Settings, LogOut, Menu, X, Mail, BarChart3, DollarSign } from 'lucide-react';
+import { ClipboardList, Users, Settings, LogOut, Menu, X, Mail, BarChart3, DollarSign, RefreshCw } from 'lucide-react';
 import logo from '../assets/Logo.png';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from '../Components/NotificationBell';
@@ -19,6 +19,7 @@ export default function AppLayout() {
     { label: 'Leads', path: '/leads', icon: ClipboardList },
     { label: 'Customers', path: '/customers', icon: Users },
     { label: 'Email', path: '/email', icon: Mail },
+    { label: 'Renewal', path: '/renewals', icon: RefreshCw },
     // We can add Quotes, Policies, Conversations later
   ];
 

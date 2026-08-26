@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { Plus, CheckCircle2, XCircle } from 'lucide-react';
 import {
@@ -12,7 +13,6 @@ import {
   Reminders,
   Messages,
   Contacts,
-  Renewals,
 } from '../Components/CustomerTabs';
 import NewCustomerModal from '../Components/CustomerTabs/NewCustomerModal';
 import type { CustomerFormData } from '../Components/CustomerTabs/NewCustomerModal';
@@ -28,7 +28,6 @@ const TABS = [
   { key: 'card', label: 'Customer Card', badge: null },
   { key: 'service', label: 'Ongoing Service', badge: null },
   { key: 'policies', label: 'Policies & Plans', badge: null },
-  { key: 'renewals', label: 'Renewal', badge: null },
   { key: 'quotes', label: 'Quotes', badge: null },
   { key: 'claims', label: 'Claims', badge: null },
   { key: 'documents', label: 'Documents', badge: null },
@@ -44,6 +43,7 @@ interface Toast { id: number; message: string; type: 'success' | 'error'; }
 export default function CustomersPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabKey>('list');
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [rawCustomers, setRawCustomers] = useState<any[]>([]);
@@ -94,6 +94,18 @@ export default function CustomersPage() {
   useEffect(() => {
     fetchCustomers();
   }, []);
+
+  // Opens a specific customer's card when arriving via a cross-page link (e.g. from the Renewal page).
+  useEffect(() => {
+    const openCustomerId = searchParams.get('openCustomerId');
+    if (!openCustomerId || rawCustomers.length === 0) return;
+    const customer = rawCustomers.find((c) => c.id === openCustomerId);
+    if (customer) {
+      handleSelectCustomer(customer);
+    }
+    searchParams.delete('openCustomerId');
+    setSearchParams(searchParams, { replace: true });
+  }, [rawCustomers, searchParams]);
 
   useEffect(() => {
     axios.get(`${API_BASE}/api/policies`)
@@ -312,13 +324,6 @@ export default function CustomersPage() {
           onAddPolicy={openAddPolicyModal}
           onEditPolicy={handleEditPolicy}
           onDeletePolicy={handleDeletePolicy}
-        />
-      )}
-      {activeTab === 'renewals' && (
-        <Renewals
-          policies={policies}
-          onSelectCustomer={(customer) => handleSelectCustomer(customer as CustomerRow)}
-          onPolicyUpdated={handlePolicySaved}
         />
       )}
       {activeTab === 'quotes' && <Quotes />}
