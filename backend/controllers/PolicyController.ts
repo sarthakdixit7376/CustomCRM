@@ -5,7 +5,7 @@ import { PolicyDocumentModel } from '../models/PolicyDocumentModel.js';
 import { CustomerModel } from '../models/CustomerModel.js';
 import { ReminderModel } from '../models/ReminderModel.js';
 import { uploadPolicyFile as uploadPolicyFileToCloudinary } from '../services/cloudinaryService.js';
-import { classifyDocument } from '../services/documentClassificationService.js';
+import { classifyDocument, isPolicyDocumentType } from '../services/documentClassificationService.js';
 
 export const policyFileUpload = multer({
   storage: multer.memoryStorage(),
@@ -15,7 +15,7 @@ export const policyFileUpload = multer({
 /** Cloudinary public_id may not contain '/', so strip anything that isn't alphanumeric/dash/underscore. */
 const sanitizeForPublicId = (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, '');
 
-/** Extra context used to build a more descriptive filename for policy-scoped uploads. */
+/** Fallback naming context (from an existing DB Policy row) used only when OCR couldn't read a value off the document. */
 interface PolicyNamingContext {
   carNumber?: string | null;
   startDate?: Date | null;
@@ -36,7 +36,7 @@ const classifyAndUploadDocument = async (
   uploadedById: string,
   policyContext?: PolicyNamingContext | null
 ) => {
-  const { documentType, extractedText } = await classifyDocument(file.buffer, file.mimetype);
+  const { documentType, extractedText, carNumber, policyStartDate, policyEndDate } = await classifyDocument(file.buffer, file.mimetype);
   const sanitizedType = sanitizeForPublicId(documentType.replace(/\s+/g, '-'));
 
   // Folder is named after the customer's internal ID (stable even if the customer has no national ID set)
@@ -47,13 +47,20 @@ const classifyAndUploadDocument = async (
   const publicId = `${sanitizedType}_${uniqueSuffix}`;
 
   // Rename the file (keeping the original extension) so it reads clearly in both Cloudinary and the
-  // document list, instead of the original upload name. Uploads made from the Policy section are named
-  // "{insurance type} {car number} {start date} {end date}"; uploads made from the customer-level
-  // Documents tab (no policy context) just use the classified type.
+  // document list, instead of the original upload name. When the document is classified as a policy
+  // (Mandatory / Third Party / Third Party + Complimentary), the name is
+  // "{insurance type} {car number} {start date} {end date}" — car number and dates are read directly
+  // off the document by OCR, falling back to the linked Policy record's values only if OCR couldn't
+  // read them. Non-policy documents (ID Card, Bank Details, etc.) just use the classified type.
   const extensionMatch = file.originalname.match(/\.[^.]+$/);
   const extension = extensionMatch ? extensionMatch[0] : '';
-  const nameParts = policyContext
-    ? [documentType, policyContext.carNumber, formatDateForFilename(policyContext.startDate), formatDateForFilename(policyContext.endDate)].filter(Boolean)
+  const nameParts = isPolicyDocumentType(documentType)
+    ? [
+        documentType,
+        carNumber ?? policyContext?.carNumber,
+        policyStartDate ?? formatDateForFilename(policyContext?.startDate),
+        policyEndDate ?? formatDateForFilename(policyContext?.endDate),
+      ].filter(Boolean)
     : [documentType];
   const renamedFilename = `${nameParts.join(' ')}${extension}`;
 

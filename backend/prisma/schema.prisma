@@ -350,6 +350,19 @@ model PolicyDocument {
   uploadedById     String
   createdAt        DateTime @default(now())
 
+  // Structured fields OCR-extracted from the document (present in the database from a separate,
+  // in-progress extraction feature not yet reflected elsewhere in this schema file — kept here
+  // verbatim so `prisma db push` doesn't drop already-populated data).
+  extractedClaimFreeYears   Int?
+  extractedEndDate          DateTime?
+  extractedInsuranceCompany String?
+  extractedPolicyNumber     String?
+  extractedPremiumAmount    Float?
+  extractedPremiumBasis     String?
+  extractedStartDate        DateTime?
+  extractionFlagged         Boolean  @default(false)
+  extractionSnippets        Json?
+
   policy     Policy?  @relation(fields: [policyId], references: [id], onDelete: Cascade)
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   uploadedBy User     @relation(fields: [uploadedById], references: [id])
