@@ -1,11 +1,73 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import axios from 'axios';
-import { Send, Loader2, UserCheck } from 'lucide-react';
+import { Send, Loader2, UserCheck, Sparkles, ChevronDown, ChevronRight } from 'lucide-react';
 import { API_BASE } from '../../config';
 import ConvertToCustomerModal, { type ConvertToCustomerFormData } from './ConvertToCustomerModal';
 
 type QuoteField = 'mandatoryPrice' | 'thirdPartyPrice' | 'complimentaryPrice';
 type AddonField = 'glassAndMoreSelected' | 'complementaryVipSelected';
+
+interface QuoteFactor {
+  label: string;
+  multiplier: number;
+}
+
+interface QuoteLine {
+  price: number;
+  base: number;
+  factors: QuoteFactor[];
+}
+
+/** Rating breakdown returned by the pricing engine alongside the saved prices. */
+interface QuoteResult {
+  mandatoryPrice: number;
+  thirdPartyPrice: number;
+  complimentaryPrice: number;
+  estimatedVehicleValue: number;
+  profile: {
+    driverAge: number;
+    licenseYears: number;
+    claimFreeYears: number;
+    vehicleAgeYears: number;
+    engineCc: number;
+    horsePower: number;
+    safetyLevel: number;
+    vehicleType?: string;
+    ownership?: string;
+    district?: string;
+    assumed: string[];
+  };
+  breakdown: {
+    mandatory: QuoteLine;
+    thirdParty: QuoteLine;
+    complimentary: QuoteLine;
+  };
+  sources: string[];
+}
+
+interface LiveInsurerQuote {
+  insurer: string;
+  annualPrice: number | null;
+  serviceScore?: string;
+  note?: string;
+}
+
+interface LiveSourceResult {
+  source: 'cma';
+  status: 'ok' | 'error' | 'skipped';
+  error?: string;
+  quotes: LiveInsurerQuote[];
+  cheapest?: LiveInsurerQuote;
+  poolPrice?: number;
+  url: string;
+}
+
+interface LiveComparison {
+  cma: LiveSourceResult;
+  recommendedMandatoryPrice?: number;
+  /** When this comparison was fetched — present when loaded from the server-side cache. */
+  fetchedAt?: string;
+}
 
 interface QuoteRow {
   id: string;
@@ -36,6 +98,12 @@ export default function LeadQuotes() {
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [convertingLead, setConvertingLead] = useState<QuoteRow | null>(null);
   const [isConverting, setIsConverting] = useState(false);
+  const [quotingId, setQuotingId] = useState<string | null>(null);
+  const [quotes, setQuotes] = useState<Record<string, QuoteResult>>({});
+  const [liveComparisons, setLiveComparisons] = useState<Record<string, LiveComparison>>({});
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  /** Leads we have already auto-priced this session, so the 8s poll can't loop on them. */
+  const autoQuotedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     let isMounted = true;
@@ -58,12 +126,27 @@ export default function LeadQuotes() {
         }));
         setLeads(mapped);
         setStatus('live');
+        void autoQuoteMissing(mapped);
       } catch (error) {
         if (isMounted) setStatus('error');
       }
     };
 
+    // Loads whatever live CMA comparison was last fetched for each lead, straight from
+    // the server-side cache — instant, no re-scrape — so a page refresh doesn't force
+    // re-clicking Re-price just to see a result that was already fetched before.
+    const fetchCachedLiveComparisons = async () => {
+      try {
+        const response = await axios.get<Record<string, LiveComparison>>(`${API_BASE}/api/leads/live-comparisons`);
+        if (!isMounted) return;
+        setLiveComparisons((prev) => ({ ...response.data, ...prev }));
+      } catch (error) {
+        console.error('Failed to load cached live comparisons:', error);
+      }
+    };
+
     fetchLeads();
+    fetchCachedLiveComparisons();
     const interval = setInterval(fetchLeads, 8000);
 
     return () => {
@@ -71,6 +154,73 @@ export default function LeadQuotes() {
       clearInterval(interval);
     };
   }, []);
+
+  /**
+   * Prices a lead off its driver + vehicle data via the insurance engine and writes
+   * the result into the row. `onlyMissing` leaves prices an agent already set alone.
+   * `live` hits CMA for mandatory (slow) — only for manual Re-price.
+   */
+  const runAutoQuote = async (leadId: string, onlyMissing: boolean, live = false) => {
+    const response = await axios.post<{
+      lead: any;
+      quote: QuoteResult;
+      liveComparison?: LiveComparison;
+    }>(`${API_BASE}/api/leads/${leadId}/auto-quote`, { onlyMissing, live }, {
+      // Live CMA scrape can take up to ~45s.
+      timeout: live ? 60_000 : 20_000,
+    });
+    const { lead, quote, liveComparison } = response.data;
+
+    setQuotes((prev) => ({ ...prev, [leadId]: quote }));
+    if (liveComparison) {
+      setLiveComparisons((prev) => ({ ...prev, [leadId]: liveComparison }));
+    }
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.id === leadId
+          ? {
+              ...l,
+              mandatoryPrice: lead.mandatoryPrice ?? l.mandatoryPrice,
+              thirdPartyPrice: lead.thirdPartyPrice ?? l.thirdPartyPrice,
+              complimentaryPrice: lead.complimentaryPrice ?? l.complimentaryPrice,
+            }
+          : l
+      )
+    );
+    return quote;
+  };
+
+  /** Fills in any lead that arrived without a full set of prices. */
+  const autoQuoteMissing = async (rows: QuoteRow[]) => {
+    const pending = rows.filter(
+      (row) =>
+        !autoQuotedRef.current.has(row.id) &&
+        (row.mandatoryPrice == null || row.thirdPartyPrice == null || row.complimentaryPrice == null)
+    );
+
+    for (const row of pending) {
+      autoQuotedRef.current.add(row.id);
+      try {
+        await runAutoQuote(row.id, true);
+      } catch (error) {
+        console.error('Failed to auto-quote lead:', error);
+      }
+    }
+  };
+
+  /** Manual re-price: live CMA for hova, local engine for makif / 3rd party. */
+  const handleRecalculate = async (leadId: string) => {
+    setQuotingId(leadId);
+    try {
+      await runAutoQuote(leadId, false, true);
+      setExpandedId(leadId);
+    } catch (error) {
+      console.error('Failed to recalculate quote:', error);
+      alert('Failed to recalculate the quote. Please try again.');
+    } finally {
+      setQuotingId(null);
+    }
+  };
 
   const handlePriceBlur = async (leadId: string, field: QuoteField, rawValue: string) => {
     const num = Number(rawValue);
@@ -133,7 +283,7 @@ export default function LeadQuotes() {
     }
   };
 
-  const totalCols = 2 + PRICE_COLUMNS.length + ADDON_COLUMNS.length + 1;
+  const totalCols = 2 + PRICE_COLUMNS.length + ADDON_COLUMNS.length + 2;
 
   return (
     <div className="flex-1 overflow-auto px-8 pb-8 max-md:px-4 max-md:pb-4 mt-8">
@@ -146,6 +296,7 @@ export default function LeadQuotes() {
               {PRICE_COLUMNS.map(([label]) => (
                 <th key={label} className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap">{label}</th>
               ))}
+              <th className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap">Auto-quote</th>
               {ADDON_COLUMNS.map(([label, , price]) => (
                 <th key={label} className="px-4 py-3.5 text-xs font-semibold text-text-muted uppercase tracking-wider text-left bg-neutral-50 border-b border-border whitespace-nowrap">{label} (₪{price})</th>
               ))}
@@ -173,7 +324,8 @@ export default function LeadQuotes() {
               </tr>
             ) : leads.length > 0 ? (
               leads.map((row) => (
-                <tr key={row.id} className="transition-colors hover:bg-neutral-50">
+                <Fragment key={row.id}>
+                <tr className="transition-colors hover:bg-neutral-50">
                   <td className="px-4 py-3 text-sm text-text border-b border-border whitespace-nowrap font-medium">{row.phoneNumber}</td>
                   <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                     <div className="flex items-center gap-2.5">
@@ -194,6 +346,30 @@ export default function LeadQuotes() {
                       />
                     </td>
                   ))}
+                  <td className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
+                    <div className="inline-flex items-center gap-1">
+                      <button
+                        onClick={() => handleRecalculate(row.id)}
+                        disabled={quotingId === row.id}
+                        title="Live re-price: CMA for mandatory, engine for makif / 3rd party"
+                        className="px-2.5 py-1.5 text-xs font-semibold rounded-md border border-border bg-surface text-text hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-wait inline-flex items-center gap-1.5"
+                      >
+                        {quotingId === row.id
+                          ? <Loader2 size={12} className="animate-spin" />
+                          : <Sparkles size={12} className="text-primary-600" />}
+                        {quotingId === row.id ? 'Live…' : 'Re-price'}
+                      </button>
+                      {(quotes[row.id] || liveComparisons[row.id]) && (
+                        <button
+                          onClick={() => setExpandedId(expandedId === row.id ? null : row.id)}
+                          title="Show how this price was calculated"
+                          className="p-1.5 rounded-md text-text-muted hover:bg-neutral-100 transition-colors"
+                        >
+                          {expandedId === row.id ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                        </button>
+                      )}
+                    </div>
+                  </td>
                   {ADDON_COLUMNS.map(([, field]) => (
                     <td key={field} className="px-4 py-3 text-sm border-b border-border whitespace-nowrap">
                       <input
@@ -227,6 +403,14 @@ export default function LeadQuotes() {
                     </div>
                   </td>
                 </tr>
+                {expandedId === row.id && (quotes[row.id] || liveComparisons[row.id]) && (
+                  <tr>
+                    <td colSpan={totalCols} className="px-4 py-4 border-b border-border bg-neutral-50/60">
+                      <QuoteBreakdown quote={quotes[row.id]} live={liveComparisons[row.id]} />
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               ))
             ) : (
               <tr>
@@ -246,6 +430,186 @@ export default function LeadQuotes() {
         onSubmit={handleConvertSubmit}
         isSubmitting={isConverting}
       />
+    </div>
+  );
+}
+
+const LINE_LABELS: [keyof QuoteResult['breakdown'], string][] = [
+  ['mandatory', 'Mandatory (hova)'],
+  ['thirdParty', '3rd party (tzad gimel)'],
+  ['complimentary', 'Complimentary (makif)'],
+];
+
+/** Shows why the engine priced a lead the way it did, plus live CMA rows when present. */
+/** Roughly formats how long ago an ISO timestamp was, for the "cached" note under a live comparison. */
+const timeAgo = (iso: string): string => {
+  const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
+};
+
+/**
+ * `quote` is the local engine's breakdown — omitted when a lead hasn't been priced
+ * in this session yet but a cached live comparison from an earlier Re-price exists,
+ * so that cached result can still show up without waiting on a fresh calculation.
+ */
+function QuoteBreakdown({ quote, live }: { quote?: QuoteResult; live?: LiveComparison }) {
+  const profile = quote?.profile;
+
+  const profileBits = profile
+    ? [
+        `Driver ${profile.driverAge}`,
+        `${profile.licenseYears} yrs license`,
+        `${profile.claimFreeYears} claim-free yrs`,
+        `Vehicle ${profile.vehicleAgeYears} yrs old`,
+        `${profile.engineCc}cc / ${profile.horsePower}hp`,
+        `Safety level ${profile.safetyLevel}`,
+        profile.district,
+        profile.ownership,
+      ].filter(Boolean)
+    : [];
+
+  return (
+    <div className="animate-fade-in-up">
+      {quote && (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-muted mb-3">
+          {profileBits.map((bit) => (
+            <span key={bit as string} className="px-2 py-0.5 rounded bg-surface border border-border">{bit}</span>
+          ))}
+          <span className="px-2 py-0.5 rounded bg-surface border border-border">
+            Est. vehicle value ₪{quote.estimatedVehicleValue.toLocaleString()}
+          </span>
+        </div>
+      )}
+
+      {live && (
+        <div className="mb-4">
+          {live.fetchedAt && (
+            <div className="text-[11px] text-text-muted mb-1.5">
+              Live comparison fetched {timeAgo(live.fetchedAt)} — showing the saved result, not re-scraping. Click Re-price for a fresh check.
+            </div>
+          )}
+          <LiveSourcePanel
+            title="CMA (car.cma.gov.il)"
+            result={live.cma}
+            recommended={live.recommendedMandatoryPrice}
+          />
+        </div>
+      )}
+
+      {quote && <div className="grid grid-cols-3 gap-4 max-md:grid-cols-1">
+        {LINE_LABELS.map(([key, label]) => {
+          const line = quote.breakdown[key];
+          return (
+            <div key={key} className="bg-surface border border-border rounded-md p-3">
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">{label}</span>
+                <span className="text-sm font-bold text-text">₪{line.price.toLocaleString()}</span>
+              </div>
+              <div className="text-[11px] text-text-muted space-y-0.5">
+                <div className="flex justify-between">
+                  <span>Base rate</span>
+                  <span>₪{line.base.toLocaleString()}</span>
+                </div>
+                {line.factors.map((factor) => (
+                  <div key={factor.label} className="flex justify-between gap-2">
+                    <span className="truncate">{factor.label}</span>
+                    <span className={factor.multiplier > 1 ? 'text-danger-600' : factor.multiplier < 1 ? 'text-primary-600' : ''}>
+                      ×{factor.multiplier}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>}
+
+      {profile && profile.assumed.length > 0 && (
+        <p className="mt-3 text-[11px] text-text-muted">
+          <span className="font-semibold">Assumed defaults for:</span> {profile.assumed.join(', ')} — fill these in on the lead for a sharper price.
+        </p>
+      )}
+      {quote && (
+        <p className="mt-1 text-[11px] text-text-muted">
+          {live?.recommendedMandatoryPrice != null
+            ? 'Mandatory from live comparison; makif / 3rd party are agency estimates.'
+            : 'Agency estimate.'}{' '}
+          Verify before binding: {quote.sources.join(' · ')}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function LiveSourcePanel({
+  title,
+  result,
+  recommended,
+}: {
+  title: string;
+  result: LiveSourceResult;
+  recommended?: number;
+}) {
+  const top = result.quotes
+    .filter((q) => q.annualPrice != null)
+    .slice(0, 8) as Array<LiveInsurerQuote & { annualPrice: number }>;
+
+  return (
+    <div className="bg-surface border border-border rounded-md p-3">
+      <div className="flex items-baseline justify-between mb-2 gap-2">
+        <a
+          href={result.url}
+          target="_blank"
+          rel="noreferrer"
+          className="text-xs font-semibold text-primary-700 hover:underline"
+        >
+          {title}
+        </a>
+        <span
+          className={`text-[10px] font-semibold uppercase tracking-wider ${
+            result.status === 'ok'
+              ? 'text-primary-600'
+              : result.status === 'skipped'
+                ? 'text-text-muted'
+                : 'text-danger-600'
+          }`}
+        >
+          {result.status}
+        </span>
+      </div>
+
+      {result.status === 'ok' && top.length > 0 ? (
+        <div className="text-[11px] text-text-muted space-y-0.5 max-h-48 overflow-y-auto">
+          {result.poolPrice != null && (
+            <div className="flex justify-between gap-2 pb-1 mb-1 border-b border-border">
+              <span>Pool (הפול)</span>
+              <span>₪{result.poolPrice.toLocaleString()}</span>
+            </div>
+          )}
+          {top.map((q) => (
+            <div key={q.insurer} className="flex justify-between gap-2">
+              <span className="truncate" title={q.insurer}>
+                {q.insurer}
+                {result.cheapest?.insurer === q.insurer ? ' · cheapest' : ''}
+              </span>
+              <span className="shrink-0 font-medium text-text">₪{q.annualPrice.toLocaleString()}</span>
+            </div>
+          ))}
+          {recommended != null && result.source === 'cma' && (
+            <p className="pt-1 text-[10px] text-primary-700">
+              Applied to Mandatory: ₪{recommended.toLocaleString()}
+            </p>
+          )}
+        </div>
+      ) : (
+        <p className="text-[11px] text-text-muted">
+          {result.error || 'No live quotes from this source.'}
+        </p>
+      )}
     </div>
   );
 }

@@ -1,4 +1,8 @@
 import prisma from '../config/prisma.js';
+import type { PolicyExtraction } from '../services/documentClassificationService.js';
+
+const toDate = (value: string | null | undefined): Date | undefined =>
+  value ? new Date(value) : undefined;
 
 export const PolicyDocumentModel = {
   getDocumentsByPolicy: async (policyId: string) => {
@@ -42,12 +46,57 @@ export const PolicyDocumentModel = {
     originalFilename?: string | null;
     ocrText?: string | null;
     uploadedById: string;
+    /** Structured fields Gemini pulled off the document, if any — see PolicyExtraction. */
+    extraction?: PolicyExtraction | null;
   }) => {
+    const { extraction, ...rest } = data;
     return prisma.policyDocument.create({
-      data,
+      data: {
+        ...rest,
+        extractedInsuranceCompany: extraction?.insuranceCompany ?? undefined,
+        extractedPolicyNumber: extraction?.policyNumber ?? undefined,
+        extractedPremiumAmount: extraction?.premiumAmount ?? undefined,
+        extractedPremiumBasis: extraction?.premiumBasis ?? undefined,
+        extractedStartDate: toDate(extraction?.startDate),
+        extractedEndDate: toDate(extraction?.endDate),
+        extractedClaimFreeYears: extraction?.claimFreeYears ?? undefined,
+        extractionSnippets: extraction?.snippets && Object.keys(extraction.snippets).length > 0 ? extraction.snippets : undefined,
+        extractionFlagged: extraction?.flagged ?? false,
+      },
       include: {
         uploadedBy: { select: { id: true, name: true } },
       },
+    });
+  },
+
+  /** Used by the backfill script to attach extraction results to a document uploaded before this feature shipped. */
+  saveExtraction: async (id: string, extraction: PolicyExtraction) => {
+    return prisma.policyDocument.update({
+      where: { id },
+      data: {
+        extractedInsuranceCompany: extraction.insuranceCompany,
+        extractedPolicyNumber: extraction.policyNumber,
+        extractedPremiumAmount: extraction.premiumAmount,
+        extractedPremiumBasis: extraction.premiumBasis,
+        extractedStartDate: toDate(extraction.startDate) ?? null,
+        extractedEndDate: toDate(extraction.endDate) ?? null,
+        extractedClaimFreeYears: extraction.claimFreeYears,
+        extractionSnippets: Object.keys(extraction.snippets).length > 0 ? extraction.snippets : undefined,
+        extractionFlagged: extraction.flagged,
+      },
+    });
+  },
+
+  /** Documents that predate this feature (or failed extraction) and still need backfilling. */
+  getUnextracted: async (limit: number) => {
+    return prisma.policyDocument.findMany({
+      where: {
+        documentType: { in: ['Mandatory Policy Insurance', 'Third Party Policy Insurance', 'Third Party + Complimentary Policy Insurance'] },
+        extractedInsuranceCompany: null,
+        extractedPremiumAmount: null,
+        ocrText: { not: null },
+      },
+      take: limit,
     });
   },
 

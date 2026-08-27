@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Lead, LeadQuotes } from '../Components/CustomerTabs';
 
 const TABS = [
@@ -8,8 +8,19 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]['key'];
 
+const isTabKey = (value: string | null): value is TabKey =>
+  TABS.some((tab) => tab.key === value);
+
 export default function LeadsPage() {
-  const [activeTab, setActiveTab] = useState<TabKey>('leads');
+  // The tab lives in the URL (?tab=quotes) so a refresh, a bookmark or the back
+  // button all land the agent back on the tab they were working in.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const activeTab: TabKey = isTabKey(tabParam) ? tabParam : 'leads';
+
+  const setActiveTab = (key: TabKey) => {
+    setSearchParams(key === 'leads' ? {} : { tab: key });
+  };
 
   return (
     <div className="flex-1 flex flex-col h-full bg-surface-muted">

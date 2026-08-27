@@ -16,6 +16,21 @@ export const getLeads = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+/**
+ * Cached live CMA comparisons, keyed by lead id — returns whatever the last manual
+ * Re-price already fetched, instantly, without re-running the ~60s Puppeteer scrape.
+ */
+export const getLiveComparisons = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const scopeAgentId = req.user!.role === 'ADMIN' ? undefined : req.user!.id;
+    const comparisons = await LeadModel.getLiveComparisons(scopeAgentId);
+    res.json(comparisons);
+  } catch (error) {
+    console.error('Error reading cached live comparisons:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 export const createLead = async (req: Request, res: Response): Promise<void> => {
   try {
     const raw = Array.isArray(req.body) ? req.body[0] : req.body;
@@ -101,6 +116,50 @@ export const updateLeadAgent = async (req: Request, res: Response): Promise<void
     res.json(updated);
   } catch (error) {
     console.error('Error updating lead agent:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+/**
+ * Auto-prices a lead's hova / tzad-gimel / makif columns from its driver and vehicle
+ * data. Returns the saved lead plus the rating breakdown so the Quotes tab can show
+ * the agent which factors drove each number.
+ */
+export const autoQuoteLead = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const existing = await LeadModel.getLeadById(req.params.id);
+    if (!existing) {
+      res.status(404).json({ error: 'Lead not found' });
+      return;
+    }
+    if (req.user!.role !== 'ADMIN' && existing.agentId !== req.user!.id) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const claimFreeYearsRaw = req.body?.claimFreeYears;
+    const claimFreeYears = claimFreeYearsRaw != null && claimFreeYearsRaw !== ''
+      ? Number(claimFreeYearsRaw)
+      : undefined;
+    if (claimFreeYears != null && Number.isNaN(claimFreeYears)) {
+      res.status(400).json({ error: 'claimFreeYears must be a number' });
+      return;
+    }
+
+    const result = await LeadModel.autoQuoteLead(req.params.id, {
+      onlyMissing: Boolean(req.body?.onlyMissing),
+      claimFreeYears,
+      // Manual Re-price opts into live CMA; background auto-fill stays local/fast.
+      live: Boolean(req.body?.live) || req.body?.onlyMissing === false,
+    });
+    if (!result) {
+      res.status(404).json({ error: 'Lead not found' });
+      return;
+    }
+
+    res.json({ lead: result.lead, quote: result.quote, liveComparison: result.liveComparison });
+  } catch (error) {
+    console.error('Error auto-quoting lead:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };

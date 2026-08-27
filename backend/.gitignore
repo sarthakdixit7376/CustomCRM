@@ -1,3 +1,7 @@
 node_modules
 .env
 dist
+data/liveHovaCache.json
+
+# Puppeteer Chrome for Testing — downloaded locally, never commit
+chrome/
