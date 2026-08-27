@@ -189,6 +189,57 @@ const defaultInsuranceDate = (): string => {
   return `${dd}/${mm}/${d.getFullYear()}`;
 };
 
+/** The CMA calculator's own POST target — a plain form endpoint, no CSRF token. */
+export const CMA_CALCULATE_URL = 'https://car.cma.gov.il/Parameters/Calculate';
+
+/**
+ * Maps a lead onto the exact field names `car.cma.gov.il/Parameters/Calculate`
+ * expects, for a form the AGENT submits from their own browser.
+ *
+ * This is the handoff path, not the scraping path: the CRM only prepares the field
+ * values, and the actual request is a normal top-level form navigation made by the
+ * agent's real browser in their real session. Nothing here touches the WAF, holds a
+ * token, or automates a challenge — it just removes the retyping.
+ *
+ * Field names/order verified against a real captured submission.
+ */
+export function buildCmaFormFields(lead: LiveQuoteLeadInput): Record<string, string> {
+  const profile = buildQuoteProfile(lead);
+  const flags = safetyFlags(profile.safetyLevel);
+
+  // parameters[N] pairs, in the order the calculator posts them.
+  const parameters: Array<[string, string]> = [
+    ['D', lead.gender === 'female' ? '2' : '1'], // gender
+    ['D2', String(profile.driverAge)],
+    ['E', String(profile.licenseYears)], // license seniority
+    ['F', String(lead.accidentsLast3Years ?? 0)],
+    ['G', String(lead.licenseSuspensionsLast3Years ?? 0)],
+    ['N', fuelCode(lead.sugDelekNm)],
+    ['A', String(profile.engineCc)],
+    ['O', String(profile.horsePower)],
+    ['J', flags.abs],
+    ['K', flags.esp],
+    ['H', flags.airbags],
+    ['L', flags.fcw],
+    ['M', flags.ldw],
+    ['B', '6'], // usage: private
+  ];
+
+  const fields: Record<string, string> = {
+    hdnForCaptcha: '',
+    sheet_id: sheetId(lead.sugRechevNm),
+    code_owner: ownershipCode(lead.baalut),
+    insurance_date: defaultInsuranceDate(),
+  };
+
+  parameters.forEach(([parameter, value], i) => {
+    fields[`parameters[${i}].parameter`] = parameter;
+    fields[`parameters[${i}].value`] = value;
+  });
+
+  return fields;
+}
+
 const pickCheapest = (quotes: LiveInsurerQuote[]): LiveInsurerQuote | undefined => {
   const priced = quotes.filter((q) => q.annualPrice != null) as Array<LiveInsurerQuote & { annualPrice: number }>;
   if (priced.length === 0) return undefined;

@@ -4,6 +4,7 @@ import prisma from '../config/prisma.js';
 import { generatePricingPdfBuffer } from '../services/pdfService.js';
 import { uploadPdfBuffer } from '../services/cloudinaryService.js';
 import { buildWhatsAppShareLink } from '../services/whatsappService.js';
+import { buildCmaFormFields, CMA_CALCULATE_URL } from '../services/liveHovaComparison.js';
 
 export const getLeads = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -12,6 +13,30 @@ export const getLeads = async (req: Request, res: Response): Promise<void> => {
     res.json(leads);
   } catch (error) {
     console.error('Error reading leads:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+/**
+ * Field values for the CMA calculator, for a form the AGENT submits from their own
+ * browser (see `buildCmaFormFields`). The server never makes this request — it only
+ * maps the lead onto CMA's field names so nobody has to retype them.
+ */
+export const getCmaHandoff = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const lead = await LeadModel.getLeadById(req.params.id);
+    if (!lead) {
+      res.status(404).json({ error: 'Lead not found' });
+      return;
+    }
+    if (req.user!.role !== 'ADMIN' && lead.agentId !== req.user!.id) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    res.json({ action: CMA_CALCULATE_URL, fields: buildCmaFormFields(lead as any) });
+  } catch (error) {
+    console.error('Error building CMA handoff:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
