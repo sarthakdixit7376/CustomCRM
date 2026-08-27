@@ -1,7 +1,13 @@
 import prisma from '../config/prisma.js';
 import { generateInsuranceQuote, buildQuoteProfile, type QuoteFloors } from '../services/pricingEngine.js';
 import { compareLiveHova, type LiveHovaComparison } from '../services/liveHovaComparison.js';
-import { getCachedLiveComparisons, saveLiveComparison, clearCachedLiveComparison } from '../services/liveHovaCache.js';
+import {
+  getCachedLiveComparisons,
+  saveLiveComparison,
+  clearCachedLiveComparison,
+  markCmaBlocked,
+  cmaBlockCooldownMinutes,
+} from '../services/liveHovaCache.js';
 import { fetchVehicleGovData, mapVehicleGovFields } from '../services/vehicleGovService.js';
 
 /** Helper: coerce a value to string or undefined */
@@ -47,6 +53,26 @@ export const LeadModel = {
 
     let liveComparison: LiveHovaComparison | undefined;
     if (options.live) {
+      // car.cma.gov.il blocks automated sessions at its WAF. Once it has, every further
+      // attempt burns the full ~55s budget to fail identically — so during the back-off
+      // window skip the scrape entirely and return the local estimate immediately.
+      const cooldownMinutes = await cmaBlockCooldownMinutes();
+      if (cooldownMinutes > 0) {
+        liveComparison = {
+          cma: {
+            source: 'cma',
+            status: 'skipped',
+            error:
+              `CMA blocked the automated check. Pausing live lookups for ${cooldownMinutes} more minute(s). ` +
+              `Prices below are the local estimate — open car.cma.gov.il to confirm the mandatory premium.`,
+            quotes: [],
+            url: 'https://car.cma.gov.il/',
+            fetchedAt: new Date().toISOString(),
+          },
+        };
+        return { lead: await LeadModel.applyQuote(id, lead, quote, options.onlyMissing), quote, liveComparison };
+      }
+
       try {
         liveComparison = await compareLiveHova({
           ...lead,
@@ -75,22 +101,28 @@ export const LeadModel = {
         // Persist so the next page load can show this result instantly instead of
         // re-running a ~60s Puppeteer scrape just to redisplay what was already fetched.
         await saveLiveComparison(id, liveComparison);
+        // Start the back-off window so the next click doesn't burn another minute.
+        if (liveComparison.cma.status === 'error') await markCmaBlocked();
       } catch (error) {
         console.warn('Live CMA comparison failed; keeping engine estimate:', error);
+        await markCmaBlocked();
         liveComparison = undefined;
       }
     }
 
+    return { lead: await LeadModel.applyQuote(id, lead, quote, options.onlyMissing), quote, liveComparison };
+  },
+
+  /** Writes the priced columns back, honouring `onlyMissing` (never overwrite a hand-set price). */
+  applyQuote: async (id: string, lead: any, quote: { mandatoryPrice: number; thirdPartyPrice: number; complimentaryPrice: number }, onlyMissing?: boolean) => {
     const data: Record<string, number> = {};
-    if (!options.onlyMissing || lead.mandatoryPrice == null) data.mandatoryPrice = quote.mandatoryPrice;
-    if (!options.onlyMissing || lead.thirdPartyPrice == null) data.thirdPartyPrice = quote.thirdPartyPrice;
-    if (!options.onlyMissing || lead.complimentaryPrice == null) data.complimentaryPrice = quote.complimentaryPrice;
+    if (!onlyMissing || lead.mandatoryPrice == null) data.mandatoryPrice = quote.mandatoryPrice;
+    if (!onlyMissing || lead.thirdPartyPrice == null) data.thirdPartyPrice = quote.thirdPartyPrice;
+    if (!onlyMissing || lead.complimentaryPrice == null) data.complimentaryPrice = quote.complimentaryPrice;
 
-    const updated = Object.keys(data).length > 0
-      ? await prisma.lead.update({ where: { id }, data })
+    return Object.keys(data).length > 0
+      ? prisma.lead.update({ where: { id }, data })
       : lead;
-
-    return { lead: updated, quote, liveComparison };
   },
 
   getLeads: async (agentId?: string) => {

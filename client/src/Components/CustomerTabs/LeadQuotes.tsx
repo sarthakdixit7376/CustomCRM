@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, Fragment } from 'react';
 import axios from 'axios';
-import { Send, Loader2, UserCheck, Sparkles, ChevronDown, ChevronRight } from 'lucide-react';
+import { Send, Loader2, UserCheck, Sparkles, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react';
 import { API_BASE } from '../../config';
 import ConvertToCustomerModal, { type ConvertToCustomerFormData } from './ConvertToCustomerModal';
 
@@ -606,9 +606,19 @@ function LiveSourcePanel({
           )}
         </div>
       ) : (
-        <p className="text-[11px] text-text-muted">
-          {result.error || 'No live quotes from this source.'}
-        </p>
+        <div className="text-[11px] text-text-muted space-y-1.5">
+          <p>{result.error || 'No live quotes from this source.'}</p>
+          {/* The automated lookup can't get past CMA's bot protection, so hand the agent
+              the one route that reliably works: opening the calculator themselves. */}
+          <a
+            href={result.url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded border border-border bg-surface text-primary-700 font-medium hover:bg-neutral-50 transition-colors"
+          >
+            <ExternalLink size={11} /> Check {title.split(' ')[0]} manually
+          </a>
+        </div>
       )}
     </div>
   );
