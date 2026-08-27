@@ -406,7 +406,7 @@ export default function LeadQuotes() {
                 {expandedId === row.id && (quotes[row.id] || liveComparisons[row.id]) && (
                   <tr>
                     <td colSpan={totalCols} className="px-4 py-4 border-b border-border bg-neutral-50/60">
-                      <QuoteBreakdown quote={quotes[row.id]} live={liveComparisons[row.id]} />
+                      <QuoteBreakdown quote={quotes[row.id]} live={liveComparisons[row.id]} leadId={row.id} />
                     </td>
                   </tr>
                 )}
@@ -441,6 +441,38 @@ const LINE_LABELS: [keyof QuoteResult['breakdown'], string][] = [
 ];
 
 /** Shows why the engine priced a lead the way it did, plus live CMA rows when present. */
+/**
+ * Opens the CMA calculator in a new tab with this lead's details already filled in.
+ *
+ * Builds a real <form> and submits it, so the request is a normal top-level navigation
+ * from the agent's OWN browser and session — the calculator sees a real user, because
+ * it is one. The CRM only supplies the field values; it never makes the request itself.
+ */
+async function openCmaWithLead(leadId: string): Promise<void> {
+  const { data } = await axios.get<{ action: string; fields: Record<string, string> }>(
+    `${API_BASE}/api/leads/${leadId}/cma-handoff`
+  );
+
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = data.action;
+  form.target = '_blank';
+  form.rel = 'noopener';
+  form.style.display = 'none';
+
+  for (const [name, value] of Object.entries(data.fields)) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+  }
+
+  document.body.appendChild(form);
+  form.submit();
+  form.remove();
+}
+
 /** Roughly formats how long ago an ISO timestamp was, for the "cached" note under a live comparison. */
 const timeAgo = (iso: string): string => {
   const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -456,7 +488,7 @@ const timeAgo = (iso: string): string => {
  * in this session yet but a cached live comparison from an earlier Re-price exists,
  * so that cached result can still show up without waiting on a fresh calculation.
  */
-function QuoteBreakdown({ quote, live }: { quote?: QuoteResult; live?: LiveComparison }) {
+function QuoteBreakdown({ quote, live, leadId }: { quote?: QuoteResult; live?: LiveComparison; leadId?: string }) {
   const profile = quote?.profile;
 
   const profileBits = profile
@@ -496,6 +528,7 @@ function QuoteBreakdown({ quote, live }: { quote?: QuoteResult; live?: LiveCompa
             title="CMA (car.cma.gov.il)"
             result={live.cma}
             recommended={live.recommendedMandatoryPrice}
+            leadId={leadId}
           />
         </div>
       )}
@@ -549,10 +582,13 @@ function LiveSourcePanel({
   title,
   result,
   recommended,
+  leadId,
 }: {
   title: string;
   result: LiveSourceResult;
   recommended?: number;
+  /** Enables the pre-filled hand-off to the agent's own browser when a lookup fails. */
+  leadId?: string;
 }) {
   const top = result.quotes
     .filter((q) => q.annualPrice != null)
@@ -609,15 +645,22 @@ function LiveSourcePanel({
         <div className="text-[11px] text-text-muted space-y-1.5">
           <p>{result.error || 'No live quotes from this source.'}</p>
           {/* The automated lookup can't get past CMA's bot protection, so hand the agent
-              the one route that reliably works: opening the calculator themselves. */}
-          <a
-            href={result.url}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 px-2 py-1 rounded border border-border bg-surface text-primary-700 font-medium hover:bg-neutral-50 transition-colors"
-          >
-            <ExternalLink size={11} /> Check {title.split(' ')[0]} manually
-          </a>
+              the route that reliably works: the calculator opened in their own browser,
+              with this lead's details already filled in. */}
+          {leadId && (
+            <button
+              type="button"
+              onClick={() => {
+                void openCmaWithLead(leadId).catch((error) => {
+                  console.error('Failed to open CMA with lead details:', error);
+                  window.open(result.url, '_blank', 'noopener');
+                });
+              }}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded border border-border bg-surface text-primary-700 font-medium hover:bg-neutral-50 transition-colors"
+            >
+              <ExternalLink size={11} /> Open CMA with this lead's details
+            </button>
+          )}
         </div>
       )}
     </div>
