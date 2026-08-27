@@ -4,13 +4,23 @@
  *   car.cma.gov.il — regulated tariff comparison across insurers
  *
  * Makif / tzad-gimel stay on the local pricing engine.
+ *
+ * Note: car.cma.gov.il sits behind AWS WAF (CloudFront). The first response is
+ * often HTTP 202 + a JS challenge interstitial with no `#myForm`. The real
+ * calculator only appears after that challenge completes and reloads the page.
  */
 
-import puppeteer, { type Browser } from 'puppeteer';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import puppeteer, { type Browser, type Page } from 'puppeteer';
 import { buildQuoteProfile, type QuoteProfileInput } from './pricingEngine.js';
 
 const CMA_URL = 'https://car.cma.gov.il/';
-const CMA_TIMEOUT_MS = 45_000;
+/** Overall scrape budget — must stay under the client live-quote axios timeout (60s). */
+const CMA_TIMEOUT_MS = 55_000;
+/** Wait for WAF challenge to clear and `#myForm` + compare button to appear. */
+const CMA_FORM_READY_MS = 30_000;
 
 export interface LiveInsurerQuote {
   insurer: string;
@@ -43,9 +53,43 @@ export interface LiveQuoteLeadInput extends QuoteProfileInput {
   licenseSuspensionsLast3Years?: number | null;
 }
 
+/** Walk `backend/chrome/` for a Chrome-for-Testing binary (gitignored local download). */
+const findLocalChromeForTesting = (): string | undefined => {
+  const chromeRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../chrome');
+  if (!fs.existsSync(chromeRoot)) return undefined;
+
+  const stack = [chromeRoot];
+  while (stack.length > 0) {
+    const dir = stack.pop()!;
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(full);
+        continue;
+      }
+      if (
+        entry.name === 'Google Chrome for Testing' ||
+        entry.name === 'chrome' ||
+        entry.name === 'chrome.exe'
+      ) {
+        return full;
+      }
+    }
+  }
+  return undefined;
+};
+
 const chromeExecutable = (): string | undefined => {
   if (process.env.PUPPETEER_EXECUTABLE_PATH) return process.env.PUPPETEER_EXECUTABLE_PATH;
-  // Local macOS: prefer the installed Chrome when the Puppeteer cache is missing.
+  const localTesting = findLocalChromeForTesting();
+  if (localTesting) return localTesting;
+  // Local macOS: fall back to installed Chrome when no Puppeteer/local binary exists.
   if (process.platform === 'darwin') {
     return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
   }
@@ -62,9 +106,43 @@ const launchBrowser = async (): Promise<Browser> => {
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
       '--lang=he-IL',
+      // Reduces headless fingerprinting that keeps AWS WAF stuck on the challenge page.
+      '--disable-blink-features=AutomationControlled',
     ],
   });
 };
+
+/**
+ * CMA serves an AWS WAF challenge first (no `#myForm`). Wait until the real
+ * calculator form + compare button exist; surface a clear error if WAF never clears.
+ */
+async function waitForCmaCalculatorForm(page: Page): Promise<void> {
+  try {
+    await page.waitForFunction(
+      `(() => {
+        return !!(
+          document.getElementById('myForm') &&
+          document.getElementById('press_to_compare')
+        );
+      })()`,
+      { timeout: CMA_FORM_READY_MS, polling: 250 }
+    );
+  } catch {
+    const stuckOnWaf = await page
+      .evaluate(`(() => {
+        const html = (document.documentElement && document.documentElement.outerHTML) || '';
+        const hasForm = !!document.getElementById('myForm');
+        return !hasForm && /AwsWaf|challenge|gokuProps|awswaf/i.test(html);
+      })()`)
+      .catch(() => false);
+
+    throw new Error(
+      stuckOnWaf
+        ? 'CMA WAF challenge did not complete — calculator form never appeared'
+        : `CMA calculator form (#myForm) did not appear within ${CMA_FORM_READY_MS}ms`
+    );
+  }
+}
 
 /** Maps gov fuel text onto CMA's `parameters[N]` select values. */
 const fuelCode = (sugDelekNm?: string | null): string => {
@@ -147,11 +225,16 @@ export async function fetchCmaHovaQuotes(
     const b = browser ?? (ownedBrowser = await launchBrowser());
     const page = await b.newPage();
     await page.setViewport({ width: 1280, height: 900 });
+    // Hide the webdriver flag before any document scripts (incl. WAF challenge) run.
+    await page.evaluateOnNewDocument(
+      `Object.defineProperty(navigator, 'webdriver', { get: () => undefined });`
+    );
     await page.setUserAgent(
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36'
     );
     await page.goto(CMA_URL, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-    await page.waitForSelector('#myForm', { timeout: 15_000 });
+    // Do not treat the first paint as ready — WAF 202 interstitial has no form yet.
+    await waitForCmaCalculatorForm(page);
 
     await page.select('#ddlSheets', sheetId(lead.sugRechevNm));
     // Sheet change reloads parameters via AJAX — wait a beat for private-car defaults.
