@@ -60,7 +60,8 @@ model User {
   createdAt    DateTime @default(now())
 
   leads             Lead[]
-  customers         Customer[]
+  customers         Customer[] @relation("CustomerAgent")
+  creditedCustomers Customer[] @relation("CustomerCreditedAgent")
   invitationsSent   Invitation[]
   emailAccounts     EmailAccount[]
   reminders         Reminder[]
@@ -207,8 +208,14 @@ model Customer {
   workPlace          String?
   carBrand           String?
   agentId            String?
-  agent              User?    @relation(fields: [agentId], references: [id])
+  agent              User?    @relation("CustomerAgent", fields: [agentId], references: [id])
   convertedFromLead  Boolean  @default(false) // set true when created via Lead conversion (the source Lead row is deleted on conversion, so this is the only trail)
+
+  // The agent credited with bringing in this customer, captured once at creation and never
+  // touched again — so reassigning agentId later (to hand off ongoing account management)
+  // never moves historical conversion/profit credit to the new agent.
+  creditedAgentId String?
+  creditedAgent   User?    @relation("CustomerCreditedAgent", fields: [creditedAgentId], references: [id])
 
   // Carried over from the source Lead on conversion
   phoneNumber         String?

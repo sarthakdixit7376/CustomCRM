@@ -247,6 +247,10 @@ export const LeadModel = {
       insuranceCompany: string;
       startDate?: string | null;
       endDate?: string | null;
+      gender?: string | null;
+      agentName?: string | null;
+      purchaseType?: string | null;
+      email?: string | null;
     }
   ) => {
     return prisma.$transaction(async (tx) => {
@@ -265,7 +269,13 @@ export const LeadModel = {
           idNumber: lead.idNumber,
           dateOfBirth: lead.dateOfBirth,
           agentId: lead.agentId,
+          creditedAgentId: lead.agentId,
           convertedFromLead: true,
+
+          gender:       policyData.gender || null,
+          agentName:    policyData.agentName || null,
+          purchaseType: policyData.purchaseType || null,
+          email:        policyData.email || null,
 
           phoneNumber:          lead.phoneNumber,
           age:                  lead.age,

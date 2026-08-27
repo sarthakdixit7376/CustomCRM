@@ -26,6 +26,9 @@ const POLICY_DOCUMENT_TYPES: readonly DocumentType[] = [
   'Third Party + Complimentary Policy Insurance',
 ];
 
+export const isPolicyDocumentType = (documentType: DocumentType): boolean =>
+  (POLICY_DOCUMENT_TYPES as readonly string[]).includes(documentType);
+
 export type PremiumBasis = 'ANNUAL' | 'MONTHLY';
 
 /**
@@ -55,6 +58,10 @@ export interface ClassificationResult {
   documentType: DocumentType;
   extractedText: string;
   extraction: PolicyExtraction | null;
+  /** Only populated for policy document types — read directly off the document, not looked up. */
+  carNumber: string | null;
+  policyStartDate: string | null; // YYYY-MM-DD
+  policyEndDate: string | null; // YYYY-MM-DD
 }
 
 const MODEL = 'gemini-3.7-flash';
@@ -161,6 +168,15 @@ const parseExtraction = (raw: any): PolicyExtraction => {
   };
 };
 
+const EMPTY_CLASSIFICATION: ClassificationResult = {
+  documentType: 'Other',
+  extractedText: '',
+  extraction: null,
+  carNumber: null,
+  policyStartDate: null,
+  policyEndDate: null,
+};
+
 /** OCRs, classifies, and (for policy documents) extracts structured fields — all in one Gemini call. */
 export async function classifyDocument(buffer: Buffer, mimeType: string): Promise<ClassificationResult> {
   try {
@@ -187,7 +203,9 @@ export async function classifyDocument(buffer: Buffer, mimeType: string): Promis
                 'in any word order or language -> "Third Party + Complimentary Policy Insurance"\n' +
                 'Return the extracted text exactly as written in the document, in its original language(s) — do not translate it.\n\n' +
                 `If the document is one of those three policy categories, additionally: ${EXTRACTION_PROMPT}\n` +
-                'If it is NOT one of those three categories, leave every field in `extraction` null.',
+                'Also read off the document itself (do not guess or infer): the insured vehicle\'s license plate / car number (מספר רכב). ' +
+                'If a value is not present or unreadable, return null for it rather than guessing.\n' +
+                'If it is NOT one of those three categories, leave every field in `extraction` null and set carNumber to null.',
             },
           ],
         },
@@ -200,6 +218,7 @@ export async function classifyDocument(buffer: Buffer, mimeType: string): Promis
             documentType: { type: Type.STRING, enum: [...DOCUMENT_TYPES] },
             extractedText: { type: Type.STRING },
             extraction: extractionSchema,
+            carNumber: { type: Type.STRING, nullable: true },
           },
           required: ['documentType', 'extractedText'],
         },
@@ -209,12 +228,23 @@ export async function classifyDocument(buffer: Buffer, mimeType: string): Promis
     const parsed = JSON.parse(response.text ?? '{}');
     const documentType: DocumentType = DOCUMENT_TYPES.includes(parsed.documentType) ? parsed.documentType : 'Other';
     const extractedText = typeof parsed.extractedText === 'string' ? parsed.extractedText : '';
-    const extraction = POLICY_DOCUMENT_TYPES.includes(documentType) ? parseExtraction(parsed.extraction) : null;
+    const isPolicy = isPolicyDocumentType(documentType);
+    const extraction = isPolicy ? parseExtraction(parsed.extraction) : null;
+    const carNumber =
+      isPolicy && typeof parsed.carNumber === 'string' && parsed.carNumber.trim() ? parsed.carNumber.trim() : null;
 
-    return { documentType, extractedText, extraction };
+    return {
+      documentType,
+      extractedText,
+      extraction,
+      carNumber,
+      // Filename helpers: prefer structured extraction dates, which are already ISO-normalized.
+      policyStartDate: extraction?.startDate ?? null,
+      policyEndDate: extraction?.endDate ?? null,
+    };
   } catch (error) {
     console.warn('Document classification failed, filing as "Other":', error);
-    return { documentType: 'Other', extractedText: '', extraction: null };
+    return EMPTY_CLASSIFICATION;
   }
 }
 
@@ -224,7 +254,7 @@ export async function classifyDocument(buffer: Buffer, mimeType: string): Promis
  * re-downloaded and re-sent to Gemini as images/PDFs.
  */
 export async function extractFromText(documentType: DocumentType, extractedText: string): Promise<PolicyExtraction | null> {
-  if (!POLICY_DOCUMENT_TYPES.includes(documentType) || !extractedText.trim()) return null;
+  if (!isPolicyDocumentType(documentType) || !extractedText.trim()) return null;
 
   try {
     const response = await ai.models.generateContent({

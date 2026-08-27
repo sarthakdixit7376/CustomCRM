@@ -11,6 +11,10 @@ export interface ConvertToCustomerFormData {
   insuranceCompany: string;
   startDate: string;
   endDate: string;
+  gender: string;
+  agentName: string;
+  purchaseType: string;
+  email: string;
 }
 
 interface ConvertToCustomerModalProps {
@@ -32,6 +36,10 @@ const INITIAL_FORM: ConvertToCustomerFormData = {
   insuranceCompany: '',
   startDate: '',
   endDate: '',
+  gender: '',
+  agentName: '',
+  purchaseType: 'Private',
+  email: '',
 };
 
 /* ───────── Component ───────── */
@@ -70,6 +78,7 @@ export default function ConvertToCustomerModal({ isOpen, leadName, onClose, onSu
     if (!form.startDate) e.startDate = 'Required';
     if (!form.endDate) e.endDate = 'Required';
     if (form.policyType === 'Car' && !form.type) e.type = 'Required';
+    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = 'Enter a valid email';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -101,6 +110,40 @@ export default function ConvertToCustomerModal({ isOpen, leadName, onClose, onSu
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-7 max-sm:p-5 [&::-webkit-scrollbar]:w-[5px] [&::-webkit-scrollbar-track]:bg-surface [&::-webkit-scrollbar-thumb]:bg-neutral-300 [&::-webkit-scrollbar-thumb]:rounded">
+          <div className="mb-7">
+            <div className="flex items-center gap-2 text-xs font-semibold text-text-muted uppercase tracking-wider mb-4 pb-2.5 border-b border-border">
+              <UserCheck size={14} /> Customer Details
+            </div>
+            <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-text-muted">Gender</label>
+                <select className={selectClass} style={selectBg} value={form.gender} onChange={(e) => handleChange('gender', e.target.value)}>
+                  <option value="">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-text-muted">Purchase Type</label>
+                <select className={selectClass} style={selectBg} value={form.purchaseType} onChange={(e) => handleChange('purchaseType', e.target.value)}>
+                  <option value="Private">Private</option>
+                  <option value="Business">Business</option>
+                  <option value="Corporate">Corporate</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-text-muted">Agent Name</label>
+                <input type="text" className={`${inputBase} ${inputOk}`} placeholder="Enter agent name" value={form.agentName} onChange={(e) => handleChange('agentName', e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-text-muted">Email</label>
+                <input type="email" className={`${inputBase} ${errors.email ? inputErr : inputOk}`} placeholder="customer@example.com" value={form.email} onChange={(e) => handleChange('email', e.target.value)} />
+                {errors.email && <span className="text-[11px] text-danger-600 flex items-center gap-1"><AlertTriangle size={12} /> {errors.email}</span>}
+              </div>
+            </div>
+          </div>
+
           <div className="mb-1">
             <div className="flex items-center gap-2 text-xs font-semibold text-text-muted uppercase tracking-wider mb-4 pb-2.5 border-b border-border">
               <ClipboardList size={14} /> Policy Details
