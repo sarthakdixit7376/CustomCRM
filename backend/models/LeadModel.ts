@@ -1,5 +1,7 @@
 import prisma from '../config/prisma.js';
 import { generateInsuranceQuote, buildQuoteProfile, type QuoteFloors } from '../services/pricingEngine.js';
+import { compareLiveHova, type LiveHovaComparison } from '../services/liveHovaComparison.js';
+import { getCachedLiveComparisons, saveLiveComparison, clearCachedLiveComparison } from '../services/liveHovaCache.js';
 import { fetchVehicleGovData, mapVehicleGovFields } from '../services/vehicleGovService.js';
 
 /** Helper: coerce a value to string or undefined */
@@ -25,8 +27,15 @@ export const LeadModel = {
    * Re-prices an existing lead from its current driver + vehicle data and saves the
    * result. `onlyMissing` fills blank price columns without touching prices an agent
    * has already negotiated by hand.
+   *
+   * When `live` is true (manual Re-price), hits car.cma.gov.il for live hova insurer
+   * quotes and prefers the cheapest CMA premium for mandatoryPrice.
+   * Makif / tzad-gimel always stay on the local engine.
    */
-  autoQuoteLead: async (id: string, options: { onlyMissing?: boolean; claimFreeYears?: number } = {}) => {
+  autoQuoteLead: async (
+    id: string,
+    options: { onlyMissing?: boolean; claimFreeYears?: number; live?: boolean } = {}
+  ) => {
     const lead = await prisma.lead.findUnique({ where: { id } });
     if (!lead) return null;
 
@@ -35,6 +44,42 @@ export const LeadModel = {
       claimFreeYears: options.claimFreeYears ?? undefined,
     });
     const quote = generateInsuranceQuote(profile, await LeadModel.getQuoteFloors());
+
+    let liveComparison: LiveHovaComparison | undefined;
+    if (options.live) {
+      try {
+        liveComparison = await compareLiveHova({
+          ...lead,
+          claimFreeYears: options.claimFreeYears ?? undefined,
+        });
+        if (liveComparison.recommendedMandatoryPrice != null) {
+          const floors = await LeadModel.getQuoteFloors();
+          const floor = floors.mandatory ?? 0;
+          quote.mandatoryPrice = Math.max(liveComparison.recommendedMandatoryPrice, floor);
+          quote.breakdown.mandatory = {
+            ...quote.breakdown.mandatory,
+            price: quote.mandatoryPrice,
+            base: liveComparison.recommendedMandatoryPrice,
+            factors: [
+              {
+                label: 'Live CMA cheapest insurer',
+                multiplier: 1,
+              },
+            ],
+          };
+          quote.sources = [
+            ...(liveComparison.cma.status === 'ok' ? ['car.cma.gov.il — live tariff comparison'] : []),
+            ...quote.sources,
+          ];
+        }
+        // Persist so the next page load can show this result instantly instead of
+        // re-running a ~60s Puppeteer scrape just to redisplay what was already fetched.
+        await saveLiveComparison(id, liveComparison);
+      } catch (error) {
+        console.warn('Live CMA comparison failed; keeping engine estimate:', error);
+        liveComparison = undefined;
+      }
+    }
 
     const data: Record<string, number> = {};
     if (!options.onlyMissing || lead.mandatoryPrice == null) data.mandatoryPrice = quote.mandatoryPrice;
@@ -45,7 +90,7 @@ export const LeadModel = {
       ? await prisma.lead.update({ where: { id }, data })
       : lead;
 
-    return { lead: updated, quote };
+    return { lead: updated, quote, liveComparison };
   },
 
   getLeads: async (agentId?: string) => {
@@ -58,6 +103,18 @@ export const LeadModel = {
         agent: { select: { id: true, name: true, email: true } },
       },
     });
+  },
+
+  /** Cached live CMA comparisons for the given leads — instant, no scrape. */
+  getLiveComparisons: async (agentId?: string) => {
+    const leads = await prisma.lead.findMany({
+      where: agentId ? { agentId } : undefined,
+      select: { id: true },
+    });
+    const cached = await getCachedLiveComparisons(leads.map((l) => l.id));
+    return Object.fromEntries(
+      Object.entries(cached).map(([leadId, entry]) => [leadId, { ...entry.comparison, fetchedAt: entry.fetchedAt }])
+    );
   },
 
   getLeadById: async (id: string) => {
@@ -116,6 +173,7 @@ export const LeadModel = {
       await prisma.lead.delete({
         where: { id },
       });
+      await clearCachedLiveComparison(id);
       return true;
     } catch (error) {
       // If it doesn't exist, prisma throws

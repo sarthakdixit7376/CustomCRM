@@ -105,7 +105,7 @@ export interface QuoteFloors {
 
 const VERIFICATION_SOURCES = [
   'car.cma.gov.il — official CMA hova tariff calculator',
-  'hova.co.il — live mandatory quotes by plate + ID',
+  'hova.co.il — live mandatory quotes by plate + ID (manual verify)',
   'shukabit.co.il / wobi.co.il — makif and third-party market comparison',
 ];
 

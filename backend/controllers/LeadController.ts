@@ -16,6 +16,21 @@ export const getLeads = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+/**
+ * Cached live CMA comparisons, keyed by lead id — returns whatever the last manual
+ * Re-price already fetched, instantly, without re-running the ~60s Puppeteer scrape.
+ */
+export const getLiveComparisons = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const scopeAgentId = req.user!.role === 'ADMIN' ? undefined : req.user!.id;
+    const comparisons = await LeadModel.getLiveComparisons(scopeAgentId);
+    res.json(comparisons);
+  } catch (error) {
+    console.error('Error reading cached live comparisons:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 export const createLead = async (req: Request, res: Response): Promise<void> => {
   try {
     const raw = Array.isArray(req.body) ? req.body[0] : req.body;
@@ -134,13 +149,15 @@ export const autoQuoteLead = async (req: Request, res: Response): Promise<void> 
     const result = await LeadModel.autoQuoteLead(req.params.id, {
       onlyMissing: Boolean(req.body?.onlyMissing),
       claimFreeYears,
+      // Manual Re-price opts into live CMA; background auto-fill stays local/fast.
+      live: Boolean(req.body?.live) || req.body?.onlyMissing === false,
     });
     if (!result) {
       res.status(404).json({ error: 'Lead not found' });
       return;
     }
 
-    res.json({ lead: result.lead, quote: result.quote });
+    res.json({ lead: result.lead, quote: result.quote, liveComparison: result.liveComparison });
   } catch (error) {
     console.error('Error auto-quoting lead:', error);
     res.status(500).json({ error: 'Internal Server Error' });
